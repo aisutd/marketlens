@@ -1,0 +1,4 @@
+DATA/*.gz
+DATA/*.csv
+DATA/*.json
+DATA/*.jsonl
