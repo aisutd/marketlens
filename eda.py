@@ -7,6 +7,11 @@
 # ******** This script is used for initial Exploratory Data Analysis (EDA) ******
 # ******** This script shall not be used for dataset cleaning
 
+# Configuration variables - change file path and column names in one place instead of throughtout the script
+# CSV/JSON support
+
+
+
 import pandas as pd
 
 # ========== DATASET CONFIGURATION ==========
