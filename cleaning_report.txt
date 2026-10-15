@@ -1,0 +1,12 @@
+raw rows                                        1,426,337
+drop rows with no ASIN or title                 1,426,336
+drop duplicate ASINs                            1,426,336
+drop rows with no price                         1,393,564
+drop top 0.1% prices                            1,392,181
+drop categories with < 200 products             1,390,867
+drop categories with no sales signal            1,388,095
+
+categories kept: 232
+share with boughtInLastMonth > 0: 36.2%
+missing stars: 9.0%
+missing listPrice: 75.2%
