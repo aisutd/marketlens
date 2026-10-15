@@ -4,3 +4,4 @@ DATA/*.json
 DATA/*.jsonl
 data/
 .venv/
+.DS_Store
