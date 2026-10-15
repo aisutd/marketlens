@@ -15,7 +15,7 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 INPUT_PATH = PROJECT_ROOT / "data" / "All_Beauty.jsonl.gz"
 OUTPUT_PATH = PROJECT_ROOT / "data" / "processed" / "All_Beauty_clean.csv"
-SAMPLE_SIZE = 10_000  # Change to None to process all reviews.
+SAMPLE_SIZE = None  # Process all records
 
 
 def clean_reviews(raw: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, int]]:
