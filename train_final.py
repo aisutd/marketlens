@@ -1,13 +1,13 @@
 """
-MarketLens step 4: train the final XGBoost model on all the data and save it to disk.
+MarketLens step 5: train the final XGBoost model on all the dev data and save it to disk.
 
 Run once (takes a few minutes on the full data):
-    python train_final.py --data data\\products_clean.csv
+    python train_final.py --data data\\products_dev.csv
 
 Saves:
     models\\opportunity_model.joblib   everything predict.py needs to score a new product
 
-Keep products_clean.csv where it is: predict.py compares new products against it
+Keep the --data file where it is: predict.py compares new products against it
 (price vs category median, rank inside the category, brand size, ...).
 """
 import argparse
@@ -22,7 +22,7 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 
-from compare_models import SEED, build_features, build_target, load
+from compare_models import SEED, build_features, build_target, load, set_device
 from improve_xgb import listing_features, text_features, train_xgb
 
 
@@ -45,7 +45,9 @@ def main():
     ap.add_argument("--data", default="products_clean.csv")
     ap.add_argument("--sample", type=int, default=None, help="only for a quick test run")
     ap.add_argument("--out", default=os.path.join("models", "opportunity_model.joblib"))
+    ap.add_argument("--gpu", action="store_true", help="train XGBoost on an NVIDIA GPU (CUDA)")
     args = ap.parse_args()
+    set_device(args.gpu)
 
     t0 = time.time()
     df = load(args.data, args.sample).reset_index(drop=True)
@@ -65,6 +67,7 @@ def main():
     model, p_val = train_xgb(X.loc[tr_idx], y.loc[tr_idx], X.loc[val_idx], y.loc[val_idx], X.loc[val_idx])
 
     print("fitting the title model on all rows for scoring new products...")
+    model.set_params(device="cpu")   # the saved model scores on any laptop, GPU or not
     bundle = {
         "xgb": model,
         "feature_cols": list(X.columns),

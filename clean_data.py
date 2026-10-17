@@ -7,12 +7,13 @@ Input (from https://www.kaggle.com/datasets/asaniczka/amazon-products-dataset-20
     amazon_categories.csv   id,category_name   (optional, adds readable names)
 
 Run:
-    python clean_data.py                                   # writes products_clean.csv
+    python clean_data.py --data data\\amazon_products.csv ^
+        --categories-file data\\amazon_categories.csv --out data\\products_clean.csv
     python clean_data.py --min-cat-size 500 --out clean.csv
     python clean_data.py --categories "Kitchen & Dining,Sports & Outdoors"
 
 Output:
-    products_clean.csv      cleaned rows, ready for compare_models.py --data products_clean.csv
+    products_clean.csv      cleaned rows, ready for make_holdout.py
     cleaning_report.txt     rows removed at each step (paste this into the Discord update)
 """
 import argparse

@@ -1,5 +1,5 @@
 """
-MarketLens: lock away a final test set BEFORE any more training or tuning.
+MarketLens step 2: lock away a final test set BEFORE any more training or tuning.
 
 Run once, right after clean_data.py:
     python make_holdout.py --data data\\products_clean.csv

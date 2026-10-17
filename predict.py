@@ -1,5 +1,5 @@
 """
-MarketLens step 5: score new product ideas with the saved model (0-100 Opportunity Score).
+MarketLens step 6: score new product ideas with the saved model (0-100 Opportunity Score).
 
 First run train_final.py once. Then either score one product:
     python predict.py --title "Hardside Carry On Luggage 20 Inch Spinner Wheels TSA Lock" ^
@@ -21,7 +21,6 @@ import argparse
 import os
 
 import joblib
-import numpy as np
 import pandas as pd
 import xgboost as xgb
 

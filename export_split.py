@@ -1,5 +1,5 @@
 """
-MarketLens: export our train/test split so Vishal can score his model on the same products.
+MarketLens helper: export our train/test split so Vishal can score his model on the same products.
 
 Run:
     python export_split.py --data data\\products_dev.csv

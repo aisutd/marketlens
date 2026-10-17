@@ -1,5 +1,5 @@
 """
-MarketLens step 3: improve XGBoost with new features, and measure what each one adds.
+MarketLens step 4: improve XGBoost with new features, and measure what each one adds.
 
 Uses the same cleaned data, label and base features as compare_models.py (keep both files
 in the same folder), then trains XGBoost on three (or four) feature sets:
@@ -17,8 +17,8 @@ category peers, which is what the Opportunity Score claims to do. A category-onl
 scores 0.50 on it by construction.
 
 Run:
-    python improve_xgb.py --data data\\products_clean.csv --sample 200000   # quick, ~2 min
-    python improve_xgb.py --data data\\products_clean.csv                   # full data
+    python improve_xgb.py --data data\\products_dev.csv --sample 200000   # quick, ~2 min
+    python improve_xgb.py --data data\\products_dev.csv                   # full data
     python improve_xgb.py --data data\\products_dev.csv --char --sample 300000  # + char n-grams
 
 Text features are built out-of-fold: each training row's title score comes from a model
@@ -32,13 +32,13 @@ import time
 import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import HashingVectorizer, TfidfTransformer
-from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import average_precision_score, roc_auc_score
 from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.pipeline import make_pipeline
 from xgboost import XGBClassifier
 
-from compare_models import SEED, build_features, build_target, load
+from compare_models import SEED, build_features, build_target, load, set_device, xgb_device
 
 # Facts about the product's own reviews, which a product idea doesn't have yet.
 REVIEW_COLS = ["stars", "log_reviews", "has_review_count", "stars_pct_in_cat", "reviews_pct_in_cat"]
@@ -162,7 +162,8 @@ def train_xgb(X_tr, y_tr, X_val, y_val, X_te):
         n_estimators=3000, learning_rate=0.05, max_depth=7, min_child_weight=5,
         subsample=0.8, colsample_bytree=0.8, reg_lambda=2.0, tree_method="hist",
         enable_categorical=True, max_cat_to_onehot=1, scale_pos_weight=pos_weight,
-        eval_metric="aucpr", early_stopping_rounds=100, n_jobs=-1, random_state=SEED)
+        eval_metric="aucpr", early_stopping_rounds=100, n_jobs=-1, random_state=SEED,
+        device=xgb_device())
     model.fit(X_tr, y_tr, eval_set=[(X_val, y_val)], verbose=False)
     return model, model.predict_proba(X_te)[:, 1]
 
@@ -174,7 +175,9 @@ def main():
     ap.add_argument("--no-text", action="store_true", help="skip the slower TF-IDF title features")
     ap.add_argument("--char", action="store_true",
                     help="also test character n-gram title features (slower, ~5-10 min on full data)")
+    ap.add_argument("--gpu", action="store_true", help="train XGBoost on an NVIDIA GPU (CUDA)")
     args = ap.parse_args()
+    set_device(args.gpu)
 
     t0 = time.time()
     df = load(args.data, args.sample).reset_index(drop=True)

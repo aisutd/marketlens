@@ -1,27 +1,26 @@
 """
-MarketLens product success model: compare Logistic Regression, Random Forest,
-HistGradientBoosting and XGBoost on the Kaggle "Amazon Products Dataset 2023 (1.4M)".
+MarketLens step 3: compare Logistic Regression, Random Forest, HistGradientBoosting and
+XGBoost on the cleaned Kaggle "Amazon Products Dataset 2023 (1.4M)".
 
-Setup:
-    pip install scikit-learn xgboost pandas shap
-    # Download from https://www.kaggle.com/datasets/asaniczka/amazon-products-dataset-2023-1-4m-products
-    # and put amazon_products.csv next to this script.
+Also defines the label and base features that every later script imports.
 
-Run:
-    python compare_models.py                    # all rows
-    python compare_models.py --sample 200000    # faster first run
+Run (setup and data download are in README.md):
+    python compare_models.py --data data\\products_dev.csv                    # all rows
+    python compare_models.py --data data\\products_dev.csv --sample 200000    # faster first run
 
 Target: a product is "successful" if its boughtInLastMonth is in the top 20%
 of its own category (and above 0). isBestSeller is NOT used as a feature,
 because it is derived from sales and would leak the answer.
 """
 import argparse
+import os
 import time
 
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
+from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (average_precision_score, brier_score_loss, f1_score,
                              roc_auc_score)
@@ -31,6 +30,15 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from xgboost import XGBClassifier
 
 SEED = 42
+
+
+def set_device(gpu):
+    """--gpu: every XGBoost model in these scripts trains on the NVIDIA GPU (CUDA)."""
+    os.environ["MARKETLENS_XGB_DEVICE"] = "cuda" if gpu else "cpu"
+
+
+def xgb_device():
+    return os.environ.get("MARKETLENS_XGB_DEVICE", "cpu")
 
 
 def load(path, sample=None):
@@ -69,7 +77,6 @@ def build_features(df):
 
 def models(numeric_cols, pos_weight):
     # Logistic Regression cannot take NaN or raw categories, so it gets imputation + one-hot.
-    from sklearn.impute import SimpleImputer
     lr_prep = ColumnTransformer([
         ("num", make_pipeline(SimpleImputer(strategy="median"), StandardScaler()), numeric_cols),
         ("cat", OneHotEncoder(handle_unknown="ignore", min_frequency=50), ["category_id"]),
@@ -93,7 +100,7 @@ def models(numeric_cols, pos_weight):
             n_estimators=2000, learning_rate=0.05, max_depth=6, subsample=0.8,
             colsample_bytree=0.8, tree_method="hist", enable_categorical=True,
             scale_pos_weight=pos_weight, eval_metric="aucpr",
-            early_stopping_rounds=100, n_jobs=-1, random_state=SEED),
+            early_stopping_rounds=100, n_jobs=-1, random_state=SEED, device=xgb_device()),
     }
 
 
@@ -101,7 +108,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default="amazon_products.csv")
     ap.add_argument("--sample", type=int, default=None)
+    ap.add_argument("--gpu", action="store_true", help="train XGBoost on an NVIDIA GPU (CUDA)")
     args = ap.parse_args()
+    set_device(args.gpu)
 
     df = load(args.data, args.sample)
     y = build_target(df)

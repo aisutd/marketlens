@@ -1,5 +1,5 @@
 """
-MarketLens: the final, honest test of the saved model on the locked-away holdout.
+MarketLens step 7: the final, honest test of the saved model on the locked-away holdout.
 
 Run ONCE, when you're finished improving the model:
     python evaluate_holdout.py --model models\\opportunity_model.joblib ^
