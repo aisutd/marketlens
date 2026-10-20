@@ -34,7 +34,8 @@ def main():
     ap.add_argument("--clean", action="store_true", help="apply the notebook's cleaning first")
     ap.add_argument("--blend", default="", help="comma-separated Random Forest weights to try")
     ap.add_argument("--rf-trees", type=int, default=300)
-    ap.add_argument("--tuned", action="store_true", help="use push_auc.py's tuned XGBoost settings")
+    ap.add_argument("--tuned", choices=["none", "launch", "both"], default="none",
+                    help="which models use push_auc.py's tuned XGBoost settings")
     ap.add_argument("--gpu", action="store_true", help="train XGBoost on an NVIDIA GPU (CUDA)")
     args = ap.parse_args()
     set_device(args.gpu)
@@ -78,7 +79,8 @@ def main():
         rf_X = rf_features(df, base, listing, text, cse)
     for name, Xs, rf_drop in [("full", X, []), ("launch-time", X.drop(columns=REVIEW_COLS), RF_REVIEW_COLS)]:
         t1 = time.time()
-        _, p = (train_tuned if args.tuned else train_xgb)(Xs.loc[tr_idx], y.loc[tr_idx], Xs.loc[val_idx], y.loc[val_idx], Xs.loc[te_idx])
+        tuned = args.tuned == "both" or (args.tuned == "launch" and name == "launch-time")
+        _, p = (train_tuned if tuned else train_xgb)(Xs.loc[tr_idx], y.loc[tr_idx], Xs.loc[val_idx], y.loc[val_idx], Xs.loc[te_idx])
         record(f"{name} XGB", p, time.time() - t1)
         if weights:
             t1 = time.time()

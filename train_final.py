@@ -25,7 +25,7 @@ from sklearn.pipeline import make_pipeline
 from compare_models import SEED, build_features, build_target, load, set_device
 from improve_xgb import REVIEW_COLS, listing_features, text_features, train_xgb
 from optional_features import fit_brand_cat_rate
-from push_auc import brand_cat_rate
+from push_auc import brand_cat_rate, train_tuned
 
 
 def fit_text_model(titles, brands, y):
@@ -70,9 +70,10 @@ def main():
     print("training XGBoost (full model, for products that already have reviews)...")
     model, p_val = train_xgb(X.loc[tr_idx], y.loc[tr_idx], X.loc[val_idx], y.loc[val_idx], X.loc[val_idx])
     # Launch-time model: no stars or review counts, for product ideas that aren't on sale yet.
+    # The slower, deeper settings from push_auc.py help this model (but not the full one).
     XL = X.drop(columns=REVIEW_COLS)
     print("training XGBoost (launch-time model, for brand-new product ideas)...")
-    launch, p_val_l = train_xgb(XL.loc[tr_idx], y.loc[tr_idx], XL.loc[val_idx], y.loc[val_idx], XL.loc[val_idx])
+    launch, p_val_l = train_tuned(XL.loc[tr_idx], y.loc[tr_idx], XL.loc[val_idx], y.loc[val_idx], XL.loc[val_idx])
 
     print("fitting the title model on all rows for scoring new products...")
     model.set_params(device="cpu")   # the saved models score on any laptop, GPU or not
