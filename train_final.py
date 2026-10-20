@@ -24,6 +24,8 @@ from sklearn.pipeline import make_pipeline
 
 from compare_models import SEED, build_features, build_target, load, set_device
 from improve_xgb import REVIEW_COLS, listing_features, text_features, train_xgb
+from optional_features import fit_brand_cat_rate
+from push_auc import brand_cat_rate
 
 
 def fit_text_model(titles, brands, y):
@@ -44,7 +46,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default="products_clean.csv")
     ap.add_argument("--sample", type=int, default=None, help="only for a quick test run")
-    ap.add_argument("--out", default=os.path.join("models", "opportunity_model.joblib"))
+    ap.add_argument("--out", default=os.path.join("models", "combined_model.joblib"))
     ap.add_argument("--gpu", action="store_true", help="train XGBoost on an NVIDIA GPU (CUDA)")
     args = ap.parse_args()
     set_device(args.gpu)
@@ -59,7 +61,9 @@ def main():
     # Out-of-fold text features for every row, so XGBoost trains on honest title scores.
     print("building text features...")
     text = text_features(titles, brand, y, df.index, df.index[:0])
-    X = pd.concat([build_features(df), listing, text], axis=1)
+    # The brand's success rate inside this category, also out-of-fold.
+    bcr = brand_cat_rate(brand, df["category_id"], y, df.index, df.index[:0])
+    X = pd.concat([build_features(df), listing, text, bcr], axis=1)
 
     # Small held-out slice: early stopping, plus the reference scores for the 0-100 scale.
     tr_idx, val_idx = train_test_split(df.index, test_size=0.1, stratify=y, random_state=SEED)
@@ -78,6 +82,7 @@ def main():
         "feature_cols": list(X.columns),
         "categories": list(X["category_id"].cat.categories),
         "text": fit_text_model(titles, brand, y),
+        "brand_cat": fit_brand_cat_rate(brand, df["category_id"], y),
         # Predicted probabilities of real products: a new product's 0-100 score is the
         # share of products in its category that it beats.
         "reference": pd.DataFrame({"category_id": df.loc[val_idx, "category_id"].values,

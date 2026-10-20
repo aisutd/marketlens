@@ -23,6 +23,7 @@ from compare_models import SEED, build_features, build_target, load, set_device
 from improve_xgb import REVIEW_COLS, listing_features, roc_auc_within_category, text_features, train_xgb
 from optional_features import (RF_REVIEW_COLS, cat_sales_encoded, notebook_cleaning, optional_features,
                                rf_features, train_rf)
+from push_auc import train_tuned
 
 
 def main():
@@ -33,6 +34,7 @@ def main():
     ap.add_argument("--clean", action="store_true", help="apply the notebook's cleaning first")
     ap.add_argument("--blend", default="", help="comma-separated Random Forest weights to try")
     ap.add_argument("--rf-trees", type=int, default=300)
+    ap.add_argument("--tuned", action="store_true", help="use push_auc.py's tuned XGBoost settings")
     ap.add_argument("--gpu", action="store_true", help="train XGBoost on an NVIDIA GPU (CUDA)")
     args = ap.parse_args()
     set_device(args.gpu)
@@ -49,7 +51,7 @@ def main():
     base = build_features(df)
     listing, brand = listing_features(df)
     print(f"rows={len(df):,}  positive rate={y.mean():.1%}  add={add or '-'}  clean={args.clean}  "
-          f"blend={weights or '-'}")
+          f"blend={weights or '-'}  tuned={args.tuned}")
 
     # Same split as improve_xgb.py
     strat = df["category_id"].astype(str) + "_" + y.astype(str)
@@ -76,7 +78,7 @@ def main():
         rf_X = rf_features(df, base, listing, text, cse)
     for name, Xs, rf_drop in [("full", X, []), ("launch-time", X.drop(columns=REVIEW_COLS), RF_REVIEW_COLS)]:
         t1 = time.time()
-        _, p = train_xgb(Xs.loc[tr_idx], y.loc[tr_idx], Xs.loc[val_idx], y.loc[val_idx], Xs.loc[te_idx])
+        _, p = (train_tuned if args.tuned else train_xgb)(Xs.loc[tr_idx], y.loc[tr_idx], Xs.loc[val_idx], y.loc[val_idx], Xs.loc[te_idx])
         record(f"{name} XGB", p, time.time() - t1)
         if weights:
             t1 = time.time()

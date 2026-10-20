@@ -10,14 +10,16 @@ MarketLens: optional features, cleaning and a Random Forest from the random-fore
     notebook_cleaning   the notebook's cleaning rules (list price, missing stars/reviews)
     rf_features, train_rf   the notebook's Random Forest and its 14 inputs, for blending with XGBoost
 
+Also switches for push_auc.py's brand_cat_rate, title_sales_score and similar_titles_rate.
 run_experiment.py switches them on one at a time and reports what each one changes.
+brand_cat_rate made the cut and is part of train_final.py / predict.py (fit_brand_cat_rate below).
 """
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import KFold
 
-from compare_models import SEED
+from compare_models import SEED, build_target
 
 OPTIONAL_FEATURES = ["has_discount", "cat_median_price", "cat_sales_encoded"]
 RF_REVIEW_COLS = ["stars", "reviews", "has_reviews"]   # dropped for the launch-time forest
@@ -76,13 +78,40 @@ def fit_cat_sales(df, smoothing=20):
     return {"map": means.to_dict(), "prior": float(overall)}
 
 
+def fit_brand_cat_rate(brands, cats, y, smoothing=20):
+    """Brand x category success rates from ALL rows, used only to score new products. Same smoothing
+    as push_auc.brand_cat_rate: pulled toward the category's own rate."""
+    cat_rate = y.groupby(cats).mean()
+    key = brands.astype(str) + "|" + cats.astype(str)
+    stats = pd.DataFrame({"key": key, "cat": cats, "y": y}).groupby("key").agg(
+        s=("y", "sum"), n=("y", "count"), cat=("cat", "first"))
+    rate = (stats["s"] + smoothing * stats["cat"].map(cat_rate)) / (stats["n"] + smoothing)
+    return {"map": rate.to_dict(), "cat_rate": cat_rate.to_dict(), "prior": float(y.mean())}
+
+
+def apply_brand_cat_rate(fitted, brands, cats):
+    key = brands.astype(str) + "|" + cats.astype(str)
+    fallback = cats.map(fitted["cat_rate"]).fillna(fitted["prior"])
+    return key.map(fitted["map"]).fillna(fallback)
+
+
 def optional_features(df, names, fit_idx, apply_idx):
+    # The last three come from push_auc.py; all three are out-of-fold.
+    from improve_xgb import brand_of
+    from push_auc import brand_cat_rate, similar_titles_rate, title_sales_score
+    titles = df["title"].fillna("")
+    y = build_target(df)
     cols = {"has_discount": lambda: has_discount(df),
             "cat_median_price": lambda: cat_median_price(df),
-            "cat_sales_encoded": lambda: cat_sales_encoded(df, fit_idx, apply_idx)}
+            "cat_sales_encoded": lambda: cat_sales_encoded(df, fit_idx, apply_idx),
+            "brand_cat_rate": lambda: brand_cat_rate(titles.map(brand_of), df["category_id"], y,
+                                                     fit_idx, apply_idx),
+            "title_sales_score": lambda: title_sales_score(
+                titles, np.log1p(df["boughtInLastMonth"].clip(lower=0)), fit_idx, apply_idx),
+            "similar_titles_rate": lambda: similar_titles_rate(titles, y, fit_idx, apply_idx)}
     unknown = set(names) - set(cols)
     if unknown:
-        raise SystemExit(f"unknown optional feature(s): {sorted(unknown)}; choose from {OPTIONAL_FEATURES}")
+        raise SystemExit(f"unknown optional feature(s): {sorted(unknown)}; choose from {sorted(cols)}")
     return pd.concat([cols[n]() for n in names], axis=1) if names else pd.DataFrame(index=df.index)
 
 
