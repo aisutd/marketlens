@@ -1,0 +1,38 @@
+
+MEETING SUMMARY - Random Forest vs. teammate's XGBoost (target = top 20% of its own category)
+---------------------------------------------------------------------------------------------
+DATA & CLEANING
+- Started with 1,426,337 products; removed 32,772 (2.3%) - duplicates and $0/missing prices.
+- 64% of products show no "bought in past month" badge.
+- 18.4% of products are labeled top-20% in their category. isBestSeller is not used (it leaks the answer).
+
+SETUP
+- Tested on 249,857 products, trained on 999,428 (teammate split file).
+- Inputs include the teammate's title_score + brand_rate. Random Forest leaf size 50.
+
+RESULTS                                    ROC-AUC  PR-AUC  within-category
+  Baseline: coin flip                      0.500   0.185      0.500
+  Baseline: category only                  0.693   0.319      0.500
+  Baseline: sort by reviews                0.520   0.240      0.560
+  Baseline: title score alone              0.769   0.416      0.718
+  Random Forest (no badge)                 0.834   0.537      0.797
+  Random Forest (launch-time only)         0.801   0.476      0.748
+  Teammate XGBoost (full)                  0.850   0.580      0.810
+  Teammate XGBoost (launch-time)           0.810   0.500      0.760
+
+WHAT IT MEANS
+- Category alone gets ROC-AUC 0.69 overall (many categories have few top sellers),
+  but 0.50 inside a category, so the within-category column is the cleanest test of ranking inside a niche.
+- Adding his title score + brand rate moved my RF from ROC-AUC 0.81 to 0.83 (full) and from 0.75 to 0.80 (launch-time).
+  The title score on its own gets ROC-AUC 0.77.
+- My Random Forest vs. his XGBoost:
+  - Full (no badge): ROC-AUC RF behind by 0.02, PR-AUC RF behind by 0.04, within-category RF behind by 0.01
+  - Launch-time: ROC-AUC about even, PR-AUC RF behind by 0.02, within-category RF behind by 0.01
+- Mixed result: my Random Forest is behind by 0.02 ROC-AUC on the full version but behind by 0.01 on launch-time, so neither algorithm wins outright.
+- Most important inputs (full RF): title_score, stars, reviews.
+- Caveat: brand_rate assumes the brand already sells on Amazon; a brand-new brand just gets the average.
+
+WHAT TO SAY
+"On the same 249,857 test products, with the same target and the same inputs (including his title score and
+ brand track record), my Random Forest scores ROC-AUC 0.83 / PR-AUC 0.54 vs. his XGBoost 0.85 / 0.58.
+ Launch-time only: 0.80 / 0.48 vs. 0.81 / 0.50. Mixed result: my Random Forest is behind by 0.02 ROC-AUC on the full version but behind by 0.01 on launch-time, so neither algorithm wins outright."

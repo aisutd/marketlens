@@ -1,0 +1,6 @@
+pandas>=2.2
+numpy>=1.26
+matplotlib>=3.10
+scikit-learn>=1.4
+pyarrow
+ipykernel
