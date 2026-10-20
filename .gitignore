@@ -5,6 +5,6 @@ DATA/*.jsonl
 data/
 .venv/
 .DS_Store
-   train_test_split_asins.csv
-   top20_labels.csv.gz
-   .ipynb_checkpoints/
+ train_test_split_asins.csv
+ top20_labels.csv.gz
+ .ipynb_checkpoints/
