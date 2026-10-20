@@ -1,5 +1,5 @@
 """
-MarketLens step 4: improve XGBoost with new features, and measure what each one adds.
+MarketLens step 3: improve XGBoost with new features, and measure what each one adds.
 
 Uses the same cleaned data, label and base features as compare_models.py (keep both files
 in the same folder), then trains XGBoost on three (or four) feature sets:
@@ -17,8 +17,8 @@ category peers, which is what the Opportunity Score claims to do. A category-onl
 scores 0.50 on it by construction.
 
 Run:
-    python improve_xgb.py --data data\\products_dev.csv --sample 200000   # quick, ~2 min
-    python improve_xgb.py --data data\\products_dev.csv                   # full data
+    python improve_xgb.py --data data\\products_clean.csv --sample 200000   # quick, ~2 min
+    python improve_xgb.py --data data\\products_clean.csv                   # full data
     python improve_xgb.py --data data\\products_dev.csv --char --sample 300000  # + char n-grams
 
 Text features are built out-of-fold: each training row's title score comes from a model
@@ -32,10 +32,10 @@ import time
 import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import HashingVectorizer, TfidfTransformer
+from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import average_precision_score, roc_auc_score
 from sklearn.model_selection import StratifiedKFold, train_test_split
-from sklearn.pipeline import make_pipeline
 from xgboost import XGBClassifier
 
 from compare_models import SEED, build_features, build_target, load, set_device, xgb_device

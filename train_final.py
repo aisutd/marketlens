@@ -1,13 +1,13 @@
 """
-MarketLens step 5: train the final XGBoost model on all the dev data and save it to disk.
+MarketLens step 4: train the final XGBoost model on all the data and save it to disk.
 
 Run once (takes a few minutes on the full data):
-    python train_final.py --data data\\products_dev.csv
+    python train_final.py --data data\\products_clean.csv
 
 Saves:
     models\\opportunity_model.joblib   everything predict.py needs to score a new product
 
-Keep the --data file where it is: predict.py compares new products against it
+Keep products_clean.csv where it is: predict.py compares new products against it
 (price vs category median, rank inside the category, brand size, ...).
 """
 import argparse
@@ -23,7 +23,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 
 from compare_models import SEED, build_features, build_target, load, set_device
-from improve_xgb import listing_features, text_features, train_xgb
+from improve_xgb import REVIEW_COLS, listing_features, text_features, train_xgb
 
 
 def fit_text_model(titles, brands, y):
@@ -63,11 +63,16 @@ def main():
 
     # Small held-out slice: early stopping, plus the reference scores for the 0-100 scale.
     tr_idx, val_idx = train_test_split(df.index, test_size=0.1, stratify=y, random_state=SEED)
-    print("training XGBoost...")
+    print("training XGBoost (full model, for products that already have reviews)...")
     model, p_val = train_xgb(X.loc[tr_idx], y.loc[tr_idx], X.loc[val_idx], y.loc[val_idx], X.loc[val_idx])
+    # Launch-time model: no stars or review counts, for product ideas that aren't on sale yet.
+    XL = X.drop(columns=REVIEW_COLS)
+    print("training XGBoost (launch-time model, for brand-new product ideas)...")
+    launch, p_val_l = train_xgb(XL.loc[tr_idx], y.loc[tr_idx], XL.loc[val_idx], y.loc[val_idx], XL.loc[val_idx])
 
     print("fitting the title model on all rows for scoring new products...")
-    model.set_params(device="cpu")   # the saved model scores on any laptop, GPU or not
+    model.set_params(device="cpu")   # the saved models score on any laptop, GPU or not
+    launch.set_params(device="cpu")
     bundle = {
         "xgb": model,
         "feature_cols": list(X.columns),
@@ -77,6 +82,9 @@ def main():
         # share of products in its category that it beats.
         "reference": pd.DataFrame({"category_id": df.loc[val_idx, "category_id"].values,
                                    "p": p_val}),
+        "launch": {"xgb": launch, "feature_cols": list(XL.columns),
+                   "reference": pd.DataFrame({"category_id": df.loc[val_idx, "category_id"].values,
+                                              "p": p_val_l})},
         "data_path": os.path.abspath(args.data),
     }
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)

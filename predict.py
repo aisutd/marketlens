@@ -1,5 +1,5 @@
 """
-MarketLens step 6: score new product ideas with the saved model (0-100 Opportunity Score).
+MarketLens step 5: score new product ideas with the saved model (0-100 Opportunity Score).
 
 First run train_final.py once. Then either score one product:
     python predict.py --title "Hardside Carry On Luggage 20 Inch Spinner Wheels TSA Lock" ^
@@ -9,8 +9,10 @@ or a CSV of products (columns: title, price, listPrice, stars, reviews, category
     python predict.py --csv my_ideas.csv --out my_ideas_scored.csv
 
 "category" can be the category name (from amazon_categories.csv) or its numeric id.
-Leave stars/reviews/list price out for a product that doesn't exist yet: missing stars and
-reviews are filled with the category's median (use --as-is to turn that off).
+Leave stars/reviews/list price out for a product that doesn't exist yet: it is then scored
+by the launch-time model, which never uses stars or reviews. Products with stars or reviews use
+the full model. (Models saved before the launch-time model existed fill missing stars/reviews with
+the category's median instead; --as-is turns that off.)
 
 Output per product:
     opportunity_score   0-100: share of real products in the same category it beats
@@ -21,6 +23,7 @@ import argparse
 import os
 
 import joblib
+import numpy as np
 import pandas as pd
 import xgboost as xgb
 
@@ -125,35 +128,42 @@ def main():
     ref = pd.read_csv(bundle["data_path"])
     new = load_new(args)
     new["category_id"] = resolve_categories(new, ref, args.categories_file)
-    if not args.as_is:
-        new = fill_typical(new, ref)
+    # No stars and no reviews = a product idea: score it with the launch-time model if we have one.
+    is_idea = (new["stars"].fillna(0) <= 0) & (new["reviews"].fillna(0) <= 0)
+    launch = bundle.get("launch")
+    if launch is None and not args.as_is:
+        new = fill_typical(new, ref)   # older saved model: fall back to category medians
     X = featurize(bundle, ref, new)
 
-    model = bundle["xgb"]
-    p = model.predict_proba(X)[:, 1]
-    contrib = model.get_booster().predict(xgb.DMatrix(X, enable_categorical=True), pred_contribs=True)
-    contrib = pd.DataFrame(contrib[:, :-1], columns=bundle["feature_cols"])
-
-    ref_p = bundle["reference"]
     out = new[["title", "price", "category"]].copy()
-    out["probability"] = p.round(4)
-    scores, reasons = [], []
-    for i, (cid, pi) in enumerate(zip(new["category_id"], p)):
-        peers = ref_p.loc[ref_p["category_id"] == cid, "p"]
-        peers = peers if len(peers) >= 30 else ref_p["p"]   # too few peers: compare with everything
-        scores.append(round(100 * (peers < pi).mean()))
-        c = contrib.iloc[i].groupby(lambda f: FRIENDLY.get(f, f)).sum().sort_values()
-        up = [f"+ {k}" for k, v in c[::-1].head(3).items() if v > 0]
-        down = [f"- {k}" for k, v in c.head(3).items() if v < 0]
-        reasons.append("; ".join(up + down))
-    out["opportunity_score"] = scores
-    out["reasons"] = reasons
+    out["model"], out["probability"], out["opportunity_score"], out["reasons"] = "full", np.nan, 0, ""
+    groups = [("full", bundle, ~is_idea if launch else is_idea | ~is_idea)]
+    if launch:
+        groups.append(("launch-time", launch, is_idea))
+    for name, m, mask in groups:
+        rows = np.flatnonzero(mask.values)
+        if not len(rows):
+            continue
+        Xm = X.iloc[rows][m["feature_cols"]]
+        p = m["xgb"].predict_proba(Xm)[:, 1]
+        contrib = m["xgb"].get_booster().predict(xgb.DMatrix(Xm, enable_categorical=True),
+                                                 pred_contribs=True)
+        contrib = pd.DataFrame(contrib[:, :-1], columns=m["feature_cols"])
+        ref_p = m["reference"]
+        for j, (i, pi) in enumerate(zip(rows, p)):
+            peers = ref_p.loc[ref_p["category_id"] == new["category_id"].iloc[i], "p"]
+            peers = peers if len(peers) >= 30 else ref_p["p"]   # too few peers: compare with everything
+            c = contrib.iloc[j].groupby(lambda f: FRIENDLY.get(f, f)).sum().sort_values()
+            up = [f"+ {k}" for k, v in c[::-1].head(3).items() if v > 0]
+            down = [f"- {k}" for k, v in c.head(3).items() if v < 0]
+            out.iloc[i, out.columns.get_indexer(["model", "probability", "opportunity_score", "reasons"])] = [
+                name, round(float(pi), 4), round(100 * (peers < pi).mean()), "; ".join(up + down)]
 
     if args.out:
         out.to_csv(args.out, index=False)
         print(f"saved {args.out}")
     with pd.option_context("display.max_colwidth", 60, "display.width", 200):
-        print(out[["title", "opportunity_score", "probability", "reasons"]].to_string(index=False))
+        print(out[["title", "opportunity_score", "probability", "model", "reasons"]].to_string(index=False))
 
 
 if __name__ == "__main__":

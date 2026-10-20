@@ -1,12 +1,15 @@
 """
-MarketLens step 3: compare Logistic Regression, Random Forest, HistGradientBoosting and
-XGBoost on the cleaned Kaggle "Amazon Products Dataset 2023 (1.4M)".
+MarketLens product success model: compare Logistic Regression, Random Forest,
+HistGradientBoosting and XGBoost on the Kaggle "Amazon Products Dataset 2023 (1.4M)".
 
-Also defines the label and base features that every later script imports.
+Setup:
+    pip install scikit-learn xgboost pandas shap
+    # Download from https://www.kaggle.com/datasets/asaniczka/amazon-products-dataset-2023-1-4m-products
+    # and put amazon_products.csv next to this script.
 
-Run (setup and data download are in README.md):
-    python compare_models.py --data data\\products_dev.csv                    # all rows
-    python compare_models.py --data data\\products_dev.csv --sample 200000    # faster first run
+Run:
+    python compare_models.py                    # all rows
+    python compare_models.py --sample 200000    # faster first run
 
 Target: a product is "successful" if its boughtInLastMonth is in the top 20%
 of its own category (and above 0). isBestSeller is NOT used as a feature,
@@ -20,7 +23,6 @@ import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
-from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (average_precision_score, brier_score_loss, f1_score,
                              roc_auc_score)
@@ -77,6 +79,7 @@ def build_features(df):
 
 def models(numeric_cols, pos_weight):
     # Logistic Regression cannot take NaN or raw categories, so it gets imputation + one-hot.
+    from sklearn.impute import SimpleImputer
     lr_prep = ColumnTransformer([
         ("num", make_pipeline(SimpleImputer(strategy="median"), StandardScaler()), numeric_cols),
         ("cat", OneHotEncoder(handle_unknown="ignore", min_frequency=50), ["category_id"]),
