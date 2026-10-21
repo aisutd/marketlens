@@ -1,6 +1,8 @@
 # Data: the Kaggle dataset is 1M+ rows and must never be committed
 data/
+DATA/
 *.csv
+*.csv.gz
 *.jsonl.gz
 cleaning_report.txt
 
@@ -11,3 +13,7 @@ models/
 # Python
 .venv/
 __pycache__/
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
