@@ -95,6 +95,28 @@ def apply_brand_cat_rate(fitted, brands, cats):
     return key.map(fitted["map"]).fillna(fallback)
 
 
+def _title_embeddings(df):
+    from embeddings import load_embeddings
+    E = load_embeddings(df["asin"].astype(str).tolist())
+    missing = np.isnan(E[:, 0]).sum()
+    if missing:
+        raise SystemExit(f"{missing:,} rows have no title embedding yet; run embed_titles.py with the same --data/--sample")
+    return E
+
+
+def _title_emb_score(df, y, fit_idx, apply_idx):
+    # Positions and index labels are the same here: callers pass a frame with a 0..n-1 index.
+    from embeddings import emb_score
+    return emb_score(_title_embeddings(df), y, fit_idx, apply_idx, "title_emb_score")
+
+
+def _title_emb_pca(df, fit_idx):
+    from embeddings import emb_pca
+    Z, _ = emb_pca(_title_embeddings(df), fit_idx, "title_emb")
+    Z.index = df.index
+    return Z
+
+
 def optional_features(df, names, fit_idx, apply_idx):
     # The last three come from push_auc.py; all three are out-of-fold.
     from improve_xgb import brand_of
@@ -108,7 +130,10 @@ def optional_features(df, names, fit_idx, apply_idx):
                                                      fit_idx, apply_idx),
             "title_sales_score": lambda: title_sales_score(
                 titles, np.log1p(df["boughtInLastMonth"].clip(lower=0)), fit_idx, apply_idx),
-            "similar_titles_rate": lambda: similar_titles_rate(titles, y, fit_idx, apply_idx)}
+            "similar_titles_rate": lambda: similar_titles_rate(titles, y, fit_idx, apply_idx),
+            # all-MiniLM-L6-v2 title embeddings (embed_titles.py, embeddings.py)
+            "title_emb_score": lambda: _title_emb_score(df, y, fit_idx, apply_idx),
+            "title_emb_pca": lambda: _title_emb_pca(df, fit_idx)}
     unknown = set(names) - set(cols)
     if unknown:
         raise SystemExit(f"unknown optional feature(s): {sorted(unknown)}; choose from {sorted(cols)}")
