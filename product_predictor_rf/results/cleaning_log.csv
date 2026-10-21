@@ -1,4 +1,0 @@
-step,rows_before,rows_after,rows_removed
-Remove duplicate ASINs,1426337,1426337,0
-Remove price <= 0 or missing,1426337,1393565,32772
-Remove missing boughtInLastMonth,1393565,1393565,0
