@@ -15,6 +15,7 @@ import os
 import time
 
 import numpy as np
+import pandas as pd
 
 from compare_models import load
 from embeddings import EMB_DIR, MODEL_NAME, stored_asins
@@ -24,6 +25,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default="data/products_dev.csv")
     ap.add_argument("--sample", type=int, default=None, help="same rows as the scripts' --sample")
+    ap.add_argument("--asins", default=None, help="CSV with an asin column: embed only those products")
     ap.add_argument("--limit", type=int, default=None, help="only the first N rows still to do")
     ap.add_argument("--chunk", type=int, default=50_000)
     ap.add_argument("--batch", type=int, default=128)
@@ -36,6 +38,8 @@ def main():
     os.makedirs(args.out_dir, exist_ok=True)
 
     df = load(args.data, args.sample)[["asin", "title"]].drop_duplicates("asin")
+    if args.asins:   # only these products (a CSV with an asin column, e.g. image_sample.csv)
+        df = df[df["asin"].isin(pd.read_csv(args.asins)["asin"])]
     done = set() if args.time_only else stored_asins(args.out_dir)
     todo = df[~df["asin"].isin(done)]
     if args.limit:
