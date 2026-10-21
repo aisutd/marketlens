@@ -111,8 +111,12 @@ def _title_emb_score(df, y, fit_idx, apply_idx):
 
 
 def _title_emb_pca(df, fit_idx):
-    from embeddings import emb_pca
-    Z, _ = emb_pca(_title_embeddings(df), fit_idx, "title_emb")
+    # Streams the stored chunks, so all dev rows fit in a laptop's memory.
+    from embeddings import pca_features
+    Z, _ = pca_features(df["asin"].astype(str).tolist(), fit_idx, "title_emb")
+    missing = int(np.isnan(Z.iloc[:, 0]).sum())
+    if missing:
+        raise SystemExit(f"{missing:,} rows have no title embedding yet; run embed_titles.py with the same --data/--sample")
     Z.index = df.index
     return Z
 

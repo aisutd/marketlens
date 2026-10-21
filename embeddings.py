@@ -13,7 +13,7 @@ import os
 
 import numpy as np
 import pandas as pd
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, IncrementalPCA
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold
 
@@ -70,6 +70,36 @@ def emb_score(E, y, fit_idx, apply_idx, name, n_folds=5, C=1.0):
     if len(apply_idx):
         fit_predict(fit_idx, apply_idx)
     return out
+
+
+def _chunks(emb_dir, prefix, asins):
+    """(destination rows, chunk rows, memory-mapped chunk) for every stored chunk that has some of `asins`."""
+    pos = {a: i for i, a in enumerate(asins)}
+    for f in sorted(glob.glob(os.path.join(emb_dir, f"{prefix}_*_asins.txt"))):
+        with open(f, encoding="utf-8") as fh:
+            rows = [(pos[a.strip()], j) for j, a in enumerate(fh) if a.strip() in pos]
+        if rows:
+            dst, src = map(np.array, zip(*rows))
+            yield dst, src, np.load(f.replace("_asins.txt", ".npy"), mmap_mode="r")
+
+
+def pca_features(asins, fit_idx, prefix="title_emb", dims=32, emb_dir=EMB_DIR, batch=50_000):
+    """Like emb_pca, but never holds the full embedding matrix: IncrementalPCA is fit on ALL training rows,
+    one chunk at a time, then every chunk is projected in turn. Returns (frame with dims columns, fitted PCA)."""
+    fit_rows = np.zeros(len(asins), dtype=bool)
+    fit_rows[np.asarray(fit_idx)] = True
+    pca = IncrementalPCA(dims, batch_size=batch)
+    for dst, src, E in _chunks(emb_dir, prefix, asins):
+        rows = src[fit_rows[dst]]
+        for i in range(0, len(rows), batch):
+            part = rows[i:i + batch]
+            if len(part) >= dims:          # partial_fit needs at least `dims` rows
+                pca.partial_fit(E[part].astype(np.float32))
+    Z = np.full((len(asins), dims), np.nan, dtype=np.float32)
+    for dst, src, E in _chunks(emb_dir, prefix, asins):
+        for i in range(0, len(src), 50_000):
+            Z[dst[i:i + 50_000]] = pca.transform(E[src[i:i + 50_000]].astype(np.float32))
+    return pd.DataFrame(Z, columns=[f"{prefix}_pca_{k}" for k in range(dims)]), pca
 
 
 def emb_pca(E, fit_idx, prefix, dims=32):
