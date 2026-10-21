@@ -2,7 +2,7 @@
 MarketLens: the final, honest test of the saved model on the locked-away holdout.
 
 Run ONCE, when you're finished improving the model:
-    python evaluate_holdout.py --model models\\combined_model.joblib ^
+    python evaluate_holdout.py --model models\\embed_model.joblib ^
         --holdout data\\products_holdout.csv
 
 The holdout products are scored exactly like new product ideas (predict.py), against the
@@ -26,7 +26,8 @@ from predict import featurize
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default=os.path.join("models", "combined_model.joblib"))
+    ap.add_argument("--model", default=os.path.join("models", "embed_model.joblib"),
+                    help="saved model; models\\combined_model.joblib is the previous one (no title embedding)")
     ap.add_argument("--holdout", default=os.path.join("data", "products_holdout.csv"))
     args = ap.parse_args()
 

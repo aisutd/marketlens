@@ -117,7 +117,8 @@ def fill_typical(new, ref):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default=os.path.join("models", "combined_model.joblib"))
+    ap.add_argument("--model", default=os.path.join("models", "embed_model.joblib"),
+                    help="saved model; models\\combined_model.joblib is the previous one (no title embedding)")
     ap.add_argument("--categories-file", default=os.path.join("data", "amazon_categories.csv"))
     ap.add_argument("--csv")
     ap.add_argument("--out")
