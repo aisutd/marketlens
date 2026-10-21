@@ -46,10 +46,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default="products_clean.csv")
     ap.add_argument("--sample", type=int, default=None, help="only for a quick test run")
-    ap.add_argument("--out", default=os.path.join("models", "combined_model.joblib"))
+    ap.add_argument("--out", default=None,
+                    help="default models\\combined_model.joblib, or models\\embed_model.joblib with --title-emb")
+    ap.add_argument("--title-emb", action="store_true",
+                    help="add the 32-dim PCA of the MiniLM title embedding (run embed_titles.py on --data first)")
     ap.add_argument("--gpu", action="store_true", help="train XGBoost on an NVIDIA GPU (CUDA)")
     args = ap.parse_args()
     set_device(args.gpu)
+    if args.out is None:
+        args.out = os.path.join("models", "embed_model.joblib" if args.title_emb else "combined_model.joblib")
 
     t0 = time.time()
     df = load(args.data, args.sample).reset_index(drop=True)
@@ -64,6 +69,16 @@ def main():
     # The brand's success rate inside this category, also out-of-fold.
     bcr = brand_cat_rate(brand, df["category_id"], y, df.index, df.index[:0])
     X = pd.concat([build_features(df), listing, text, bcr], axis=1)
+    title_pca = None
+    if args.title_emb:
+        # PCA has no label in it, so it is fit on all rows; predict.py embeds a new title the same way.
+        print("adding the title embedding PCA...")
+        from embeddings import pca_features
+        Z, title_pca = pca_features(df["asin"].astype(str).tolist(), df.index, "title_emb")
+        if Z.iloc[:, 0].isna().any():
+            raise SystemExit("some rows have no title embedding; run embed_titles.py --data " + args.data)
+        Z.index = df.index
+        X = pd.concat([X, Z], axis=1)
 
     # Small held-out slice: early stopping, plus the reference scores for the 0-100 scale.
     tr_idx, val_idx = train_test_split(df.index, test_size=0.1, stratify=y, random_state=SEED)
@@ -93,6 +108,9 @@ def main():
                                               "p": p_val_l})},
         "data_path": os.path.abspath(args.data),
     }
+    if title_pca is not None:
+        from embeddings import MODEL_NAME
+        bundle["title_emb"] = {"model": MODEL_NAME, "pca": title_pca, "prefix": "title_emb"}
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
     joblib.dump(bundle, args.out, compress=3)
     print(f"saved {args.out}  ({os.path.getsize(args.out) / 1e6:.0f} MB, {time.time() - t0:.0f}s)")

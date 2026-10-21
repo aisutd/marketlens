@@ -22,7 +22,7 @@ from sklearn.model_selection import train_test_split
 from compare_models import SEED, build_features, build_target, load, set_device
 from improve_xgb import REVIEW_COLS, listing_features, roc_auc_within_category, text_features, train_xgb
 from optional_features import (RF_REVIEW_COLS, cat_sales_encoded, notebook_cleaning, optional_features,
-                               rf_features, train_rf)
+                               rf_features, train_lgbm, train_rf)
 from push_auc import train_tuned
 
 
@@ -36,6 +36,7 @@ def main():
     ap.add_argument("--rf-trees", type=int, default=300)
     ap.add_argument("--tuned", choices=["none", "launch", "both"], default="none",
                     help="which models use push_auc.py's tuned XGBoost settings")
+    ap.add_argument("--lgbm", action="store_true", help="also train LightGBM and average it with XGBoost")
     ap.add_argument("--gpu", action="store_true", help="train XGBoost on an NVIDIA GPU (CUDA)")
     args = ap.parse_args()
     set_device(args.gpu)
@@ -82,6 +83,11 @@ def main():
         tuned = args.tuned == "both" or (args.tuned == "launch" and name == "launch-time")
         _, p = (train_tuned if tuned else train_xgb)(Xs.loc[tr_idx], y.loc[tr_idx], Xs.loc[val_idx], y.loc[val_idx], Xs.loc[te_idx])
         record(f"{name} XGB", p, time.time() - t1)
+        if args.lgbm:
+            t1 = time.time()
+            p_lgb = train_lgbm(Xs.loc[tr_idx], y.loc[tr_idx], Xs.loc[val_idx], y.loc[val_idx], Xs.loc[te_idx])
+            record(f"{name} LightGBM alone", p_lgb, time.time() - t1)
+            record(f"{name} XGB + LightGBM average", (p + p_lgb) / 2, 0.0)
         if weights:
             t1 = time.time()
             R = rf_X.drop(columns=rf_drop)

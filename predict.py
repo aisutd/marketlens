@@ -34,6 +34,7 @@ from optional_features import apply_brand_cat_rate
 FRIENDLY = {
     "title_score": "title wording", "brand_rate": "brand track record", "stars": "star rating",
     "brand_cat_rate": "brand track record in category",
+    **{f"title_emb_pca_{k}": "title meaning" for k in range(64)},
     "log_reviews": "review count", "log_price": "price", "price_vs_cat_median": "price vs category",
     "price_pct_in_cat": "price rank in category", "stars_pct_in_cat": "rating rank in category",
     "reviews_pct_in_cat": "review rank in category", "discount_pct": "discount",
@@ -89,6 +90,11 @@ def featurize(bundle, ref, new):
     if "brand_cat" in bundle:   # models saved before brand_cat_rate existed don't have it
         X["brand_cat_rate"] = apply_brand_cat_rate(bundle["brand_cat"], brand.loc[rows],
                                                    both.loc[rows, "category_id"]).values
+    if "title_emb" in bundle:   # embed_model.joblib: the title's MiniLM embedding, reduced with the saved PCA
+        from embeddings import title_emb_columns
+        Z = title_emb_columns(bundle["title_emb"], titles.astype(str).tolist())
+        Z.index = X.index
+        X = pd.concat([X, Z], axis=1)
     X["category_id"] = pd.Categorical(both.loc[rows, "category_id"], categories=bundle["categories"])
     return X[bundle["feature_cols"]].reset_index(drop=True)
 

@@ -164,6 +164,19 @@ def rf_features(df, base, listing, text, cse):
     return F
 
 
+def train_lgbm(X_tr, y_tr, X_val, y_val, X_te):
+    """LightGBM on the same features (category_id as a categorical), early stopping on the validation slice."""
+    import lightgbm as lgb
+    pos_weight = (y_tr == 0).sum() / max((y_tr == 1).sum(), 1)
+    model = lgb.LGBMClassifier(
+        n_estimators=5000, learning_rate=0.03, num_leaves=127, min_child_samples=50, subsample=0.8,
+        subsample_freq=1, colsample_bytree=0.8, reg_lambda=2.0, scale_pos_weight=pos_weight,
+        n_jobs=-1, random_state=SEED, verbose=-1)
+    model.fit(X_tr, y_tr, eval_set=[(X_val, y_val)], eval_metric="average_precision",
+              callbacks=[lgb.early_stopping(150, verbose=False)])
+    return model.predict_proba(X_te)[:, 1]
+
+
 def train_rf(X_tr, y_tr, X_te, n_estimators=300, min_samples_leaf=50):
     # The notebook's settings (leaf size 50, half the features per split); n_estimators capped at 300.
     model = RandomForestClassifier(n_estimators=n_estimators, min_samples_leaf=min_samples_leaf,

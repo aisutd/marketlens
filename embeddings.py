@@ -72,6 +72,28 @@ def emb_score(E, y, fit_idx, apply_idx, name, n_folds=5, C=1.0):
     return out
 
 
+_MODELS = {}
+
+
+def embed_new_titles(titles, model_name=MODEL_NAME, batch=32):
+    """Embed titles exactly like embed_titles.py (normalised, rounded through float16), on the CPU."""
+    os.environ.setdefault("HF_HOME", os.path.join(EMB_DIR, "hf_cache"))
+    if model_name not in _MODELS:
+        import torch
+        from sentence_transformers import SentenceTransformer
+        torch.set_num_threads(os.cpu_count() or 1)
+        _MODELS[model_name] = SentenceTransformer(model_name, device="cpu")
+    E = _MODELS[model_name].encode(list(titles), batch_size=batch, normalize_embeddings=True,
+                                   convert_to_numpy=True, show_progress_bar=len(titles) > 5000)
+    return E.astype(np.float16).astype(np.float32)
+
+
+def title_emb_columns(fitted, titles):
+    """The saved bundle's title-embedding PCA columns for new titles."""
+    Z = fitted["pca"].transform(embed_new_titles(titles, fitted["model"]))
+    return pd.DataFrame(Z, columns=[f"{fitted['prefix']}_pca_{k}" for k in range(Z.shape[1])])
+
+
 def _chunks(emb_dir, prefix, asins):
     """(destination rows, chunk rows, memory-mapped chunk) for every stored chunk that has some of `asins`."""
     pos = {a: i for i, a in enumerate(asins)}
