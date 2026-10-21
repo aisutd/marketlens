@@ -29,6 +29,7 @@ def main():
     ap.add_argument("--limit", type=int, default=None, help="only the first N rows still to do")
     ap.add_argument("--chunk", type=int, default=50_000)
     ap.add_argument("--batch", type=int, default=128)
+    ap.add_argument("--threads", type=int, default=None, help="torch CPU threads (default: physical cores)")
     ap.add_argument("--time-only", action="store_true", help="embed --limit rows and report speed, save nothing")
     ap.add_argument("--out-dir", default=EMB_DIR)
     args = ap.parse_args()
@@ -49,6 +50,9 @@ def main():
         return
 
     model = SentenceTransformer(MODEL_NAME, device="cpu")
+    if args.threads:
+        import torch
+        torch.set_num_threads(args.threads)
     n = len(glob.glob(os.path.join(args.out_dir, "title_emb_*_asins.txt")))
     t0 = time.time()
     for start in range(0, len(todo), args.chunk):
