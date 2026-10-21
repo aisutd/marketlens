@@ -18,6 +18,11 @@ The model is an XGBoost classifier. It uses the following features:
 - **Listing:** brand size, pack/set size, and title shape.
 - **Text:** a score learned from the title's words, and the brand's track record. Both are built
   out-of-fold, so the model never scores a title it trained on.
+- **Brand in category:** `brand_cat_rate`, the brand's success rate inside this product's category,
+  smoothed toward the category's own rate and built out-of-fold.
+
+The launch-time model (for product ideas with no stars or reviews yet) uses tuned XGBoost settings:
+a slower learning rate and deeper trees.
 
 `isBestSeller` is **not** used, because Amazon derives it from sales and it would leak the answer.
 
