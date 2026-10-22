@@ -1,0 +1,16 @@
+us_category,referral_rate,cogs_rate,return_rate,tacos_rate,ratings_per_order,lifecycle_decay_m,price_elasticity,price_drift_yr
+Cell Phones & Accessories,0.15,0.3,0.08,0.1,0.08,30,-1.6,-0.05
+Electronics - Audio,0.15,0.28,0.095,0.12,0.09,30,-1.8,-0.05
+Electronics - TV & Video,0.08,0.5,0.07,0.07,0.07,36,-1.3,-0.06
+Electronics - Accessories,0.15,0.24,0.06,0.09,0.07,48,-1.7,-0.03
+Computer Accessories & Peripherals,0.15,0.22,0.06,0.09,0.07,48,-1.9,-0.03
+Computers & Accessories,0.08,0.52,0.065,0.07,0.06,36,-1.2,-0.06
+Camera & Photo,0.08,0.4,0.07,0.09,0.06,40,-1.4,-0.04
+Kitchen & Home Appliances,0.15,0.28,0.055,0.09,0.06,72,-1.2,0.03
+Home & Kitchen,0.15,0.24,0.045,0.1,0.06,72,-1.5,0.03
+Office Products,0.15,0.26,0.03,0.08,0.05,84,-1.4,0.03
+Musical Instruments,0.15,0.32,0.05,0.09,0.06,60,-1.1,0.02
+Tools & Home Improvement,0.15,0.3,0.045,0.09,0.06,72,-1.2,0.03
+Toys & Games,0.15,0.26,0.05,0.11,0.06,36,-1.6,0.02
+Health & Household,0.15,0.24,0.04,0.11,0.06,60,-1.3,0.03
+Automotive,0.12,0.3,0.05,0.09,0.06,60,-1.2,0.03

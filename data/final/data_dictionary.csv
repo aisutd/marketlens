@@ -1,0 +1,287 @@
+dataset,column,role,dtype,null_pct,description
+monthly,product_id,id,str,0.0,product id
+monthly,month,id,datetime64[us],0.0,month
+monthly,product_name,id,str,0.0,product name
+monthly,brand,id,str,0.0,brand
+monthly,us_category,id,str,0.0,us category
+monthly,category_group,id,str,0.0,category group
+monthly,cat_leaf,id,str,0.0,cat leaf
+monthly,month_of_year,feature,int64,0.0,month of year
+monthly,moy_sin,feature,float64,0.0,moy sin
+monthly,moy_cos,feature,float64,0.0,moy cos
+monthly,year,feature,int64,0.0,year
+monthly,is_prime_day,feature,int64,0.0,Month contains Prime Day
+monthly,is_prime_big_deal_days,feature,int64,0.0,is prime big deal days
+monthly,is_bfcm,feature,int64,0.0,November (Black Friday / Cyber Monday)
+monthly,is_holiday_peak,feature,int64,0.0,is holiday peak
+monthly,is_back_to_school,feature,int64,0.0,is back to school
+monthly,macro_index,feature,float64,0.0,U.S. e-commerce macro demand index (Jan 2021 = 1)
+monthly,age_months,feature,int64,0.0,age months
+monthly,log_age_months,feature,float64,0.0,log age months
+monthly,is_launch_phase,feature,int64,0.0,is launch phase
+monthly,promo_flag,feature,int64,0.0,promo flag
+monthly,promo_depth_pct,feature,float64,0.0,Promotional discount depth in the month (%)
+monthly,everyday_price,feature,float64,0.0,everyday price
+monthly,avg_price,target,float64,0.0,Average selling price after promotions (USD)
+monthly,log_avg_price,feature,float64,0.0,log avg price
+monthly,price_vs_everyday,feature,float64,0.0,Selling price ÷ everyday price
+monthly,units_sold_lag1,feature,float64,1.39,Units shipped to customers in the period (lag1)
+monthly,units_sold_lag2,feature,float64,2.78,Units shipped to customers in the period (lag2)
+monthly,units_sold_lag3,feature,float64,4.18,Units shipped to customers in the period (lag3)
+monthly,units_sold_lag12,feature,float64,16.5,Units shipped to customers in the period (lag12)
+monthly,demand_units_lag1,feature,float64,1.39,Unconstrained customer demand (units sold + lost to stock-outs) (lag1)
+monthly,demand_units_lag2,feature,float64,2.78,Unconstrained customer demand (units sold + lost to stock-outs) (lag2)
+monthly,demand_units_lag3,feature,float64,4.18,Unconstrained customer demand (units sold + lost to stock-outs) (lag3)
+monthly,demand_units_lag12,feature,float64,16.5,Unconstrained customer demand (units sold + lost to stock-outs) (lag12)
+monthly,avg_price_lag1,feature,float64,1.39,Average selling price after promotions (USD) (lag1)
+monthly,avg_price_lag2,feature,float64,2.78,Average selling price after promotions (USD) (lag2)
+monthly,avg_price_lag3,feature,float64,4.18,Average selling price after promotions (USD) (lag3)
+monthly,avg_price_lag12,feature,float64,16.5,Average selling price after promotions (USD) (lag12)
+monthly,net_profit_lag1,feature,float64,1.39,"Net revenue − referral, FBA, storage, COGS, ads, overhead (USD) (lag1)"
+monthly,net_profit_lag2,feature,float64,2.78,"Net revenue − referral, FBA, storage, COGS, ads, overhead (USD) (lag2)"
+monthly,net_profit_lag3,feature,float64,4.18,"Net revenue − referral, FBA, storage, COGS, ads, overhead (USD) (lag3)"
+monthly,net_profit_lag12,feature,float64,16.5,"Net revenue − referral, FBA, storage, COGS, ads, overhead (USD) (lag12)"
+monthly,gross_revenue_lag1,feature,float64,1.39,Units × selling price before returns (USD) (lag1)
+monthly,gross_revenue_lag2,feature,float64,2.78,Units × selling price before returns (USD) (lag2)
+monthly,gross_revenue_lag3,feature,float64,4.18,Units × selling price before returns (USD) (lag3)
+monthly,gross_revenue_lag12,feature,float64,16.5,Units × selling price before returns (USD) (lag12)
+monthly,profit_margin_pct_lag1,feature,float64,1.4,Net profit ÷ gross revenue × 100 (lag1)
+monthly,profit_margin_pct_lag12,feature,float64,16.51,Net profit ÷ gross revenue × 100 (lag12)
+monthly,demand_share_pct_lag1,feature,float64,1.39,Product demand ÷ total tracked demand in its U.S. category × 100 (lag1)
+monthly,demand_share_pct_lag12,feature,float64,16.5,Product demand ÷ total tracked demand in its U.S. category × 100 (lag12)
+monthly,units_sold_roll3_mean,feature,float64,1.39,Units shipped to customers in the period (roll3 mean)
+monthly,units_sold_roll6_mean,feature,float64,1.39,Units shipped to customers in the period (roll6 mean)
+monthly,units_sold_roll12_mean,feature,float64,1.39,Units shipped to customers in the period (roll12 mean)
+monthly,demand_units_roll3_mean,feature,float64,1.39,Unconstrained customer demand (units sold + lost to stock-outs) (roll3 mean)
+monthly,demand_units_roll6_mean,feature,float64,1.39,Unconstrained customer demand (units sold + lost to stock-outs) (roll6 mean)
+monthly,demand_units_roll12_mean,feature,float64,1.39,Unconstrained customer demand (units sold + lost to stock-outs) (roll12 mean)
+monthly,net_profit_roll3_mean,feature,float64,1.39,"Net revenue − referral, FBA, storage, COGS, ads, overhead (USD) (roll3 mean)"
+monthly,net_profit_roll6_mean,feature,float64,1.39,"Net revenue − referral, FBA, storage, COGS, ads, overhead (USD) (roll6 mean)"
+monthly,net_profit_roll12_mean,feature,float64,1.39,"Net revenue − referral, FBA, storage, COGS, ads, overhead (USD) (roll12 mean)"
+monthly,units_roll3_std,feature,float64,2.78,units roll3 std
+monthly,units_trend_3v12,feature,float64,1.39,units trend 3v12
+monthly,reviews_to_date_lag1,feature,float64,0.0,Ratings accumulated up to the previous month
+monthly,cum_units_sold_lag1,feature,float64,0.0,cum units sold (lag1)
+monthly,cum_net_profit_lag1,feature,float64,0.0,cum net profit (lag1)
+monthly,roi_cum_pct_lag1,feature,float64,1.39,Cumulative net profit since launch ÷ capital invested × 100 (lag1)
+monthly,log_price_usd,feature,float64,0.0,ln(1 + everyday sale price in USD)
+monthly,log_list_price_usd,feature,float64,0.0,log list price usd
+monthly,discount_pct,feature,float64,0.0,Everyday discount vs U.S. reference price (%)
+monthly,deep_discount_listing,feature,int64,0.0,deep discount listing
+monthly,rating,feature,float64,0.0,Average star rating
+monthly,review_sentiment,feature,float64,0.0,review sentiment
+monthly,listing_quality_score,feature,float64,0.0,"0–100 composite of content richness, rating and sentiment"
+monthly,log_brand_listing_count,feature,float64,0.0,log brand listing count
+monthly,is_bundle,feature,int64,0.0,is bundle
+monthly,cat_depth,feature,int64,0.0,cat depth
+monthly,name_len,feature,int64,0.0,name len
+monthly,n_bullets,feature,int64,0.0,n bullets
+monthly,log_ship_weight_lb,feature,float64,0.0,log ship weight lb
+monthly,cubic_ft,feature,float64,0.0,cubic ft
+monthly,log_fba_fee_unit,feature,float64,0.0,log fba fee unit
+monthly,log_landed_cost_unit,feature,float64,0.0,log landed cost unit
+monthly,referral_rate,feature,float64,0.0,referral rate
+monthly,return_rate,feature,float64,0.0,return rate
+monthly,tacos_rate,feature,float64,0.0,tacos rate
+monthly,price_elasticity,feature,float64,0.0,Category own-price elasticity used for promo months
+monthly,fee_share_of_price,feature,float64,0.0,fee share of price
+monthly,cost_share_of_price,feature,float64,0.0,cost share of price
+monthly,unit_margin_pct,feature,float64,0.0,Pre-ad unit contribution margin at everyday price
+monthly,launch_month,feature,int64,0.0,launch month
+monthly,log_launch_fixed_cost,feature,float64,0.0,log launch fixed cost
+monthly,category_group__Camera_Photo,feature,int64,0.0,One-hot: category_group = Camera_Photo
+monthly,category_group__Cell_Phones_Accessories,feature,int64,0.0,One-hot: category_group = Cell_Phones_Accessories
+monthly,category_group__Computer_Accessories_Peripherals,feature,int64,0.0,One-hot: category_group = Computer_Accessories_Peripherals
+monthly,category_group__Computers_Accessories,feature,int64,0.0,One-hot: category_group = Computers_Accessories
+monthly,category_group__Electronics_Accessories,feature,int64,0.0,One-hot: category_group = Electronics_Accessories
+monthly,category_group__Electronics_Audio,feature,int64,0.0,One-hot: category_group = Electronics_Audio
+monthly,category_group__Electronics_TV_Video,feature,int64,0.0,One-hot: category_group = Electronics_TV_Video
+monthly,category_group__Home_Kitchen,feature,int64,0.0,One-hot: category_group = Home_Kitchen
+monthly,category_group__Kitchen_Home_Appliances,feature,int64,0.0,One-hot: category_group = Kitchen_Home_Appliances
+monthly,category_group__Office_Products,feature,int64,0.0,One-hot: category_group = Office_Products
+monthly,category_group__Other,feature,int64,0.0,One-hot: category_group = Other
+monthly,size_tier__large_bulky,feature,int64,0.0,One-hot: size_tier = large_bulky
+monthly,size_tier__large_standard,feature,int64,0.0,One-hot: size_tier = large_standard
+monthly,size_tier__large_standard_heavy,feature,int64,0.0,One-hot: size_tier = large_standard_heavy
+monthly,size_tier__small_standard,feature,int64,0.0,One-hot: size_tier = small_standard
+monthly,price_tier__10,feature,int64,0.0,One-hot: price_tier = 10
+monthly,price_tier__10_25,feature,int64,0.0,One-hot: price_tier = 10_25
+monthly,price_tier__25_50,feature,int64,0.0,One-hot: price_tier = 25_50
+monthly,price_tier__50_100,feature,int64,0.0,One-hot: price_tier = 50_100
+monthly,price_tier__100_250,feature,int64,0.0,One-hot: price_tier = 100_250
+monthly,price_tier__250,feature,int64,0.0,One-hot: price_tier = 250
+monthly,rating_band__3_5,feature,int64,0.0,One-hot: rating_band = 3_5
+monthly,rating_band__3_5_3_8,feature,int64,0.0,One-hot: rating_band = 3_5_3_8
+monthly,rating_band__3_8_4_0,feature,int64,0.0,One-hot: rating_band = 3_8_4_0
+monthly,rating_band__4_0_4_2,feature,int64,0.0,One-hot: rating_band = 4_0_4_2
+monthly,rating_band__4_2_4_4,feature,int64,0.0,One-hot: rating_band = 4_2_4_4
+monthly,rating_band__4_4,feature,int64,0.0,One-hot: rating_band = 4_4
+monthly,units_sold,target,int64,0.0,Units shipped to customers in the period
+monthly,demand_units,target,int64,0.0,Unconstrained customer demand (units sold + lost to stock-outs)
+monthly,demand_share_pct,target,float64,0.0,Product demand ÷ total tracked demand in its U.S. category × 100
+monthly,demand_growth_mom_pct,target,float64,1.4,Month-over-month % change in demand
+monthly,gross_revenue,target,float64,0.0,Units × selling price before returns (USD)
+monthly,net_profit,target,float64,0.0,"Net revenue − referral, FBA, storage, COGS, ads, overhead (USD)"
+monthly,profit_margin_pct,target,float64,0.02,Net profit ÷ gross revenue × 100
+monthly,roi_unit_pct,target,float64,0.02,Profit per unit ÷ landed cost per unit × 100
+monthly,roi_cum_pct,target,float64,0.0,Cumulative net profit since launch ÷ capital invested × 100
+monthly,stockout_flag,feature,int64,0.0,stockout flag
+yearly,product_id,id,str,0.0,product id
+yearly,year,feature,int64,0.0,year
+yearly,product_name,id,str,0.0,product name
+yearly,brand,id,str,0.0,brand
+yearly,us_category,id,str,0.0,us category
+yearly,category_group,id,str,0.0,category group
+yearly,cat_leaf,id,str,0.0,cat leaf
+yearly,years_since_launch,feature,int64,0.0,years since launch
+yearly,months_active,feature,int64,0.0,months active
+yearly,promo_months,feature,int64,0.0,promo months
+yearly,is_partial_year,feature,int64,0.0,is partial year
+yearly,units_sold_prev_year,feature,float64,22.14,Units shipped to customers in the period (prev year)
+yearly,demand_units_prev_year,feature,float64,22.14,Unconstrained customer demand (units sold + lost to stock-outs) (prev year)
+yearly,gross_revenue_prev_year,feature,float64,22.14,Units × selling price before returns (USD) (prev year)
+yearly,net_profit_prev_year,feature,float64,22.14,"Net revenue − referral, FBA, storage, COGS, ads, overhead (USD) (prev year)"
+yearly,profit_margin_pct_prev_year,feature,float64,22.14,Net profit ÷ gross revenue × 100 (prev year)
+yearly,avg_price_prev_year,feature,float64,22.14,Average selling price after promotions (USD) (prev year)
+yearly,months_active_prev_year,feature,float64,22.14,months active (prev year)
+yearly,log_price_usd,feature,float64,0.0,ln(1 + everyday sale price in USD)
+yearly,log_list_price_usd,feature,float64,0.0,log list price usd
+yearly,discount_pct,feature,float64,0.0,Everyday discount vs U.S. reference price (%)
+yearly,deep_discount_listing,feature,int64,0.0,deep discount listing
+yearly,rating,feature,float64,0.0,Average star rating
+yearly,review_sentiment,feature,float64,0.0,review sentiment
+yearly,listing_quality_score,feature,float64,0.0,"0–100 composite of content richness, rating and sentiment"
+yearly,log_brand_listing_count,feature,float64,0.0,log brand listing count
+yearly,is_bundle,feature,int64,0.0,is bundle
+yearly,cat_depth,feature,int64,0.0,cat depth
+yearly,name_len,feature,int64,0.0,name len
+yearly,n_bullets,feature,int64,0.0,n bullets
+yearly,log_ship_weight_lb,feature,float64,0.0,log ship weight lb
+yearly,cubic_ft,feature,float64,0.0,cubic ft
+yearly,log_fba_fee_unit,feature,float64,0.0,log fba fee unit
+yearly,log_landed_cost_unit,feature,float64,0.0,log landed cost unit
+yearly,referral_rate,feature,float64,0.0,referral rate
+yearly,return_rate,feature,float64,0.0,return rate
+yearly,tacos_rate,feature,float64,0.0,tacos rate
+yearly,price_elasticity,feature,float64,0.0,Category own-price elasticity used for promo months
+yearly,fee_share_of_price,feature,float64,0.0,fee share of price
+yearly,cost_share_of_price,feature,float64,0.0,cost share of price
+yearly,unit_margin_pct,feature,float64,0.0,Pre-ad unit contribution margin at everyday price
+yearly,launch_month,feature,int64,0.0,launch month
+yearly,log_launch_fixed_cost,feature,float64,0.0,log launch fixed cost
+yearly,category_group__Camera_Photo,feature,int64,0.0,One-hot: category_group = Camera_Photo
+yearly,category_group__Cell_Phones_Accessories,feature,int64,0.0,One-hot: category_group = Cell_Phones_Accessories
+yearly,category_group__Computer_Accessories_Peripherals,feature,int64,0.0,One-hot: category_group = Computer_Accessories_Peripherals
+yearly,category_group__Computers_Accessories,feature,int64,0.0,One-hot: category_group = Computers_Accessories
+yearly,category_group__Electronics_Accessories,feature,int64,0.0,One-hot: category_group = Electronics_Accessories
+yearly,category_group__Electronics_Audio,feature,int64,0.0,One-hot: category_group = Electronics_Audio
+yearly,category_group__Electronics_TV_Video,feature,int64,0.0,One-hot: category_group = Electronics_TV_Video
+yearly,category_group__Home_Kitchen,feature,int64,0.0,One-hot: category_group = Home_Kitchen
+yearly,category_group__Kitchen_Home_Appliances,feature,int64,0.0,One-hot: category_group = Kitchen_Home_Appliances
+yearly,category_group__Office_Products,feature,int64,0.0,One-hot: category_group = Office_Products
+yearly,category_group__Other,feature,int64,0.0,One-hot: category_group = Other
+yearly,size_tier__large_bulky,feature,int64,0.0,One-hot: size_tier = large_bulky
+yearly,size_tier__large_standard,feature,int64,0.0,One-hot: size_tier = large_standard
+yearly,size_tier__large_standard_heavy,feature,int64,0.0,One-hot: size_tier = large_standard_heavy
+yearly,size_tier__small_standard,feature,int64,0.0,One-hot: size_tier = small_standard
+yearly,price_tier__10,feature,int64,0.0,One-hot: price_tier = 10
+yearly,price_tier__10_25,feature,int64,0.0,One-hot: price_tier = 10_25
+yearly,price_tier__25_50,feature,int64,0.0,One-hot: price_tier = 25_50
+yearly,price_tier__50_100,feature,int64,0.0,One-hot: price_tier = 50_100
+yearly,price_tier__100_250,feature,int64,0.0,One-hot: price_tier = 100_250
+yearly,price_tier__250,feature,int64,0.0,One-hot: price_tier = 250
+yearly,rating_band__3_5,feature,int64,0.0,One-hot: rating_band = 3_5
+yearly,rating_band__3_5_3_8,feature,int64,0.0,One-hot: rating_band = 3_5_3_8
+yearly,rating_band__3_8_4_0,feature,int64,0.0,One-hot: rating_band = 3_8_4_0
+yearly,rating_band__4_0_4_2,feature,int64,0.0,One-hot: rating_band = 4_0_4_2
+yearly,rating_band__4_2_4_4,feature,int64,0.0,One-hot: rating_band = 4_2_4_4
+yearly,rating_band__4_4,feature,int64,0.0,One-hot: rating_band = 4_4
+yearly,units_sold,target,int64,0.0,Units shipped to customers in the period
+yearly,demand_units,target,int64,0.0,Unconstrained customer demand (units sold + lost to stock-outs)
+yearly,demand_share_pct,target,float64,0.0,Product demand ÷ total tracked demand in its U.S. category × 100
+yearly,demand_growth_yoy_pct,target,float64,40.06,Year-over-year % change in demand
+yearly,avg_price,target,float64,0.0,Average selling price after promotions (USD)
+yearly,gross_revenue,target,float64,0.0,Units × selling price before returns (USD)
+yearly,net_profit,target,float64,0.0,"Net revenue − referral, FBA, storage, COGS, ads, overhead (USD)"
+yearly,profit_margin_pct,target,float64,0.0,Net profit ÷ gross revenue × 100
+yearly,roi_year_pct,target,float64,0.0,Net profit in year ÷ capital invested × 100
+yearly,roi_cum_pct,target,float64,0.0,Cumulative net profit since launch ÷ capital invested × 100
+product,product_id,id,str,0.0,product id
+product,product_name,id,str,0.0,product name
+product,brand,id,str,0.0,brand
+product,us_category,id,str,0.0,us category
+product,category_group,id,str,0.0,category group
+product,cat_leaf,id,str,0.0,cat leaf
+product,launch_date,id,datetime64[us],0.0,launch date
+product,age_months_at_obs_end,feature,int64,0.0,age months at obs end
+product,log_rating_count,feature,float64,0.0,"ln(1 + total ratings), listing-evaluation use only"
+product,log_price_usd,feature,float64,0.0,ln(1 + everyday sale price in USD)
+product,log_list_price_usd,feature,float64,0.0,log list price usd
+product,discount_pct,feature,float64,0.0,Everyday discount vs U.S. reference price (%)
+product,deep_discount_listing,feature,int64,0.0,deep discount listing
+product,rating,feature,float64,0.0,Average star rating
+product,review_sentiment,feature,float64,0.0,review sentiment
+product,listing_quality_score,feature,float64,0.0,"0–100 composite of content richness, rating and sentiment"
+product,log_brand_listing_count,feature,float64,0.0,log brand listing count
+product,is_bundle,feature,int64,0.0,is bundle
+product,cat_depth,feature,int64,0.0,cat depth
+product,name_len,feature,int64,0.0,name len
+product,n_bullets,feature,int64,0.0,n bullets
+product,log_ship_weight_lb,feature,float64,0.0,log ship weight lb
+product,cubic_ft,feature,float64,0.0,cubic ft
+product,log_fba_fee_unit,feature,float64,0.0,log fba fee unit
+product,log_landed_cost_unit,feature,float64,0.0,log landed cost unit
+product,referral_rate,feature,float64,0.0,referral rate
+product,return_rate,feature,float64,0.0,return rate
+product,tacos_rate,feature,float64,0.0,tacos rate
+product,price_elasticity,feature,float64,0.0,Category own-price elasticity used for promo months
+product,fee_share_of_price,feature,float64,0.0,fee share of price
+product,cost_share_of_price,feature,float64,0.0,cost share of price
+product,unit_margin_pct,feature,float64,0.0,Pre-ad unit contribution margin at everyday price
+product,launch_month,feature,int64,0.0,launch month
+product,log_launch_fixed_cost,feature,float64,0.0,log launch fixed cost
+product,category_group__Camera_Photo,feature,int64,0.0,One-hot: category_group = Camera_Photo
+product,category_group__Cell_Phones_Accessories,feature,int64,0.0,One-hot: category_group = Cell_Phones_Accessories
+product,category_group__Computer_Accessories_Peripherals,feature,int64,0.0,One-hot: category_group = Computer_Accessories_Peripherals
+product,category_group__Computers_Accessories,feature,int64,0.0,One-hot: category_group = Computers_Accessories
+product,category_group__Electronics_Accessories,feature,int64,0.0,One-hot: category_group = Electronics_Accessories
+product,category_group__Electronics_Audio,feature,int64,0.0,One-hot: category_group = Electronics_Audio
+product,category_group__Electronics_TV_Video,feature,int64,0.0,One-hot: category_group = Electronics_TV_Video
+product,category_group__Home_Kitchen,feature,int64,0.0,One-hot: category_group = Home_Kitchen
+product,category_group__Kitchen_Home_Appliances,feature,int64,0.0,One-hot: category_group = Kitchen_Home_Appliances
+product,category_group__Office_Products,feature,int64,0.0,One-hot: category_group = Office_Products
+product,category_group__Other,feature,int64,0.0,One-hot: category_group = Other
+product,size_tier__large_bulky,feature,int64,0.0,One-hot: size_tier = large_bulky
+product,size_tier__large_standard,feature,int64,0.0,One-hot: size_tier = large_standard
+product,size_tier__large_standard_heavy,feature,int64,0.0,One-hot: size_tier = large_standard_heavy
+product,size_tier__small_standard,feature,int64,0.0,One-hot: size_tier = small_standard
+product,price_tier__10,feature,int64,0.0,One-hot: price_tier = 10
+product,price_tier__10_25,feature,int64,0.0,One-hot: price_tier = 10_25
+product,price_tier__25_50,feature,int64,0.0,One-hot: price_tier = 25_50
+product,price_tier__50_100,feature,int64,0.0,One-hot: price_tier = 50_100
+product,price_tier__100_250,feature,int64,0.0,One-hot: price_tier = 100_250
+product,price_tier__250,feature,int64,0.0,One-hot: price_tier = 250
+product,rating_band__3_5,feature,int64,0.0,One-hot: rating_band = 3_5
+product,rating_band__3_5_3_8,feature,int64,0.0,One-hot: rating_band = 3_5_3_8
+product,rating_band__3_8_4_0,feature,int64,0.0,One-hot: rating_band = 3_8_4_0
+product,rating_band__4_0_4_2,feature,int64,0.0,One-hot: rating_band = 4_0_4_2
+product,rating_band__4_2_4_4,feature,int64,0.0,One-hot: rating_band = 4_2_4_4
+product,rating_band__4_4,feature,int64,0.0,One-hot: rating_band = 4_4
+product,units_sold_12m,target,float64,3.89,units sold 12m
+product,demand_units_12m,target,float64,3.89,demand units 12m
+product,avg_monthly_demand_12m,target,float64,3.89,avg monthly demand 12m
+product,demand_share_pct_12m,target,float64,3.89,demand share pct 12m
+product,avg_price_12m,target,float64,3.89,avg price 12m
+product,revenue_12m,target,float64,3.89,revenue 12m
+product,profit_12m,target,float64,3.89,profit 12m
+product,margin_pct_12m,target,float64,3.89,margin pct 12m
+product,roi_pct_12m,target,float64,3.89,roi pct 12m
+product,units_sold_24m,target,float64,15.65,units sold 24m
+product,revenue_24m,target,float64,15.65,revenue 24m
+product,profit_24m,target,float64,15.65,profit 24m
+product,margin_pct_24m,target,float64,15.65,margin pct 24m
+product,roi_pct_24m,target,float64,15.65,roi pct 24m
+product,break_even_months,target,float64,28.06,Months from launch until cumulative cash ≥ capital invested (payback)
+product,break_even_months_log,target,float64,28.06,break even months log
+product,break_even_bucket,target,str,0.0,"Payback class: 0-3m, 4-6m, 7-12m, 13-24m, 24m+, never"
+product,never_breaks_even,target,int64,0.0,1 if payback not reached within 10 years

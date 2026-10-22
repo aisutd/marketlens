@@ -1,0 +1,35 @@
+level,target,algorithm,transform,base_col,loss,trees,trained_rows,n_features,test_R2,test_MAE,test_AUC,beats_baseline,path
+monthly,units_sold,HistGradientBoostingRegressor,log1p,,squared_error,600,68299,110,0.9038834985945824,633.8282798963678,,1.0,models/final/monthly/units_sold.joblib
+monthly,demand_units,HistGradientBoostingRegressor,log1p,,squared_error,400,68299,110,0.9157315312600522,591.7070854958679,,1.0,models/final/monthly/demand_units.joblib
+monthly,demand_share_pct,HistGradientBoostingRegressor,log1p,,squared_error,500,68299,110,0.985987132374589,0.1543663783105572,,1.0,models/final/monthly/demand_share_pct.joblib
+monthly,avg_price,HistGradientBoostingRegressor,log1p,,squared_error,500,68299,104,0.993188790606657,3.5227985803833683,,1.0,models/final/monthly/avg_price.joblib
+monthly,gross_revenue,HistGradientBoostingRegressor,log1p,,squared_error,500,68299,110,0.8902814320689,71773.93747216475,,1.0,models/final/monthly/gross_revenue.joblib
+monthly,profit_margin_pct,HistGradientBoostingRegressor,none,,squared_error,1500,68283,110,0.990800483698422,1.7742356602259324,,1.0,models/final/monthly/profit_margin_pct.joblib
+monthly,roi_unit_pct,HistGradientBoostingRegressor,none,,squared_error,1400,68283,110,0.988844735688724,5.914804542511819,,,models/final/monthly/roi_unit_pct.joblib
+monthly,net_profit,HistGradientBoostingRegressor,none,,absolute_error,1500,68299,110,0.8773015860328895,22564.70651966148,,1.0,models/final/monthly/net_profit.joblib
+monthly,roi_cum_pct,HistGradientBoostingRegressor,none,roi_cum_pct_lag1,squared_error,1500,68299,110,0.9999823066239266,4.768102143261719,,1.0,models/final/monthly/roi_cum_pct.joblib
+yearly,units_sold,HistGradientBoostingRegressor,log1p,,squared_error,200,6564,64,0.926502159481004,8164.087705600991,,1.0,models/final/yearly/units_sold.joblib
+yearly,demand_units,HistGradientBoostingRegressor,log1p,,squared_error,500,6564,64,0.9101490853643448,9049.549343602144,,1.0,models/final/yearly/demand_units.joblib
+yearly,demand_share_pct,HistGradientBoostingRegressor,log1p,,squared_error,1500,6564,64,0.9779192867727958,0.2482204198234477,,,models/final/yearly/demand_share_pct.joblib
+yearly,gross_revenue,HistGradientBoostingRegressor,log1p,,squared_error,600,6564,64,0.7985378797743022,1376961.1589321373,,1.0,models/final/yearly/gross_revenue.joblib
+yearly,profit_margin_pct,HistGradientBoostingRegressor,none,,squared_error,300,6564,64,0.9823949201928832,2.359446629231803,,1.0,models/final/yearly/profit_margin_pct.joblib
+yearly,roi_year_pct,HistGradientBoostingRegressor,none,,squared_error,600,6564,64,0.904654713847471,56.622607039535346,,,models/final/yearly/roi_year_pct.joblib
+yearly,roi_cum_pct,HistGradientBoostingRegressor,none,,squared_error,1500,6564,64,0.9719858849920164,223.49377743366216,,,models/final/yearly/roi_cum_pct.joblib
+yearly,avg_price,HistGradientBoostingRegressor,none,avg_price_prev_year,absolute_error,1500,6564,64,0.9786793081997957,4.184890779227862,,1.0,models/final/yearly/avg_price.joblib
+yearly,net_profit,composite: (prev revenue × growth) × margin,none,net_profit_prev_year,absolute_error,1500,6564,64,0.94790504960173,236389.86534200053,,1.0,models/final/yearly/net_profit.joblib
+product,units_sold_12m,HistGradientBoostingRegressor,log1p,,squared_error,100,1294,60,0.7613449783069677,27879.996836299702,,1.0,models/final/product/units_sold_12m.joblib
+product,demand_units_12m,HistGradientBoostingRegressor,log1p,,squared_error,100,1294,60,0.7456423300092363,28770.229823310437,,1.0,models/final/product/demand_units_12m.joblib
+product,avg_monthly_demand_12m,HistGradientBoostingRegressor,log1p,,squared_error,100,1294,60,0.7639958200879787,2322.5506524508314,,1.0,models/final/product/avg_monthly_demand_12m.joblib
+product,avg_price_12m,HistGradientBoostingRegressor,log1p,,squared_error,100,1294,60,0.94893738522854,8.248482040306701,,1.0,models/final/product/avg_price_12m.joblib
+product,revenue_12m,HistGradientBoostingRegressor,log1p,,squared_error,1300,1294,60,0.8996010872599867,2258187.91239074,,1.0,models/final/product/revenue_12m.joblib
+product,margin_pct_12m,HistGradientBoostingRegressor,none,,squared_error,1500,1294,60,0.9826914046891893,2.563272018154252,,1.0,models/final/product/margin_pct_12m.joblib
+product,roi_pct_12m,HistGradientBoostingRegressor,none,,squared_error,100,1294,60,0.8900597165344821,112.41435122025652,,1.0,models/final/product/roi_pct_12m.joblib
+product,units_sold_24m,HistGradientBoostingRegressor,log1p,,squared_error,100,1135,60,0.7399363981132235,53328.51426626027,,1.0,models/final/product/units_sold_24m.joblib
+product,revenue_24m,HistGradientBoostingRegressor,log1p,,squared_error,500,1135,60,0.9111591725677456,3864894.864868164,,1.0,models/final/product/revenue_24m.joblib
+product,margin_pct_24m,HistGradientBoostingRegressor,none,,squared_error,700,1135,60,0.9858985423099212,2.1306933132426153,,1.0,models/final/product/margin_pct_24m.joblib
+product,roi_pct_24m,HistGradientBoostingRegressor,none,,squared_error,100,1135,60,0.901194833445068,232.0523932452728,,1.0,models/final/product/roi_pct_24m.joblib
+product,break_even_months,HistGradientBoostingRegressor,log1p,,squared_error,500,978,60,0.8059363699561025,2.1732781665095877,,1.0,models/final/product/break_even_months.joblib
+product,profit_12m,composite: revenue × margin / 100,,,squared_error,0,1294,60,0.8986822854700418,706593.8882410254,,1.0,models/final/product/profit_12m.joblib
+product,profit_24m,composite: revenue × margin / 100,,,squared_error,0,1135,60,0.896811363175789,1295929.4145364598,,1.0,models/final/product/profit_24m.joblib
+product,demand_share_pct_12m,composite: demand / market size,none,cat_median_share_12m,absolute_error,800,1294,60,0.9042980306980912,0.7307257898758415,,1.0,models/final/product/demand_share_pct_12m.joblib
+product,never_breaks_even,HistGradientBoostingClassifier,none,,squared_error,200,1351,60,,,0.9952380952380953,,models/final/product/never_breaks_even.joblib

@@ -1,0 +1,1665 @@
+us_category,month,category_demand_units
+Automotive,2022-09-01,79
+Automotive,2022-10-01,209
+Automotive,2022-11-01,462
+Automotive,2022-12-01,383
+Automotive,2023-01-01,222
+Automotive,2023-02-01,208
+Automotive,2023-03-01,295
+Automotive,2023-04-01,342
+Automotive,2023-05-01,267
+Automotive,2023-06-01,315
+Automotive,2023-07-01,311
+Automotive,2023-08-01,223
+Automotive,2023-09-01,210
+Automotive,2023-10-01,218
+Automotive,2023-11-01,414
+Automotive,2023-12-01,468
+Automotive,2024-01-01,272
+Automotive,2024-02-01,227
+Automotive,2024-03-01,401
+Automotive,2024-04-01,472
+Automotive,2024-05-01,520
+Automotive,2024-06-01,311
+Automotive,2024-07-01,431
+Automotive,2024-08-01,369
+Automotive,2024-09-01,262
+Automotive,2024-10-01,291
+Automotive,2024-11-01,561
+Automotive,2024-12-01,401
+Automotive,2025-01-01,284
+Automotive,2025-02-01,271
+Automotive,2025-03-01,180
+Automotive,2025-04-01,235
+Automotive,2025-05-01,252
+Automotive,2025-06-01,269
+Automotive,2025-07-01,306
+Automotive,2025-08-01,307
+Automotive,2025-09-01,282
+Automotive,2025-10-01,343
+Automotive,2025-11-01,384
+Automotive,2025-12-01,561
+Automotive,2026-01-01,197
+Automotive,2026-02-01,177
+Automotive,2026-03-01,224
+Automotive,2026-04-01,223
+Automotive,2026-05-01,248
+Automotive,2026-06-01,310
+Automotive,2026-07-01,329
+Automotive,2026-08-01,230
+Automotive,2026-09-01,179
+Camera & Photo,2017-05-01,1648
+Camera & Photo,2017-06-01,3517
+Camera & Photo,2017-07-01,8037
+Camera & Photo,2017-08-01,6120
+Camera & Photo,2017-09-01,4917
+Camera & Photo,2017-10-01,6454
+Camera & Photo,2017-11-01,14354
+Camera & Photo,2017-12-01,17340
+Camera & Photo,2018-01-01,6145
+Camera & Photo,2018-02-01,5206
+Camera & Photo,2018-03-01,8128
+Camera & Photo,2018-04-01,7949
+Camera & Photo,2018-05-01,9378
+Camera & Photo,2018-06-01,11486
+Camera & Photo,2018-07-01,19884
+Camera & Photo,2018-08-01,14774
+Camera & Photo,2018-09-01,15643
+Camera & Photo,2018-10-01,17018
+Camera & Photo,2018-11-01,38988
+Camera & Photo,2018-12-01,30322
+Camera & Photo,2019-01-01,12569
+Camera & Photo,2019-02-01,11601
+Camera & Photo,2019-03-01,12088
+Camera & Photo,2019-04-01,11989
+Camera & Photo,2019-05-01,10574
+Camera & Photo,2019-06-01,15818
+Camera & Photo,2019-07-01,18658
+Camera & Photo,2019-08-01,18597
+Camera & Photo,2019-09-01,19344
+Camera & Photo,2019-10-01,25451
+Camera & Photo,2019-11-01,44263
+Camera & Photo,2019-12-01,51544
+Camera & Photo,2020-01-01,19072
+Camera & Photo,2020-02-01,17219
+Camera & Photo,2020-03-01,31862
+Camera & Photo,2020-04-01,50391
+Camera & Photo,2020-05-01,92625
+Camera & Photo,2020-06-01,89642
+Camera & Photo,2020-07-01,96646
+Camera & Photo,2020-08-01,71507
+Camera & Photo,2020-09-01,79668
+Camera & Photo,2020-10-01,112122
+Camera & Photo,2020-11-01,123171
+Camera & Photo,2020-12-01,171333
+Camera & Photo,2021-01-01,86055
+Camera & Photo,2021-02-01,64612
+Camera & Photo,2021-03-01,68862
+Camera & Photo,2021-04-01,58578
+Camera & Photo,2021-05-01,67351
+Camera & Photo,2021-06-01,95974
+Camera & Photo,2021-07-01,75281
+Camera & Photo,2021-08-01,73037
+Camera & Photo,2021-09-01,59260
+Camera & Photo,2021-10-01,67691
+Camera & Photo,2021-11-01,127612
+Camera & Photo,2021-12-01,120503
+Camera & Photo,2022-01-01,46940
+Camera & Photo,2022-02-01,47172
+Camera & Photo,2022-03-01,46902
+Camera & Photo,2022-04-01,49313
+Camera & Photo,2022-05-01,67600
+Camera & Photo,2022-06-01,63384
+Camera & Photo,2022-07-01,76745
+Camera & Photo,2022-08-01,71338
+Camera & Photo,2022-09-01,63099
+Camera & Photo,2022-10-01,65577
+Camera & Photo,2022-11-01,133177
+Camera & Photo,2022-12-01,108675
+Camera & Photo,2023-01-01,44424
+Camera & Photo,2023-02-01,42152
+Camera & Photo,2023-03-01,52636
+Camera & Photo,2023-04-01,60145
+Camera & Photo,2023-05-01,63253
+Camera & Photo,2023-06-01,66290
+Camera & Photo,2023-07-01,124780
+Camera & Photo,2023-08-01,69658
+Camera & Photo,2023-09-01,73263
+Camera & Photo,2023-10-01,79457
+Camera & Photo,2023-11-01,140053
+Camera & Photo,2023-12-01,143641
+Camera & Photo,2024-01-01,67372
+Camera & Photo,2024-02-01,68355
+Camera & Photo,2024-03-01,80031
+Camera & Photo,2024-04-01,74369
+Camera & Photo,2024-05-01,76129
+Camera & Photo,2024-06-01,71797
+Camera & Photo,2024-07-01,91654
+Camera & Photo,2024-08-01,53131
+Camera & Photo,2024-09-01,48160
+Camera & Photo,2024-10-01,66720
+Camera & Photo,2024-11-01,109831
+Camera & Photo,2024-12-01,119463
+Camera & Photo,2025-01-01,44616
+Camera & Photo,2025-02-01,43041
+Camera & Photo,2025-03-01,48184
+Camera & Photo,2025-04-01,44795
+Camera & Photo,2025-05-01,46468
+Camera & Photo,2025-06-01,48722
+Camera & Photo,2025-07-01,76156
+Camera & Photo,2025-08-01,44022
+Camera & Photo,2025-09-01,41386
+Camera & Photo,2025-10-01,52370
+Camera & Photo,2025-11-01,92839
+Camera & Photo,2025-12-01,84267
+Camera & Photo,2026-01-01,30569
+Camera & Photo,2026-02-01,32566
+Camera & Photo,2026-03-01,39056
+Camera & Photo,2026-04-01,37068
+Camera & Photo,2026-05-01,37560
+Camera & Photo,2026-06-01,31546
+Camera & Photo,2026-07-01,49936
+Camera & Photo,2026-08-01,33405
+Camera & Photo,2026-09-01,30266
+Cell Phones & Accessories,2017-05-01,2113
+Cell Phones & Accessories,2017-06-01,3831
+Cell Phones & Accessories,2017-07-01,5922
+Cell Phones & Accessories,2017-08-01,4318
+Cell Phones & Accessories,2017-09-01,3430
+Cell Phones & Accessories,2017-10-01,3792
+Cell Phones & Accessories,2017-11-01,7436
+Cell Phones & Accessories,2017-12-01,6608
+Cell Phones & Accessories,2018-01-01,3340
+Cell Phones & Accessories,2018-02-01,3074
+Cell Phones & Accessories,2018-03-01,3608
+Cell Phones & Accessories,2018-04-01,3744
+Cell Phones & Accessories,2018-05-01,4465
+Cell Phones & Accessories,2018-06-01,3184
+Cell Phones & Accessories,2018-07-01,16785
+Cell Phones & Accessories,2018-08-01,22271
+Cell Phones & Accessories,2018-09-01,22794
+Cell Phones & Accessories,2018-10-01,31411
+Cell Phones & Accessories,2018-11-01,67934
+Cell Phones & Accessories,2018-12-01,82473
+Cell Phones & Accessories,2019-01-01,33977
+Cell Phones & Accessories,2019-02-01,28714
+Cell Phones & Accessories,2019-03-01,31567
+Cell Phones & Accessories,2019-04-01,42714
+Cell Phones & Accessories,2019-05-01,45585
+Cell Phones & Accessories,2019-06-01,59017
+Cell Phones & Accessories,2019-07-01,81367
+Cell Phones & Accessories,2019-08-01,52182
+Cell Phones & Accessories,2019-09-01,59006
+Cell Phones & Accessories,2019-10-01,75629
+Cell Phones & Accessories,2019-11-01,126750
+Cell Phones & Accessories,2019-12-01,110636
+Cell Phones & Accessories,2020-01-01,69746
+Cell Phones & Accessories,2020-02-01,68307
+Cell Phones & Accessories,2020-03-01,70670
+Cell Phones & Accessories,2020-04-01,101420
+Cell Phones & Accessories,2020-05-01,115058
+Cell Phones & Accessories,2020-06-01,129432
+Cell Phones & Accessories,2020-07-01,157318
+Cell Phones & Accessories,2020-08-01,197844
+Cell Phones & Accessories,2020-09-01,187346
+Cell Phones & Accessories,2020-10-01,318861
+Cell Phones & Accessories,2020-11-01,457992
+Cell Phones & Accessories,2020-12-01,345945
+Cell Phones & Accessories,2021-01-01,184216
+Cell Phones & Accessories,2021-02-01,190117
+Cell Phones & Accessories,2021-03-01,206787
+Cell Phones & Accessories,2021-04-01,160646
+Cell Phones & Accessories,2021-05-01,170835
+Cell Phones & Accessories,2021-06-01,269214
+Cell Phones & Accessories,2021-07-01,196335
+Cell Phones & Accessories,2021-08-01,225098
+Cell Phones & Accessories,2021-09-01,249161
+Cell Phones & Accessories,2021-10-01,313498
+Cell Phones & Accessories,2021-11-01,630609
+Cell Phones & Accessories,2021-12-01,599384
+Cell Phones & Accessories,2022-01-01,274301
+Cell Phones & Accessories,2022-02-01,271041
+Cell Phones & Accessories,2022-03-01,291738
+Cell Phones & Accessories,2022-04-01,306190
+Cell Phones & Accessories,2022-05-01,327426
+Cell Phones & Accessories,2022-06-01,334583
+Cell Phones & Accessories,2022-07-01,452094
+Cell Phones & Accessories,2022-08-01,341359
+Cell Phones & Accessories,2022-09-01,314331
+Cell Phones & Accessories,2022-10-01,419908
+Cell Phones & Accessories,2022-11-01,697367
+Cell Phones & Accessories,2022-12-01,596859
+Cell Phones & Accessories,2023-01-01,326722
+Cell Phones & Accessories,2023-02-01,310024
+Cell Phones & Accessories,2023-03-01,391206
+Cell Phones & Accessories,2023-04-01,362100
+Cell Phones & Accessories,2023-05-01,506208
+Cell Phones & Accessories,2023-06-01,617012
+Cell Phones & Accessories,2023-07-01,1056796
+Cell Phones & Accessories,2023-08-01,862500
+Cell Phones & Accessories,2023-09-01,869127
+Cell Phones & Accessories,2023-10-01,1127255
+Cell Phones & Accessories,2023-11-01,1919969
+Cell Phones & Accessories,2023-12-01,1756222
+Cell Phones & Accessories,2024-01-01,805651
+Cell Phones & Accessories,2024-02-01,834730
+Cell Phones & Accessories,2024-03-01,1013054
+Cell Phones & Accessories,2024-04-01,1020322
+Cell Phones & Accessories,2024-05-01,1019675
+Cell Phones & Accessories,2024-06-01,1172714
+Cell Phones & Accessories,2024-07-01,1622531
+Cell Phones & Accessories,2024-08-01,1239283
+Cell Phones & Accessories,2024-09-01,1226901
+Cell Phones & Accessories,2024-10-01,1499721
+Cell Phones & Accessories,2024-11-01,2683419
+Cell Phones & Accessories,2024-12-01,2254041
+Cell Phones & Accessories,2025-01-01,1122339
+Cell Phones & Accessories,2025-02-01,1137537
+Cell Phones & Accessories,2025-03-01,1335463
+Cell Phones & Accessories,2025-04-01,1344946
+Cell Phones & Accessories,2025-05-01,1407280
+Cell Phones & Accessories,2025-06-01,1469934
+Cell Phones & Accessories,2025-07-01,2115473
+Cell Phones & Accessories,2025-08-01,1401639
+Cell Phones & Accessories,2025-09-01,1486741
+Cell Phones & Accessories,2025-10-01,1837379
+Cell Phones & Accessories,2025-11-01,3162929
+Cell Phones & Accessories,2025-12-01,2745708
+Cell Phones & Accessories,2026-01-01,1274066
+Cell Phones & Accessories,2026-02-01,1281352
+Cell Phones & Accessories,2026-03-01,1347101
+Cell Phones & Accessories,2026-04-01,1354268
+Cell Phones & Accessories,2026-05-01,1495232
+Cell Phones & Accessories,2026-06-01,1430549
+Cell Phones & Accessories,2026-07-01,1945513
+Cell Phones & Accessories,2026-08-01,1285209
+Cell Phones & Accessories,2026-09-01,1215482
+Computer Accessories & Peripherals,2016-01-01,3144
+Computer Accessories & Peripherals,2016-02-01,6636
+Computer Accessories & Peripherals,2016-03-01,13101
+Computer Accessories & Peripherals,2016-04-01,14759
+Computer Accessories & Peripherals,2016-05-01,17245
+Computer Accessories & Peripherals,2016-06-01,21871
+Computer Accessories & Peripherals,2016-07-01,51033
+Computer Accessories & Peripherals,2016-08-01,44901
+Computer Accessories & Peripherals,2016-09-01,44195
+Computer Accessories & Peripherals,2016-10-01,43266
+Computer Accessories & Peripherals,2016-11-01,93568
+Computer Accessories & Peripherals,2016-12-01,89115
+Computer Accessories & Peripherals,2017-01-01,47819
+Computer Accessories & Peripherals,2017-02-01,57074
+Computer Accessories & Peripherals,2017-03-01,71527
+Computer Accessories & Peripherals,2017-04-01,77774
+Computer Accessories & Peripherals,2017-05-01,108097
+Computer Accessories & Peripherals,2017-06-01,104690
+Computer Accessories & Peripherals,2017-07-01,167667
+Computer Accessories & Peripherals,2017-08-01,139576
+Computer Accessories & Peripherals,2017-09-01,126057
+Computer Accessories & Peripherals,2017-10-01,129118
+Computer Accessories & Peripherals,2017-11-01,249522
+Computer Accessories & Peripherals,2017-12-01,218049
+Computer Accessories & Peripherals,2018-01-01,124086
+Computer Accessories & Peripherals,2018-02-01,127547
+Computer Accessories & Peripherals,2018-03-01,150417
+Computer Accessories & Peripherals,2018-04-01,164961
+Computer Accessories & Peripherals,2018-05-01,180616
+Computer Accessories & Peripherals,2018-06-01,202440
+Computer Accessories & Peripherals,2018-07-01,354307
+Computer Accessories & Peripherals,2018-08-01,295156
+Computer Accessories & Peripherals,2018-09-01,257925
+Computer Accessories & Peripherals,2018-10-01,270005
+Computer Accessories & Peripherals,2018-11-01,573009
+Computer Accessories & Peripherals,2018-12-01,502713
+Computer Accessories & Peripherals,2019-01-01,262517
+Computer Accessories & Peripherals,2019-02-01,275250
+Computer Accessories & Peripherals,2019-03-01,309576
+Computer Accessories & Peripherals,2019-04-01,332239
+Computer Accessories & Peripherals,2019-05-01,345517
+Computer Accessories & Peripherals,2019-06-01,373862
+Computer Accessories & Peripherals,2019-07-01,576979
+Computer Accessories & Peripherals,2019-08-01,458112
+Computer Accessories & Peripherals,2019-09-01,385570
+Computer Accessories & Peripherals,2019-10-01,408277
+Computer Accessories & Peripherals,2019-11-01,807136
+Computer Accessories & Peripherals,2019-12-01,637284
+Computer Accessories & Peripherals,2020-01-01,305639
+Computer Accessories & Peripherals,2020-02-01,321420
+Computer Accessories & Peripherals,2020-03-01,372820
+Computer Accessories & Peripherals,2020-04-01,451603
+Computer Accessories & Peripherals,2020-05-01,477850
+Computer Accessories & Peripherals,2020-06-01,485351
+Computer Accessories & Peripherals,2020-07-01,502911
+Computer Accessories & Peripherals,2020-08-01,652381
+Computer Accessories & Peripherals,2020-09-01,526049
+Computer Accessories & Peripherals,2020-10-01,830973
+Computer Accessories & Peripherals,2020-11-01,1127035
+Computer Accessories & Peripherals,2020-12-01,905814
+Computer Accessories & Peripherals,2021-01-01,449086
+Computer Accessories & Peripherals,2021-02-01,442383
+Computer Accessories & Peripherals,2021-03-01,500573
+Computer Accessories & Peripherals,2021-04-01,414761
+Computer Accessories & Peripherals,2021-05-01,449075
+Computer Accessories & Peripherals,2021-06-01,729662
+Computer Accessories & Peripherals,2021-07-01,494431
+Computer Accessories & Peripherals,2021-08-01,601453
+Computer Accessories & Peripherals,2021-09-01,537561
+Computer Accessories & Peripherals,2021-10-01,539181
+Computer Accessories & Peripherals,2021-11-01,1095008
+Computer Accessories & Peripherals,2021-12-01,899065
+Computer Accessories & Peripherals,2022-01-01,408825
+Computer Accessories & Peripherals,2022-02-01,408427
+Computer Accessories & Peripherals,2022-03-01,483433
+Computer Accessories & Peripherals,2022-04-01,486999
+Computer Accessories & Peripherals,2022-05-01,465598
+Computer Accessories & Peripherals,2022-06-01,505214
+Computer Accessories & Peripherals,2022-07-01,763707
+Computer Accessories & Peripherals,2022-08-01,623846
+Computer Accessories & Peripherals,2022-09-01,513957
+Computer Accessories & Peripherals,2022-10-01,609591
+Computer Accessories & Peripherals,2022-11-01,1048000
+Computer Accessories & Peripherals,2022-12-01,859292
+Computer Accessories & Peripherals,2023-01-01,456404
+Computer Accessories & Peripherals,2023-02-01,444501
+Computer Accessories & Peripherals,2023-03-01,479425
+Computer Accessories & Peripherals,2023-04-01,479366
+Computer Accessories & Peripherals,2023-05-01,515722
+Computer Accessories & Peripherals,2023-06-01,539604
+Computer Accessories & Peripherals,2023-07-01,837122
+Computer Accessories & Peripherals,2023-08-01,660974
+Computer Accessories & Peripherals,2023-09-01,539077
+Computer Accessories & Peripherals,2023-10-01,642559
+Computer Accessories & Peripherals,2023-11-01,1050149
+Computer Accessories & Peripherals,2023-12-01,861340
+Computer Accessories & Peripherals,2024-01-01,429467
+Computer Accessories & Peripherals,2024-02-01,395068
+Computer Accessories & Peripherals,2024-03-01,465025
+Computer Accessories & Peripherals,2024-04-01,445346
+Computer Accessories & Peripherals,2024-05-01,472495
+Computer Accessories & Peripherals,2024-06-01,481079
+Computer Accessories & Peripherals,2024-07-01,723853
+Computer Accessories & Peripherals,2024-08-01,589244
+Computer Accessories & Peripherals,2024-09-01,502876
+Computer Accessories & Peripherals,2024-10-01,562098
+Computer Accessories & Peripherals,2024-11-01,953347
+Computer Accessories & Peripherals,2024-12-01,776139
+Computer Accessories & Peripherals,2025-01-01,379612
+Computer Accessories & Peripherals,2025-02-01,381052
+Computer Accessories & Peripherals,2025-03-01,425758
+Computer Accessories & Peripherals,2025-04-01,423220
+Computer Accessories & Peripherals,2025-05-01,440053
+Computer Accessories & Peripherals,2025-06-01,453159
+Computer Accessories & Peripherals,2025-07-01,694349
+Computer Accessories & Peripherals,2025-08-01,550462
+Computer Accessories & Peripherals,2025-09-01,477607
+Computer Accessories & Peripherals,2025-10-01,548481
+Computer Accessories & Peripherals,2025-11-01,971261
+Computer Accessories & Peripherals,2025-12-01,761770
+Computer Accessories & Peripherals,2026-01-01,368064
+Computer Accessories & Peripherals,2026-02-01,363442
+Computer Accessories & Peripherals,2026-03-01,399382
+Computer Accessories & Peripherals,2026-04-01,396885
+Computer Accessories & Peripherals,2026-05-01,418308
+Computer Accessories & Peripherals,2026-06-01,434549
+Computer Accessories & Peripherals,2026-07-01,656676
+Computer Accessories & Peripherals,2026-08-01,518657
+Computer Accessories & Peripherals,2026-09-01,437009
+Computers & Accessories,2016-01-01,35078
+Computers & Accessories,2016-02-01,87934
+Computers & Accessories,2016-03-01,162713
+Computers & Accessories,2016-04-01,220878
+Computers & Accessories,2016-05-01,207837
+Computers & Accessories,2016-06-01,292981
+Computers & Accessories,2016-07-01,508373
+Computers & Accessories,2016-08-01,441260
+Computers & Accessories,2016-09-01,378235
+Computers & Accessories,2016-10-01,332761
+Computers & Accessories,2016-11-01,555280
+Computers & Accessories,2016-12-01,417131
+Computers & Accessories,2017-01-01,283303
+Computers & Accessories,2017-02-01,300459
+Computers & Accessories,2017-03-01,308030
+Computers & Accessories,2017-04-01,291066
+Computers & Accessories,2017-05-01,290188
+Computers & Accessories,2017-06-01,313775
+Computers & Accessories,2017-07-01,342624
+Computers & Accessories,2017-08-01,291561
+Computers & Accessories,2017-09-01,283331
+Computers & Accessories,2017-10-01,305605
+Computers & Accessories,2017-11-01,475823
+Computers & Accessories,2017-12-01,441964
+Computers & Accessories,2018-01-01,229554
+Computers & Accessories,2018-02-01,231817
+Computers & Accessories,2018-03-01,295217
+Computers & Accessories,2018-04-01,324988
+Computers & Accessories,2018-05-01,348608
+Computers & Accessories,2018-06-01,387784
+Computers & Accessories,2018-07-01,560687
+Computers & Accessories,2018-08-01,517028
+Computers & Accessories,2018-09-01,415808
+Computers & Accessories,2018-10-01,462874
+Computers & Accessories,2018-11-01,794636
+Computers & Accessories,2018-12-01,685488
+Computers & Accessories,2019-01-01,318002
+Computers & Accessories,2019-02-01,279561
+Computers & Accessories,2019-03-01,308241
+Computers & Accessories,2019-04-01,327718
+Computers & Accessories,2019-05-01,368035
+Computers & Accessories,2019-06-01,342657
+Computers & Accessories,2019-07-01,518642
+Computers & Accessories,2019-08-01,506199
+Computers & Accessories,2019-09-01,442803
+Computers & Accessories,2019-10-01,416307
+Computers & Accessories,2019-11-01,718685
+Computers & Accessories,2019-12-01,621266
+Computers & Accessories,2020-01-01,333775
+Computers & Accessories,2020-02-01,316249
+Computers & Accessories,2020-03-01,377680
+Computers & Accessories,2020-04-01,497099
+Computers & Accessories,2020-05-01,518434
+Computers & Accessories,2020-06-01,503417
+Computers & Accessories,2020-07-01,517474
+Computers & Accessories,2020-08-01,624402
+Computers & Accessories,2020-09-01,517561
+Computers & Accessories,2020-10-01,725502
+Computers & Accessories,2020-11-01,905740
+Computers & Accessories,2020-12-01,773019
+Computers & Accessories,2021-01-01,376897
+Computers & Accessories,2021-02-01,376372
+Computers & Accessories,2021-03-01,430610
+Computers & Accessories,2021-04-01,353531
+Computers & Accessories,2021-05-01,351726
+Computers & Accessories,2021-06-01,472946
+Computers & Accessories,2021-07-01,414116
+Computers & Accessories,2021-08-01,482605
+Computers & Accessories,2021-09-01,412734
+Computers & Accessories,2021-10-01,420155
+Computers & Accessories,2021-11-01,710406
+Computers & Accessories,2021-12-01,596718
+Computers & Accessories,2022-01-01,303589
+Computers & Accessories,2022-02-01,294915
+Computers & Accessories,2022-03-01,323647
+Computers & Accessories,2022-04-01,282813
+Computers & Accessories,2022-05-01,319850
+Computers & Accessories,2022-06-01,308243
+Computers & Accessories,2022-07-01,429746
+Computers & Accessories,2022-08-01,362060
+Computers & Accessories,2022-09-01,340735
+Computers & Accessories,2022-10-01,381839
+Computers & Accessories,2022-11-01,538980
+Computers & Accessories,2022-12-01,546242
+Computers & Accessories,2023-01-01,286566
+Computers & Accessories,2023-02-01,269582
+Computers & Accessories,2023-03-01,320089
+Computers & Accessories,2023-04-01,314634
+Computers & Accessories,2023-05-01,336554
+Computers & Accessories,2023-06-01,322883
+Computers & Accessories,2023-07-01,422574
+Computers & Accessories,2023-08-01,383815
+Computers & Accessories,2023-09-01,339016
+Computers & Accessories,2023-10-01,370290
+Computers & Accessories,2023-11-01,548255
+Computers & Accessories,2023-12-01,488989
+Computers & Accessories,2024-01-01,248878
+Computers & Accessories,2024-02-01,236306
+Computers & Accessories,2024-03-01,277762
+Computers & Accessories,2024-04-01,258094
+Computers & Accessories,2024-05-01,249517
+Computers & Accessories,2024-06-01,265760
+Computers & Accessories,2024-07-01,389144
+Computers & Accessories,2024-08-01,313100
+Computers & Accessories,2024-09-01,265920
+Computers & Accessories,2024-10-01,282561
+Computers & Accessories,2024-11-01,425345
+Computers & Accessories,2024-12-01,378954
+Computers & Accessories,2025-01-01,195868
+Computers & Accessories,2025-02-01,188292
+Computers & Accessories,2025-03-01,194196
+Computers & Accessories,2025-04-01,198284
+Computers & Accessories,2025-05-01,208659
+Computers & Accessories,2025-06-01,216434
+Computers & Accessories,2025-07-01,306156
+Computers & Accessories,2025-08-01,243502
+Computers & Accessories,2025-09-01,193328
+Computers & Accessories,2025-10-01,207020
+Computers & Accessories,2025-11-01,315337
+Computers & Accessories,2025-12-01,279377
+Computers & Accessories,2026-01-01,147264
+Computers & Accessories,2026-02-01,132572
+Computers & Accessories,2026-03-01,162368
+Computers & Accessories,2026-04-01,142687
+Computers & Accessories,2026-05-01,162709
+Computers & Accessories,2026-06-01,160536
+Computers & Accessories,2026-07-01,199723
+Computers & Accessories,2026-08-01,174448
+Computers & Accessories,2026-09-01,147339
+Electronics - Accessories,2016-03-01,882
+Electronics - Accessories,2016-04-01,3326
+Electronics - Accessories,2016-05-01,5435
+Electronics - Accessories,2016-06-01,6975
+Electronics - Accessories,2016-07-01,21771
+Electronics - Accessories,2016-08-01,13605
+Electronics - Accessories,2016-09-01,12784
+Electronics - Accessories,2016-10-01,19065
+Electronics - Accessories,2016-11-01,28618
+Electronics - Accessories,2016-12-01,29855
+Electronics - Accessories,2017-01-01,15141
+Electronics - Accessories,2017-02-01,19439
+Electronics - Accessories,2017-03-01,22907
+Electronics - Accessories,2017-04-01,23784
+Electronics - Accessories,2017-05-01,25560
+Electronics - Accessories,2017-06-01,27330
+Electronics - Accessories,2017-07-01,40271
+Electronics - Accessories,2017-08-01,33001
+Electronics - Accessories,2017-09-01,33455
+Electronics - Accessories,2017-10-01,42626
+Electronics - Accessories,2017-11-01,83785
+Electronics - Accessories,2017-12-01,61791
+Electronics - Accessories,2018-01-01,31218
+Electronics - Accessories,2018-02-01,30399
+Electronics - Accessories,2018-03-01,35131
+Electronics - Accessories,2018-04-01,32485
+Electronics - Accessories,2018-05-01,35210
+Electronics - Accessories,2018-06-01,32381
+Electronics - Accessories,2018-07-01,50157
+Electronics - Accessories,2018-08-01,36760
+Electronics - Accessories,2018-09-01,36850
+Electronics - Accessories,2018-10-01,40111
+Electronics - Accessories,2018-11-01,72850
+Electronics - Accessories,2018-12-01,62884
+Electronics - Accessories,2019-01-01,30521
+Electronics - Accessories,2019-02-01,29591
+Electronics - Accessories,2019-03-01,38025
+Electronics - Accessories,2019-04-01,41139
+Electronics - Accessories,2019-05-01,40207
+Electronics - Accessories,2019-06-01,43725
+Electronics - Accessories,2019-07-01,67207
+Electronics - Accessories,2019-08-01,48224
+Electronics - Accessories,2019-09-01,44896
+Electronics - Accessories,2019-10-01,44471
+Electronics - Accessories,2019-11-01,86328
+Electronics - Accessories,2019-12-01,80732
+Electronics - Accessories,2020-01-01,34301
+Electronics - Accessories,2020-02-01,30474
+Electronics - Accessories,2020-03-01,36382
+Electronics - Accessories,2020-04-01,46346
+Electronics - Accessories,2020-05-01,51241
+Electronics - Accessories,2020-06-01,50842
+Electronics - Accessories,2020-07-01,44180
+Electronics - Accessories,2020-08-01,37415
+Electronics - Accessories,2020-09-01,44603
+Electronics - Accessories,2020-10-01,57048
+Electronics - Accessories,2020-11-01,65525
+Electronics - Accessories,2020-12-01,69350
+Electronics - Accessories,2021-01-01,36192
+Electronics - Accessories,2021-02-01,32179
+Electronics - Accessories,2021-03-01,34921
+Electronics - Accessories,2021-04-01,26903
+Electronics - Accessories,2021-05-01,25938
+Electronics - Accessories,2021-06-01,42411
+Electronics - Accessories,2021-07-01,31074
+Electronics - Accessories,2021-08-01,35715
+Electronics - Accessories,2021-09-01,43675
+Electronics - Accessories,2021-10-01,54413
+Electronics - Accessories,2021-11-01,125918
+Electronics - Accessories,2021-12-01,138068
+Electronics - Accessories,2022-01-01,73255
+Electronics - Accessories,2022-02-01,64569
+Electronics - Accessories,2022-03-01,73690
+Electronics - Accessories,2022-04-01,85267
+Electronics - Accessories,2022-05-01,81423
+Electronics - Accessories,2022-06-01,75503
+Electronics - Accessories,2022-07-01,113203
+Electronics - Accessories,2022-08-01,85416
+Electronics - Accessories,2022-09-01,71982
+Electronics - Accessories,2022-10-01,84675
+Electronics - Accessories,2022-11-01,133582
+Electronics - Accessories,2022-12-01,117203
+Electronics - Accessories,2023-01-01,56305
+Electronics - Accessories,2023-02-01,59017
+Electronics - Accessories,2023-03-01,71032
+Electronics - Accessories,2023-04-01,65028
+Electronics - Accessories,2023-05-01,65067
+Electronics - Accessories,2023-06-01,77897
+Electronics - Accessories,2023-07-01,100371
+Electronics - Accessories,2023-08-01,90865
+Electronics - Accessories,2023-09-01,93763
+Electronics - Accessories,2023-10-01,123775
+Electronics - Accessories,2023-11-01,229071
+Electronics - Accessories,2023-12-01,195025
+Electronics - Accessories,2024-01-01,122185
+Electronics - Accessories,2024-02-01,115703
+Electronics - Accessories,2024-03-01,165376
+Electronics - Accessories,2024-04-01,166966
+Electronics - Accessories,2024-05-01,176838
+Electronics - Accessories,2024-06-01,190057
+Electronics - Accessories,2024-07-01,338812
+Electronics - Accessories,2024-08-01,232284
+Electronics - Accessories,2024-09-01,272721
+Electronics - Accessories,2024-10-01,336200
+Electronics - Accessories,2024-11-01,468452
+Electronics - Accessories,2024-12-01,409854
+Electronics - Accessories,2025-01-01,213785
+Electronics - Accessories,2025-02-01,228327
+Electronics - Accessories,2025-03-01,228094
+Electronics - Accessories,2025-04-01,214534
+Electronics - Accessories,2025-05-01,216188
+Electronics - Accessories,2025-06-01,265269
+Electronics - Accessories,2025-07-01,359263
+Electronics - Accessories,2025-08-01,248595
+Electronics - Accessories,2025-09-01,222537
+Electronics - Accessories,2025-10-01,306594
+Electronics - Accessories,2025-11-01,613136
+Electronics - Accessories,2025-12-01,575634
+Electronics - Accessories,2026-01-01,403397
+Electronics - Accessories,2026-02-01,336169
+Electronics - Accessories,2026-03-01,438567
+Electronics - Accessories,2026-04-01,452332
+Electronics - Accessories,2026-05-01,501408
+Electronics - Accessories,2026-06-01,482559
+Electronics - Accessories,2026-07-01,698019
+Electronics - Accessories,2026-08-01,431018
+Electronics - Accessories,2026-09-01,481118
+Electronics - Audio,2017-05-01,551
+Electronics - Audio,2017-06-01,946
+Electronics - Audio,2017-07-01,1158
+Electronics - Audio,2017-08-01,1497
+Electronics - Audio,2017-09-01,2548
+Electronics - Audio,2017-10-01,1611
+Electronics - Audio,2017-11-01,69600
+Electronics - Audio,2017-12-01,91065
+Electronics - Audio,2018-01-01,62341
+Electronics - Audio,2018-02-01,125314
+Electronics - Audio,2018-03-01,206288
+Electronics - Audio,2018-04-01,240074
+Electronics - Audio,2018-05-01,250972
+Electronics - Audio,2018-06-01,244986
+Electronics - Audio,2018-07-01,403548
+Electronics - Audio,2018-08-01,271735
+Electronics - Audio,2018-09-01,285372
+Electronics - Audio,2018-10-01,327997
+Electronics - Audio,2018-11-01,595328
+Electronics - Audio,2018-12-01,608110
+Electronics - Audio,2019-01-01,264180
+Electronics - Audio,2019-02-01,245646
+Electronics - Audio,2019-03-01,323807
+Electronics - Audio,2019-04-01,392689
+Electronics - Audio,2019-05-01,417762
+Electronics - Audio,2019-06-01,498155
+Electronics - Audio,2019-07-01,949940
+Electronics - Audio,2019-08-01,553341
+Electronics - Audio,2019-09-01,625113
+Electronics - Audio,2019-10-01,615939
+Electronics - Audio,2019-11-01,1347812
+Electronics - Audio,2019-12-01,1194212
+Electronics - Audio,2020-01-01,486869
+Electronics - Audio,2020-02-01,474395
+Electronics - Audio,2020-03-01,537827
+Electronics - Audio,2020-04-01,656339
+Electronics - Audio,2020-05-01,695391
+Electronics - Audio,2020-06-01,742121
+Electronics - Audio,2020-07-01,764176
+Electronics - Audio,2020-08-01,675024
+Electronics - Audio,2020-09-01,651653
+Electronics - Audio,2020-10-01,1131691
+Electronics - Audio,2020-11-01,1507746
+Electronics - Audio,2020-12-01,1355805
+Electronics - Audio,2021-01-01,574281
+Electronics - Audio,2021-02-01,533051
+Electronics - Audio,2021-03-01,596418
+Electronics - Audio,2021-04-01,471704
+Electronics - Audio,2021-05-01,549079
+Electronics - Audio,2021-06-01,810793
+Electronics - Audio,2021-07-01,587132
+Electronics - Audio,2021-08-01,629187
+Electronics - Audio,2021-09-01,585231
+Electronics - Audio,2021-10-01,629389
+Electronics - Audio,2021-11-01,1504747
+Electronics - Audio,2021-12-01,1362144
+Electronics - Audio,2022-01-01,510173
+Electronics - Audio,2022-02-01,471634
+Electronics - Audio,2022-03-01,558572
+Electronics - Audio,2022-04-01,563426
+Electronics - Audio,2022-05-01,578568
+Electronics - Audio,2022-06-01,616611
+Electronics - Audio,2022-07-01,924619
+Electronics - Audio,2022-08-01,594354
+Electronics - Audio,2022-09-01,540495
+Electronics - Audio,2022-10-01,698724
+Electronics - Audio,2022-11-01,1256096
+Electronics - Audio,2022-12-01,1151187
+Electronics - Audio,2023-01-01,475817
+Electronics - Audio,2023-02-01,505682
+Electronics - Audio,2023-03-01,536598
+Electronics - Audio,2023-04-01,496841
+Electronics - Audio,2023-05-01,497779
+Electronics - Audio,2023-06-01,496609
+Electronics - Audio,2023-07-01,753815
+Electronics - Audio,2023-08-01,502434
+Electronics - Audio,2023-09-01,472100
+Electronics - Audio,2023-10-01,622710
+Electronics - Audio,2023-11-01,1054412
+Electronics - Audio,2023-12-01,1033510
+Electronics - Audio,2024-01-01,402552
+Electronics - Audio,2024-02-01,363951
+Electronics - Audio,2024-03-01,452948
+Electronics - Audio,2024-04-01,439850
+Electronics - Audio,2024-05-01,432629
+Electronics - Audio,2024-06-01,425395
+Electronics - Audio,2024-07-01,624858
+Electronics - Audio,2024-08-01,454637
+Electronics - Audio,2024-09-01,396761
+Electronics - Audio,2024-10-01,485087
+Electronics - Audio,2024-11-01,908454
+Electronics - Audio,2024-12-01,763191
+Electronics - Audio,2025-01-01,301091
+Electronics - Audio,2025-02-01,291347
+Electronics - Audio,2025-03-01,328467
+Electronics - Audio,2025-04-01,311525
+Electronics - Audio,2025-05-01,337183
+Electronics - Audio,2025-06-01,336149
+Electronics - Audio,2025-07-01,514961
+Electronics - Audio,2025-08-01,327097
+Electronics - Audio,2025-09-01,305439
+Electronics - Audio,2025-10-01,364999
+Electronics - Audio,2025-11-01,702134
+Electronics - Audio,2025-12-01,650243
+Electronics - Audio,2026-01-01,235731
+Electronics - Audio,2026-02-01,244402
+Electronics - Audio,2026-03-01,271488
+Electronics - Audio,2026-04-01,264947
+Electronics - Audio,2026-05-01,245197
+Electronics - Audio,2026-06-01,231206
+Electronics - Audio,2026-07-01,332619
+Electronics - Audio,2026-08-01,228255
+Electronics - Audio,2026-09-01,223907
+Electronics - TV & Video,2016-03-01,3188
+Electronics - TV & Video,2016-04-01,5082
+Electronics - TV & Video,2016-05-01,4757
+Electronics - TV & Video,2016-06-01,5526
+Electronics - TV & Video,2016-07-01,8328
+Electronics - TV & Video,2016-08-01,8451
+Electronics - TV & Video,2016-09-01,16045
+Electronics - TV & Video,2016-10-01,32181
+Electronics - TV & Video,2016-11-01,87022
+Electronics - TV & Video,2016-12-01,91712
+Electronics - TV & Video,2017-01-01,46510
+Electronics - TV & Video,2017-02-01,34475
+Electronics - TV & Video,2017-03-01,22432
+Electronics - TV & Video,2017-04-01,13698
+Electronics - TV & Video,2017-05-01,11454
+Electronics - TV & Video,2017-06-01,11032
+Electronics - TV & Video,2017-07-01,16418
+Electronics - TV & Video,2017-08-01,39061
+Electronics - TV & Video,2017-09-01,80688
+Electronics - TV & Video,2017-10-01,219387
+Electronics - TV & Video,2017-11-01,627978
+Electronics - TV & Video,2017-12-01,732964
+Electronics - TV & Video,2018-01-01,302642
+Electronics - TV & Video,2018-02-01,295022
+Electronics - TV & Video,2018-03-01,222700
+Electronics - TV & Video,2018-04-01,155103
+Electronics - TV & Video,2018-05-01,120229
+Electronics - TV & Video,2018-06-01,123242
+Electronics - TV & Video,2018-07-01,220568
+Electronics - TV & Video,2018-08-01,167464
+Electronics - TV & Video,2018-09-01,222184
+Electronics - TV & Video,2018-10-01,303748
+Electronics - TV & Video,2018-11-01,902557
+Electronics - TV & Video,2018-12-01,1012660
+Electronics - TV & Video,2019-01-01,405337
+Electronics - TV & Video,2019-02-01,277980
+Electronics - TV & Video,2019-03-01,203672
+Electronics - TV & Video,2019-04-01,115517
+Electronics - TV & Video,2019-05-01,84896
+Electronics - TV & Video,2019-06-01,90533
+Electronics - TV & Video,2019-07-01,114611
+Electronics - TV & Video,2019-08-01,144879
+Electronics - TV & Video,2019-09-01,194996
+Electronics - TV & Video,2019-10-01,392550
+Electronics - TV & Video,2019-11-01,1013023
+Electronics - TV & Video,2019-12-01,915249
+Electronics - TV & Video,2020-01-01,422493
+Electronics - TV & Video,2020-02-01,378208
+Electronics - TV & Video,2020-03-01,214074
+Electronics - TV & Video,2020-04-01,188540
+Electronics - TV & Video,2020-05-01,175423
+Electronics - TV & Video,2020-06-01,139731
+Electronics - TV & Video,2020-07-01,138657
+Electronics - TV & Video,2020-08-01,173519
+Electronics - TV & Video,2020-09-01,227038
+Electronics - TV & Video,2020-10-01,595350
+Electronics - TV & Video,2020-11-01,994093
+Electronics - TV & Video,2020-12-01,1219657
+Electronics - TV & Video,2021-01-01,491317
+Electronics - TV & Video,2021-02-01,354698
+Electronics - TV & Video,2021-03-01,271856
+Electronics - TV & Video,2021-04-01,112463
+Electronics - TV & Video,2021-05-01,95564
+Electronics - TV & Video,2021-06-01,138023
+Electronics - TV & Video,2021-07-01,103822
+Electronics - TV & Video,2021-08-01,106407
+Electronics - TV & Video,2021-09-01,167073
+Electronics - TV & Video,2021-10-01,325398
+Electronics - TV & Video,2021-11-01,736284
+Electronics - TV & Video,2021-12-01,777600
+Electronics - TV & Video,2022-01-01,294157
+Electronics - TV & Video,2022-02-01,248111
+Electronics - TV & Video,2022-03-01,161774
+Electronics - TV & Video,2022-04-01,97212
+Electronics - TV & Video,2022-05-01,73055
+Electronics - TV & Video,2022-06-01,78318
+Electronics - TV & Video,2022-07-01,125275
+Electronics - TV & Video,2022-08-01,124829
+Electronics - TV & Video,2022-09-01,151086
+Electronics - TV & Video,2022-10-01,322443
+Electronics - TV & Video,2022-11-01,727634
+Electronics - TV & Video,2022-12-01,714075
+Electronics - TV & Video,2023-01-01,307594
+Electronics - TV & Video,2023-02-01,255205
+Electronics - TV & Video,2023-03-01,164623
+Electronics - TV & Video,2023-04-01,104040
+Electronics - TV & Video,2023-05-01,88003
+Electronics - TV & Video,2023-06-01,83876
+Electronics - TV & Video,2023-07-01,131141
+Electronics - TV & Video,2023-08-01,115640
+Electronics - TV & Video,2023-09-01,160166
+Electronics - TV & Video,2023-10-01,289783
+Electronics - TV & Video,2023-11-01,771546
+Electronics - TV & Video,2023-12-01,770799
+Electronics - TV & Video,2024-01-01,347883
+Electronics - TV & Video,2024-02-01,256842
+Electronics - TV & Video,2024-03-01,188063
+Electronics - TV & Video,2024-04-01,117101
+Electronics - TV & Video,2024-05-01,112066
+Electronics - TV & Video,2024-06-01,103304
+Electronics - TV & Video,2024-07-01,148554
+Electronics - TV & Video,2024-08-01,152518
+Electronics - TV & Video,2024-09-01,194547
+Electronics - TV & Video,2024-10-01,361038
+Electronics - TV & Video,2024-11-01,817791
+Electronics - TV & Video,2024-12-01,886128
+Electronics - TV & Video,2025-01-01,431761
+Electronics - TV & Video,2025-02-01,326041
+Electronics - TV & Video,2025-03-01,224245
+Electronics - TV & Video,2025-04-01,132209
+Electronics - TV & Video,2025-05-01,118586
+Electronics - TV & Video,2025-06-01,132261
+Electronics - TV & Video,2025-07-01,200559
+Electronics - TV & Video,2025-08-01,190148
+Electronics - TV & Video,2025-09-01,268728
+Electronics - TV & Video,2025-10-01,548280
+Electronics - TV & Video,2025-11-01,1293358
+Electronics - TV & Video,2025-12-01,1178515
+Electronics - TV & Video,2026-01-01,542210
+Electronics - TV & Video,2026-02-01,424106
+Electronics - TV & Video,2026-03-01,285598
+Electronics - TV & Video,2026-04-01,179404
+Electronics - TV & Video,2026-05-01,155558
+Electronics - TV & Video,2026-06-01,155318
+Electronics - TV & Video,2026-07-01,228201
+Electronics - TV & Video,2026-08-01,188679
+Electronics - TV & Video,2026-09-01,249826
+Health & Household,2018-12-01,651
+Health & Household,2019-01-01,504
+Health & Household,2019-02-01,606
+Health & Household,2019-03-01,1034
+Health & Household,2019-04-01,1055
+Health & Household,2019-05-01,1187
+Health & Household,2019-06-01,1151
+Health & Household,2019-07-01,1365
+Health & Household,2019-08-01,1278
+Health & Household,2019-09-01,1119
+Health & Household,2019-10-01,995
+Health & Household,2019-11-01,2415
+Health & Household,2019-12-01,1618
+Health & Household,2020-01-01,888
+Health & Household,2020-02-01,938
+Health & Household,2020-03-01,1298
+Health & Household,2020-04-01,1096
+Health & Household,2020-05-01,1516
+Health & Household,2020-06-01,1293
+Health & Household,2020-07-01,2472
+Health & Household,2020-08-01,2209
+Health & Household,2020-09-01,2434
+Health & Household,2020-10-01,3641
+Health & Household,2020-11-01,3278
+Health & Household,2020-12-01,2410
+Health & Household,2021-01-01,1280
+Health & Household,2021-02-01,978
+Health & Household,2021-03-01,1020
+Health & Household,2021-04-01,853
+Health & Household,2021-05-01,965
+Health & Household,2021-06-01,1407
+Health & Household,2021-07-01,1257
+Health & Household,2021-08-01,1180
+Health & Household,2021-09-01,924
+Health & Household,2021-10-01,1119
+Health & Household,2021-11-01,2310
+Health & Household,2021-12-01,1514
+Health & Household,2022-01-01,763
+Health & Household,2022-02-01,840
+Health & Household,2022-03-01,712
+Health & Household,2022-04-01,737
+Health & Household,2022-05-01,804
+Health & Household,2022-06-01,783
+Health & Household,2022-07-01,1214
+Health & Household,2022-08-01,677
+Health & Household,2022-09-01,883
+Health & Household,2022-10-01,1174
+Health & Household,2022-11-01,1689
+Health & Household,2022-12-01,1448
+Health & Household,2023-01-01,766
+Health & Household,2023-02-01,651
+Health & Household,2023-03-01,742
+Health & Household,2023-04-01,814
+Health & Household,2023-05-01,1129
+Health & Household,2023-06-01,917
+Health & Household,2023-07-01,1243
+Health & Household,2023-08-01,1273
+Health & Household,2023-09-01,1019
+Health & Household,2023-10-01,1300
+Health & Household,2023-11-01,1425
+Health & Household,2023-12-01,1274
+Health & Household,2024-01-01,739
+Health & Household,2024-02-01,673
+Health & Household,2024-03-01,686
+Health & Household,2024-04-01,691
+Health & Household,2024-05-01,722
+Health & Household,2024-06-01,542
+Health & Household,2024-07-01,780
+Health & Household,2024-08-01,723
+Health & Household,2024-09-01,692
+Health & Household,2024-10-01,501
+Health & Household,2024-11-01,818
+Health & Household,2024-12-01,786
+Health & Household,2025-01-01,502
+Health & Household,2025-02-01,705
+Health & Household,2025-03-01,669
+Health & Household,2025-04-01,674
+Health & Household,2025-05-01,779
+Health & Household,2025-06-01,689
+Health & Household,2025-07-01,796
+Health & Household,2025-08-01,640
+Health & Household,2025-09-01,758
+Health & Household,2025-10-01,767
+Health & Household,2025-11-01,1899
+Health & Household,2025-12-01,1123
+Health & Household,2026-01-01,588
+Health & Household,2026-02-01,458
+Health & Household,2026-03-01,431
+Health & Household,2026-04-01,424
+Health & Household,2026-05-01,586
+Health & Household,2026-06-01,540
+Health & Household,2026-07-01,883
+Health & Household,2026-08-01,719
+Health & Household,2026-09-01,562
+Home & Kitchen,2016-12-01,1610
+Home & Kitchen,2017-01-01,1543
+Home & Kitchen,2017-02-01,2183
+Home & Kitchen,2017-03-01,3404
+Home & Kitchen,2017-04-01,4757
+Home & Kitchen,2017-05-01,5727
+Home & Kitchen,2017-06-01,7175
+Home & Kitchen,2017-07-01,11455
+Home & Kitchen,2017-08-01,9072
+Home & Kitchen,2017-09-01,9472
+Home & Kitchen,2017-10-01,9389
+Home & Kitchen,2017-11-01,16568
+Home & Kitchen,2017-12-01,41828
+Home & Kitchen,2018-01-01,28073
+Home & Kitchen,2018-02-01,33079
+Home & Kitchen,2018-03-01,58184
+Home & Kitchen,2018-04-01,55506
+Home & Kitchen,2018-05-01,59468
+Home & Kitchen,2018-06-01,78597
+Home & Kitchen,2018-07-01,103646
+Home & Kitchen,2018-08-01,81241
+Home & Kitchen,2018-09-01,71579
+Home & Kitchen,2018-10-01,68050
+Home & Kitchen,2018-11-01,120754
+Home & Kitchen,2018-12-01,88582
+Home & Kitchen,2019-01-01,50554
+Home & Kitchen,2019-02-01,45697
+Home & Kitchen,2019-03-01,66135
+Home & Kitchen,2019-04-01,53394
+Home & Kitchen,2019-05-01,53726
+Home & Kitchen,2019-06-01,51138
+Home & Kitchen,2019-07-01,94747
+Home & Kitchen,2019-08-01,88285
+Home & Kitchen,2019-09-01,68397
+Home & Kitchen,2019-10-01,66557
+Home & Kitchen,2019-11-01,85608
+Home & Kitchen,2019-12-01,100820
+Home & Kitchen,2020-01-01,52147
+Home & Kitchen,2020-02-01,56482
+Home & Kitchen,2020-03-01,66206
+Home & Kitchen,2020-04-01,75989
+Home & Kitchen,2020-05-01,79495
+Home & Kitchen,2020-06-01,92495
+Home & Kitchen,2020-07-01,64859
+Home & Kitchen,2020-08-01,74014
+Home & Kitchen,2020-09-01,58134
+Home & Kitchen,2020-10-01,98754
+Home & Kitchen,2020-11-01,156805
+Home & Kitchen,2020-12-01,130789
+Home & Kitchen,2021-01-01,58462
+Home & Kitchen,2021-02-01,64931
+Home & Kitchen,2021-03-01,76764
+Home & Kitchen,2021-04-01,63092
+Home & Kitchen,2021-05-01,51043
+Home & Kitchen,2021-06-01,84308
+Home & Kitchen,2021-07-01,60941
+Home & Kitchen,2021-08-01,60466
+Home & Kitchen,2021-09-01,41589
+Home & Kitchen,2021-10-01,41157
+Home & Kitchen,2021-11-01,102596
+Home & Kitchen,2021-12-01,107605
+Home & Kitchen,2022-01-01,44418
+Home & Kitchen,2022-02-01,44444
+Home & Kitchen,2022-03-01,58435
+Home & Kitchen,2022-04-01,52910
+Home & Kitchen,2022-05-01,44374
+Home & Kitchen,2022-06-01,45049
+Home & Kitchen,2022-07-01,72119
+Home & Kitchen,2022-08-01,60031
+Home & Kitchen,2022-09-01,64476
+Home & Kitchen,2022-10-01,78277
+Home & Kitchen,2022-11-01,150627
+Home & Kitchen,2022-12-01,118916
+Home & Kitchen,2023-01-01,51211
+Home & Kitchen,2023-02-01,44254
+Home & Kitchen,2023-03-01,55885
+Home & Kitchen,2023-04-01,43377
+Home & Kitchen,2023-05-01,52197
+Home & Kitchen,2023-06-01,48052
+Home & Kitchen,2023-07-01,65884
+Home & Kitchen,2023-08-01,42853
+Home & Kitchen,2023-09-01,60793
+Home & Kitchen,2023-10-01,56849
+Home & Kitchen,2023-11-01,82258
+Home & Kitchen,2023-12-01,76948
+Home & Kitchen,2024-01-01,43056
+Home & Kitchen,2024-02-01,42880
+Home & Kitchen,2024-03-01,42605
+Home & Kitchen,2024-04-01,42630
+Home & Kitchen,2024-05-01,40308
+Home & Kitchen,2024-06-01,45966
+Home & Kitchen,2024-07-01,60223
+Home & Kitchen,2024-08-01,43926
+Home & Kitchen,2024-09-01,43978
+Home & Kitchen,2024-10-01,45036
+Home & Kitchen,2024-11-01,78342
+Home & Kitchen,2024-12-01,72981
+Home & Kitchen,2025-01-01,38990
+Home & Kitchen,2025-02-01,26626
+Home & Kitchen,2025-03-01,36259
+Home & Kitchen,2025-04-01,35191
+Home & Kitchen,2025-05-01,33075
+Home & Kitchen,2025-06-01,39579
+Home & Kitchen,2025-07-01,53448
+Home & Kitchen,2025-08-01,30705
+Home & Kitchen,2025-09-01,34408
+Home & Kitchen,2025-10-01,37647
+Home & Kitchen,2025-11-01,62598
+Home & Kitchen,2025-12-01,71034
+Home & Kitchen,2026-01-01,31051
+Home & Kitchen,2026-02-01,45921
+Home & Kitchen,2026-03-01,41033
+Home & Kitchen,2026-04-01,43696
+Home & Kitchen,2026-05-01,39435
+Home & Kitchen,2026-06-01,33381
+Home & Kitchen,2026-07-01,63187
+Home & Kitchen,2026-08-01,40983
+Home & Kitchen,2026-09-01,37096
+Kitchen & Home Appliances,2016-01-01,281
+Kitchen & Home Appliances,2016-02-01,3755
+Kitchen & Home Appliances,2016-03-01,8928
+Kitchen & Home Appliances,2016-04-01,14096
+Kitchen & Home Appliances,2016-05-01,16186
+Kitchen & Home Appliances,2016-06-01,22021
+Kitchen & Home Appliances,2016-07-01,33817
+Kitchen & Home Appliances,2016-08-01,33470
+Kitchen & Home Appliances,2016-09-01,36492
+Kitchen & Home Appliances,2016-10-01,51777
+Kitchen & Home Appliances,2016-11-01,102498
+Kitchen & Home Appliances,2016-12-01,104622
+Kitchen & Home Appliances,2017-01-01,68943
+Kitchen & Home Appliances,2017-02-01,63666
+Kitchen & Home Appliances,2017-03-01,76077
+Kitchen & Home Appliances,2017-04-01,83264
+Kitchen & Home Appliances,2017-05-01,93797
+Kitchen & Home Appliances,2017-06-01,110076
+Kitchen & Home Appliances,2017-07-01,146735
+Kitchen & Home Appliances,2017-08-01,119920
+Kitchen & Home Appliances,2017-09-01,106322
+Kitchen & Home Appliances,2017-10-01,121911
+Kitchen & Home Appliances,2017-11-01,260387
+Kitchen & Home Appliances,2017-12-01,255613
+Kitchen & Home Appliances,2018-01-01,137223
+Kitchen & Home Appliances,2018-02-01,132846
+Kitchen & Home Appliances,2018-03-01,156903
+Kitchen & Home Appliances,2018-04-01,169268
+Kitchen & Home Appliances,2018-05-01,184509
+Kitchen & Home Appliances,2018-06-01,188499
+Kitchen & Home Appliances,2018-07-01,276543
+Kitchen & Home Appliances,2018-08-01,192533
+Kitchen & Home Appliances,2018-09-01,199811
+Kitchen & Home Appliances,2018-10-01,215668
+Kitchen & Home Appliances,2018-11-01,418956
+Kitchen & Home Appliances,2018-12-01,406221
+Kitchen & Home Appliances,2019-01-01,225417
+Kitchen & Home Appliances,2019-02-01,212225
+Kitchen & Home Appliances,2019-03-01,226488
+Kitchen & Home Appliances,2019-04-01,224749
+Kitchen & Home Appliances,2019-05-01,247625
+Kitchen & Home Appliances,2019-06-01,269230
+Kitchen & Home Appliances,2019-07-01,359469
+Kitchen & Home Appliances,2019-08-01,282326
+Kitchen & Home Appliances,2019-09-01,259792
+Kitchen & Home Appliances,2019-10-01,300927
+Kitchen & Home Appliances,2019-11-01,554947
+Kitchen & Home Appliances,2019-12-01,502445
+Kitchen & Home Appliances,2020-01-01,280730
+Kitchen & Home Appliances,2020-02-01,257005
+Kitchen & Home Appliances,2020-03-01,287510
+Kitchen & Home Appliances,2020-04-01,362563
+Kitchen & Home Appliances,2020-05-01,393734
+Kitchen & Home Appliances,2020-06-01,420628
+Kitchen & Home Appliances,2020-07-01,417030
+Kitchen & Home Appliances,2020-08-01,435403
+Kitchen & Home Appliances,2020-09-01,424582
+Kitchen & Home Appliances,2020-10-01,650877
+Kitchen & Home Appliances,2020-11-01,817647
+Kitchen & Home Appliances,2020-12-01,786102
+Kitchen & Home Appliances,2021-01-01,414422
+Kitchen & Home Appliances,2021-02-01,409944
+Kitchen & Home Appliances,2021-03-01,475826
+Kitchen & Home Appliances,2021-04-01,358142
+Kitchen & Home Appliances,2021-05-01,391405
+Kitchen & Home Appliances,2021-06-01,526989
+Kitchen & Home Appliances,2021-07-01,391904
+Kitchen & Home Appliances,2021-08-01,400956
+Kitchen & Home Appliances,2021-09-01,379413
+Kitchen & Home Appliances,2021-10-01,417946
+Kitchen & Home Appliances,2021-11-01,717657
+Kitchen & Home Appliances,2021-12-01,637122
+Kitchen & Home Appliances,2022-01-01,319389
+Kitchen & Home Appliances,2022-02-01,303300
+Kitchen & Home Appliances,2022-03-01,335892
+Kitchen & Home Appliances,2022-04-01,336534
+Kitchen & Home Appliances,2022-05-01,352577
+Kitchen & Home Appliances,2022-06-01,360569
+Kitchen & Home Appliances,2022-07-01,504846
+Kitchen & Home Appliances,2022-08-01,382427
+Kitchen & Home Appliances,2022-09-01,371536
+Kitchen & Home Appliances,2022-10-01,456133
+Kitchen & Home Appliances,2022-11-01,738719
+Kitchen & Home Appliances,2022-12-01,680033
+Kitchen & Home Appliances,2023-01-01,364020
+Kitchen & Home Appliances,2023-02-01,352906
+Kitchen & Home Appliances,2023-03-01,398985
+Kitchen & Home Appliances,2023-04-01,384517
+Kitchen & Home Appliances,2023-05-01,401378
+Kitchen & Home Appliances,2023-06-01,416222
+Kitchen & Home Appliances,2023-07-01,551190
+Kitchen & Home Appliances,2023-08-01,401110
+Kitchen & Home Appliances,2023-09-01,382638
+Kitchen & Home Appliances,2023-10-01,496946
+Kitchen & Home Appliances,2023-11-01,770709
+Kitchen & Home Appliances,2023-12-01,699202
+Kitchen & Home Appliances,2024-01-01,352062
+Kitchen & Home Appliances,2024-02-01,352906
+Kitchen & Home Appliances,2024-03-01,379149
+Kitchen & Home Appliances,2024-04-01,365883
+Kitchen & Home Appliances,2024-05-01,395854
+Kitchen & Home Appliances,2024-06-01,419222
+Kitchen & Home Appliances,2024-07-01,550650
+Kitchen & Home Appliances,2024-08-01,435123
+Kitchen & Home Appliances,2024-09-01,413134
+Kitchen & Home Appliances,2024-10-01,505927
+Kitchen & Home Appliances,2024-11-01,816244
+Kitchen & Home Appliances,2024-12-01,716289
+Kitchen & Home Appliances,2025-01-01,372458
+Kitchen & Home Appliances,2025-02-01,364619
+Kitchen & Home Appliances,2025-03-01,392835
+Kitchen & Home Appliances,2025-04-01,392418
+Kitchen & Home Appliances,2025-05-01,398583
+Kitchen & Home Appliances,2025-06-01,424140
+Kitchen & Home Appliances,2025-07-01,578847
+Kitchen & Home Appliances,2025-08-01,413837
+Kitchen & Home Appliances,2025-09-01,407658
+Kitchen & Home Appliances,2025-10-01,490967
+Kitchen & Home Appliances,2025-11-01,805655
+Kitchen & Home Appliances,2025-12-01,744457
+Kitchen & Home Appliances,2026-01-01,375730
+Kitchen & Home Appliances,2026-02-01,361121
+Kitchen & Home Appliances,2026-03-01,465064
+Kitchen & Home Appliances,2026-04-01,503311
+Kitchen & Home Appliances,2026-05-01,603170
+Kitchen & Home Appliances,2026-06-01,604017
+Kitchen & Home Appliances,2026-07-01,776390
+Kitchen & Home Appliances,2026-08-01,515451
+Kitchen & Home Appliances,2026-09-01,493855
+Musical Instruments,2018-09-01,4237
+Musical Instruments,2018-10-01,9017
+Musical Instruments,2018-11-01,19253
+Musical Instruments,2018-12-01,24771
+Musical Instruments,2019-01-01,12185
+Musical Instruments,2019-02-01,14878
+Musical Instruments,2019-03-01,15686
+Musical Instruments,2019-04-01,19668
+Musical Instruments,2019-05-01,20646
+Musical Instruments,2019-06-01,19362
+Musical Instruments,2019-07-01,29923
+Musical Instruments,2019-08-01,20378
+Musical Instruments,2019-09-01,22694
+Musical Instruments,2019-10-01,17162
+Musical Instruments,2019-11-01,36565
+Musical Instruments,2019-12-01,27689
+Musical Instruments,2020-01-01,16897
+Musical Instruments,2020-02-01,17913
+Musical Instruments,2020-03-01,24983
+Musical Instruments,2020-04-01,27560
+Musical Instruments,2020-05-01,29801
+Musical Instruments,2020-06-01,25398
+Musical Instruments,2020-07-01,28154
+Musical Instruments,2020-08-01,32139
+Musical Instruments,2020-09-01,20876
+Musical Instruments,2020-10-01,30597
+Musical Instruments,2020-11-01,40097
+Musical Instruments,2020-12-01,41941
+Musical Instruments,2021-01-01,24508
+Musical Instruments,2021-02-01,21538
+Musical Instruments,2021-03-01,22639
+Musical Instruments,2021-04-01,14130
+Musical Instruments,2021-05-01,14154
+Musical Instruments,2021-06-01,19210
+Musical Instruments,2021-07-01,16281
+Musical Instruments,2021-08-01,18604
+Musical Instruments,2021-09-01,16140
+Musical Instruments,2021-10-01,19439
+Musical Instruments,2021-11-01,22094
+Musical Instruments,2021-12-01,31068
+Musical Instruments,2022-01-01,11947
+Musical Instruments,2022-02-01,14370
+Musical Instruments,2022-03-01,12250
+Musical Instruments,2022-04-01,13727
+Musical Instruments,2022-05-01,14452
+Musical Instruments,2022-06-01,11817
+Musical Instruments,2022-07-01,14418
+Musical Instruments,2022-08-01,13668
+Musical Instruments,2022-09-01,15818
+Musical Instruments,2022-10-01,18667
+Musical Instruments,2022-11-01,29187
+Musical Instruments,2022-12-01,29367
+Musical Instruments,2023-01-01,15253
+Musical Instruments,2023-02-01,10480
+Musical Instruments,2023-03-01,14340
+Musical Instruments,2023-04-01,16855
+Musical Instruments,2023-05-01,19714
+Musical Instruments,2023-06-01,14262
+Musical Instruments,2023-07-01,16378
+Musical Instruments,2023-08-01,11877
+Musical Instruments,2023-09-01,12715
+Musical Instruments,2023-10-01,13697
+Musical Instruments,2023-11-01,27480
+Musical Instruments,2023-12-01,18036
+Musical Instruments,2024-01-01,9435
+Musical Instruments,2024-02-01,7019
+Musical Instruments,2024-03-01,8339
+Musical Instruments,2024-04-01,10817
+Musical Instruments,2024-05-01,9645
+Musical Instruments,2024-06-01,8639
+Musical Instruments,2024-07-01,21569
+Musical Instruments,2024-08-01,16881
+Musical Instruments,2024-09-01,17926
+Musical Instruments,2024-10-01,13508
+Musical Instruments,2024-11-01,19878
+Musical Instruments,2024-12-01,18449
+Musical Instruments,2025-01-01,10260
+Musical Instruments,2025-02-01,6634
+Musical Instruments,2025-03-01,13303
+Musical Instruments,2025-04-01,11066
+Musical Instruments,2025-05-01,9754
+Musical Instruments,2025-06-01,10418
+Musical Instruments,2025-07-01,12207
+Musical Instruments,2025-08-01,6108
+Musical Instruments,2025-09-01,7208
+Musical Instruments,2025-10-01,8399
+Musical Instruments,2025-11-01,17428
+Musical Instruments,2025-12-01,14939
+Musical Instruments,2026-01-01,8215
+Musical Instruments,2026-02-01,12041
+Musical Instruments,2026-03-01,10257
+Musical Instruments,2026-04-01,8234
+Musical Instruments,2026-05-01,8218
+Musical Instruments,2026-06-01,9787
+Musical Instruments,2026-07-01,11436
+Musical Instruments,2026-08-01,7859
+Musical Instruments,2026-09-01,9489
+Office Products,2016-08-01,615
+Office Products,2016-09-01,896
+Office Products,2016-10-01,2911
+Office Products,2016-11-01,8475
+Office Products,2016-12-01,9166
+Office Products,2017-01-01,5983
+Office Products,2017-02-01,7984
+Office Products,2017-03-01,10189
+Office Products,2017-04-01,11348
+Office Products,2017-05-01,15553
+Office Products,2017-06-01,17976
+Office Products,2017-07-01,29618
+Office Products,2017-08-01,25487
+Office Products,2017-09-01,20327
+Office Products,2017-10-01,20003
+Office Products,2017-11-01,34408
+Office Products,2017-12-01,34580
+Office Products,2018-01-01,17723
+Office Products,2018-02-01,18164
+Office Products,2018-03-01,18005
+Office Products,2018-04-01,17718
+Office Products,2018-05-01,18443
+Office Products,2018-06-01,19294
+Office Products,2018-07-01,28137
+Office Products,2018-08-01,27695
+Office Products,2018-09-01,22679
+Office Products,2018-10-01,23738
+Office Products,2018-11-01,43587
+Office Products,2018-12-01,34579
+Office Products,2019-01-01,19507
+Office Products,2019-02-01,18705
+Office Products,2019-03-01,20358
+Office Products,2019-04-01,20988
+Office Products,2019-05-01,21407
+Office Products,2019-06-01,22830
+Office Products,2019-07-01,32824
+Office Products,2019-08-01,28521
+Office Products,2019-09-01,22913
+Office Products,2019-10-01,23286
+Office Products,2019-11-01,44058
+Office Products,2019-12-01,37862
+Office Products,2020-01-01,19038
+Office Products,2020-02-01,18538
+Office Products,2020-03-01,20793
+Office Products,2020-04-01,27812
+Office Products,2020-05-01,27551
+Office Products,2020-06-01,30489
+Office Products,2020-07-01,32175
+Office Products,2020-08-01,35749
+Office Products,2020-09-01,29486
+Office Products,2020-10-01,43837
+Office Products,2020-11-01,52261
+Office Products,2020-12-01,52123
+Office Products,2021-01-01,26277
+Office Products,2021-02-01,26585
+Office Products,2021-03-01,29780
+Office Products,2021-04-01,23644
+Office Products,2021-05-01,25197
+Office Products,2021-06-01,37115
+Office Products,2021-07-01,25426
+Office Products,2021-08-01,32825
+Office Products,2021-09-01,28320
+Office Products,2021-10-01,26765
+Office Products,2021-11-01,48084
+Office Products,2021-12-01,42157
+Office Products,2022-01-01,19912
+Office Products,2022-02-01,18051
+Office Products,2022-03-01,20291
+Office Products,2022-04-01,19960
+Office Products,2022-05-01,22324
+Office Products,2022-06-01,22634
+Office Products,2022-07-01,34916
+Office Products,2022-08-01,30667
+Office Products,2022-09-01,26051
+Office Products,2022-10-01,29065
+Office Products,2022-11-01,45079
+Office Products,2022-12-01,37259
+Office Products,2023-01-01,19960
+Office Products,2023-02-01,18670
+Office Products,2023-03-01,20288
+Office Products,2023-04-01,20776
+Office Products,2023-05-01,21541
+Office Products,2023-06-01,22345
+Office Products,2023-07-01,32080
+Office Products,2023-08-01,27338
+Office Products,2023-09-01,21508
+Office Products,2023-10-01,25669
+Office Products,2023-11-01,39833
+Office Products,2023-12-01,36818
+Office Products,2024-01-01,17578
+Office Products,2024-02-01,17883
+Office Products,2024-03-01,20113
+Office Products,2024-04-01,21055
+Office Products,2024-05-01,22537
+Office Products,2024-06-01,21715
+Office Products,2024-07-01,30332
+Office Products,2024-08-01,25595
+Office Products,2024-09-01,21428
+Office Products,2024-10-01,26594
+Office Products,2024-11-01,42186
+Office Products,2024-12-01,36052
+Office Products,2025-01-01,18106
+Office Products,2025-02-01,17323
+Office Products,2025-03-01,18013
+Office Products,2025-04-01,19095
+Office Products,2025-05-01,19697
+Office Products,2025-06-01,18858
+Office Products,2025-07-01,28060
+Office Products,2025-08-01,24458
+Office Products,2025-09-01,19854
+Office Products,2025-10-01,23743
+Office Products,2025-11-01,36256
+Office Products,2025-12-01,29912
+Office Products,2026-01-01,15490
+Office Products,2026-02-01,15018
+Office Products,2026-03-01,16800
+Office Products,2026-04-01,18481
+Office Products,2026-05-01,19593
+Office Products,2026-06-01,19548
+Office Products,2026-07-01,25922
+Office Products,2026-08-01,20769
+Office Products,2026-09-01,18303
+Tools & Home Improvement,2019-12-01,1066
+Tools & Home Improvement,2020-01-01,701
+Tools & Home Improvement,2020-02-01,962
+Tools & Home Improvement,2020-03-01,1368
+Tools & Home Improvement,2020-04-01,1615
+Tools & Home Improvement,2020-05-01,1620
+Tools & Home Improvement,2020-06-01,2127
+Tools & Home Improvement,2020-07-01,2710
+Tools & Home Improvement,2020-08-01,3419
+Tools & Home Improvement,2020-09-01,2719
+Tools & Home Improvement,2020-10-01,4819
+Tools & Home Improvement,2020-11-01,5945
+Tools & Home Improvement,2020-12-01,4878
+Tools & Home Improvement,2021-01-01,2370
+Tools & Home Improvement,2021-02-01,2794
+Tools & Home Improvement,2021-03-01,2867
+Tools & Home Improvement,2021-04-01,1443
+Tools & Home Improvement,2021-05-01,1523
+Tools & Home Improvement,2021-06-01,2680
+Tools & Home Improvement,2021-07-01,2269
+Tools & Home Improvement,2021-08-01,1878
+Tools & Home Improvement,2021-09-01,1744
+Tools & Home Improvement,2021-10-01,2280
+Tools & Home Improvement,2021-11-01,4414
+Tools & Home Improvement,2021-12-01,4239
+Tools & Home Improvement,2022-01-01,1776
+Tools & Home Improvement,2022-02-01,1749
+Tools & Home Improvement,2022-03-01,1769
+Tools & Home Improvement,2022-04-01,2083
+Tools & Home Improvement,2022-05-01,1811
+Tools & Home Improvement,2022-06-01,1690
+Tools & Home Improvement,2022-07-01,2222
+Tools & Home Improvement,2022-08-01,1882
+Tools & Home Improvement,2022-09-01,2126
+Tools & Home Improvement,2022-10-01,2404
+Tools & Home Improvement,2022-11-01,4055
+Tools & Home Improvement,2022-12-01,3784
+Tools & Home Improvement,2023-01-01,1954
+Tools & Home Improvement,2023-02-01,2277
+Tools & Home Improvement,2023-03-01,1953
+Tools & Home Improvement,2023-04-01,1949
+Tools & Home Improvement,2023-05-01,1697
+Tools & Home Improvement,2023-06-01,1655
+Tools & Home Improvement,2023-07-01,2399
+Tools & Home Improvement,2023-08-01,1865
+Tools & Home Improvement,2023-09-01,1437
+Tools & Home Improvement,2023-10-01,2033
+Tools & Home Improvement,2023-11-01,2752
+Tools & Home Improvement,2023-12-01,3057
+Tools & Home Improvement,2024-01-01,1670
+Tools & Home Improvement,2024-02-01,1548
+Tools & Home Improvement,2024-03-01,1627
+Tools & Home Improvement,2024-04-01,1908
+Tools & Home Improvement,2024-05-01,1548
+Tools & Home Improvement,2024-06-01,1803
+Tools & Home Improvement,2024-07-01,2461
+Tools & Home Improvement,2024-08-01,1563
+Tools & Home Improvement,2024-09-01,1595
+Tools & Home Improvement,2024-10-01,1911
+Tools & Home Improvement,2024-11-01,2556
+Tools & Home Improvement,2024-12-01,2786
+Tools & Home Improvement,2025-01-01,1460
+Tools & Home Improvement,2025-02-01,1170
+Tools & Home Improvement,2025-03-01,1489
+Tools & Home Improvement,2025-04-01,1715
+Tools & Home Improvement,2025-05-01,1682
+Tools & Home Improvement,2025-06-01,1457
+Tools & Home Improvement,2025-07-01,2297
+Tools & Home Improvement,2025-08-01,1589
+Tools & Home Improvement,2025-09-01,1577
+Tools & Home Improvement,2025-10-01,1686
+Tools & Home Improvement,2025-11-01,3152
+Tools & Home Improvement,2025-12-01,2510
+Tools & Home Improvement,2026-01-01,1391
+Tools & Home Improvement,2026-02-01,1336
+Tools & Home Improvement,2026-03-01,1094
+Tools & Home Improvement,2026-04-01,1217
+Tools & Home Improvement,2026-05-01,1407
+Tools & Home Improvement,2026-06-01,1539
+Tools & Home Improvement,2026-07-01,2285
+Tools & Home Improvement,2026-08-01,1417
+Tools & Home Improvement,2026-09-01,1469
+Toys & Games,2016-08-01,1240
+Toys & Games,2016-09-01,1541
+Toys & Games,2016-10-01,2475
+Toys & Games,2016-11-01,7253
+Toys & Games,2016-12-01,9598
+Toys & Games,2017-01-01,3665
+Toys & Games,2017-02-01,2845
+Toys & Games,2017-03-01,3242
+Toys & Games,2017-04-01,3055
+Toys & Games,2017-05-01,3473
+Toys & Games,2017-06-01,3033
+Toys & Games,2017-07-01,5362
+Toys & Games,2017-08-01,2906
+Toys & Games,2017-09-01,3144
+Toys & Games,2017-10-01,4458
+Toys & Games,2017-11-01,7088
+Toys & Games,2017-12-01,6019
+Toys & Games,2018-01-01,2349
+Toys & Games,2018-02-01,3396
+Toys & Games,2018-03-01,2549
+Toys & Games,2018-04-01,1981
+Toys & Games,2018-05-01,2403
+Toys & Games,2018-06-01,2767
+Toys & Games,2018-07-01,3267
+Toys & Games,2018-08-01,2389
+Toys & Games,2018-09-01,2516
+Toys & Games,2018-10-01,2257
+Toys & Games,2018-11-01,4358
+Toys & Games,2018-12-01,4384
+Toys & Games,2019-01-01,1141
+Toys & Games,2019-02-01,1343
+Toys & Games,2019-03-01,2312
+Toys & Games,2019-04-01,2043
+Toys & Games,2019-05-01,1647
+Toys & Games,2019-06-01,2191
+Toys & Games,2019-07-01,2885
+Toys & Games,2019-08-01,2343
+Toys & Games,2019-09-01,2073
+Toys & Games,2019-10-01,1798
+Toys & Games,2019-11-01,4189
+Toys & Games,2019-12-01,3287
+Toys & Games,2020-01-01,1447
+Toys & Games,2020-02-01,1271
+Toys & Games,2020-03-01,1187
+Toys & Games,2020-04-01,1923
+Toys & Games,2020-05-01,1969
+Toys & Games,2020-06-01,1812
+Toys & Games,2020-07-01,1694
+Toys & Games,2020-08-01,1641
+Toys & Games,2020-09-01,1625
+Toys & Games,2020-10-01,1515
+Toys & Games,2020-11-01,3995
+Toys & Games,2020-12-01,2796
+Toys & Games,2021-01-01,917
+Toys & Games,2021-02-01,1099
+Toys & Games,2021-03-01,1302
+Toys & Games,2021-04-01,1036
+Toys & Games,2021-05-01,1414
+Toys & Games,2021-06-01,1309
+Toys & Games,2021-07-01,1175
+Toys & Games,2021-08-01,1887
+Toys & Games,2021-09-01,1186
+Toys & Games,2021-10-01,1121
+Toys & Games,2021-11-01,2352
+Toys & Games,2021-12-01,1994
+Toys & Games,2022-01-01,554
+Toys & Games,2022-02-01,799
+Toys & Games,2022-03-01,868
+Toys & Games,2022-04-01,660
+Toys & Games,2022-05-01,868
+Toys & Games,2022-06-01,692
+Toys & Games,2022-07-01,968
+Toys & Games,2022-08-01,799
+Toys & Games,2022-09-01,735
+Toys & Games,2022-10-01,975
+Toys & Games,2022-11-01,2005
+Toys & Games,2022-12-01,1198
+Toys & Games,2023-01-01,447
+Toys & Games,2023-02-01,680
+Toys & Games,2023-03-01,523
+Toys & Games,2023-04-01,483
+Toys & Games,2023-05-01,562
+Toys & Games,2023-06-01,522
+Toys & Games,2023-07-01,985
+Toys & Games,2023-08-01,687
+Toys & Games,2023-09-01,432
+Toys & Games,2023-10-01,525
+Toys & Games,2023-11-01,1218
+Toys & Games,2023-12-01,1153
+Toys & Games,2024-01-01,707
+Toys & Games,2024-02-01,461
+Toys & Games,2024-03-01,478
+Toys & Games,2024-04-01,373
+Toys & Games,2024-05-01,287
+Toys & Games,2024-06-01,392
+Toys & Games,2024-07-01,650
+Toys & Games,2024-08-01,565
+Toys & Games,2024-09-01,387
+Toys & Games,2024-10-01,412
+Toys & Games,2024-11-01,821
+Toys & Games,2024-12-01,1086
+Toys & Games,2025-01-01,346
+Toys & Games,2025-02-01,489
+Toys & Games,2025-03-01,385
+Toys & Games,2025-04-01,439
+Toys & Games,2025-05-01,501
+Toys & Games,2025-06-01,511
+Toys & Games,2025-07-01,804
+Toys & Games,2025-08-01,606
+Toys & Games,2025-09-01,403
+Toys & Games,2025-10-01,420
+Toys & Games,2025-11-01,905
+Toys & Games,2025-12-01,634
+Toys & Games,2026-01-01,215
+Toys & Games,2026-02-01,278
+Toys & Games,2026-03-01,231
+Toys & Games,2026-04-01,249
+Toys & Games,2026-05-01,283
+Toys & Games,2026-06-01,271
+Toys & Games,2026-07-01,346
+Toys & Games,2026-08-01,235
+Toys & Games,2026-09-01,242

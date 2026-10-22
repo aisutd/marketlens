@@ -1,0 +1,18 @@
+# Python / tooling
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ipynb_checkpoints/
+.DS_Store
+
+# Generated HTML copies of the notebooks (re-create with: jupyter nbconvert --to html notebooks/*.ipynb)
+reports/html/
+
+# v1 models from notebook 05, superseded by models/final/ (kept locally for reference)
+models/monthly/
+models/yearly/
+models/product/
