@@ -82,6 +82,19 @@ def _cap_units_at_demand(preds: dict, units: str, demand: str) -> None:
         _set_value(preds[units], preds[demand]["value"])
 
 
+def _demand_at_least_units(preds: dict, units: str, demand: str) -> None:
+    """Used where units sold is the more accurate figure: demand is raised to at least units sold."""
+    if preds[demand]["value"] < preds[units]["value"]:
+        _set_relative(preds[demand], preds[units]["value"], preds[demand])
+
+
+def _set_relative(metric: dict, value: float, error_source: dict) -> None:
+    """Set a derived value, keeping the same relative (%) uncertainty the metric had."""
+    old = error_source["value"]
+    rel = (error_source.get("plus_minus") or 0) / abs(old) if old else 0.0
+    _set_value(metric, value, plus_minus=rel * abs(value))
+
+
 def _direction(change_pct: float) -> str:
     return "increase" if change_pct > 2 else "decrease" if change_pct < -2 else "stable"
 
@@ -137,10 +150,7 @@ class MarketLensPredictor:
             product = ProductInput(**product)
         X = build_product_features(product, self.ref, self.encoders)
         preds = self._format("product", LAUNCH_METRICS, X)
-        _cap_units_at_demand(preds, "units_sold_12m", "demand_units_12m")
-        for m in ("units_sold", "revenue"):
-            if preds[f"{m}_24m"]["value"] < preds[f"{m}_12m"]["value"]:
-                _set_value(preds[f"{m}_24m"], preds[f"{m}_12m"]["value"])
+        self._consistent_launch(preds)
         be = preds["break_even_months"]
         be["display"] = (f"{config.BREAK_EVEN_CAP_MONTHS}+ months" if be["value"] >= config.BREAK_EVEN_CAP_MONTHS - 0.5
                          else f"~{be['value']:.0f} months")
@@ -178,10 +188,10 @@ class MarketLensPredictor:
             promo_depth_pct = round(float(np.clip((1 - expected_price / X0.everyday_price.iloc[0]) * 100, 0, 50)), 1)
             X = build(promo_depth_pct)
         preds = self._format("monthly", MONTHLY_METRICS, X)
-        _cap_units_at_demand(preds, "units_sold", "demand_units")
         if planned:   # the seller sets the price, so it is known exactly
             preds["avg_price"].update(value=round(float(X.avg_price.iloc[0]), 2), plus_minus=0.0,
                                       range=[round(float(X.avg_price.iloc[0]), 2)] * 2, source="planned")
+        self._consistent_month(preds, X)
         # Demand trend: the demand forecast compared with last month's actual demand
         last_demand = float(X.demand_units_lag1.iloc[0])
         change = (preds["demand_units"]["value"] / last_demand - 1) * 100 if last_demand > 0 else 0.0
@@ -191,6 +201,35 @@ class MarketLensPredictor:
                 "month": X.month.iloc[0].strftime("%Y-%m"), "promo_depth_pct": promo_depth_pct,
                 "promo_source": "planned by seller" if planned else "expected from history",
                 "predictions": preds, "demand_trend": trend, "notes": []}
+
+    @staticmethod
+    def _consistent_launch(preds: dict) -> None:
+        """Revenue and price are the most accurate launch models (test accuracy 92% / 94%), so units are derived from
+        them (units = revenue / price: 92% vs 80% for the units model), and the rest follows."""
+        if preds["revenue_24m"]["value"] < preds["revenue_12m"]["value"]:
+            _set_relative(preds["revenue_24m"], preds["revenue_12m"]["value"], preds["revenue_24m"])
+        price = preds["avg_price_12m"]["value"]
+        if price > 0:
+            for h in ("12m", "24m"):
+                _set_relative(preds[f"units_sold_{h}"], preds[f"revenue_{h}"]["value"] / price, preds[f"units_sold_{h}"])
+        _demand_at_least_units(preds, "units_sold_12m", "demand_units_12m")
+        _set_relative(preds["avg_monthly_demand_12m"], preds["demand_units_12m"]["value"] / 12, preds["avg_monthly_demand_12m"])
+        # profit_12m / profit_24m are already revenue × margin
+
+    @staticmethod
+    def _consistent_month(preds: dict, X: pd.DataFrame) -> None:
+        """Units and price are predicted directly; revenue = units × price and profit = revenue × margin
+        (both more accurate on test data than the separate revenue / profit models)."""
+        _cap_units_at_demand(preds, "units_sold", "demand_units")
+        revenue = preds["units_sold"]["value"] * preds["avg_price"]["value"]
+        _set_relative(preds["gross_revenue"], revenue, preds["gross_revenue"])
+        _set_relative(preds["net_profit"], revenue * preds["profit_margin_pct"]["value"] / 100, preds["net_profit"])
+        # cumulative ROI = last month's cumulative ROI + this month's profit / capital invested
+        cum_prev, cum_profit_prev = float(X.roi_cum_pct_lag1.iloc[0]), float(X.cum_net_profit_lag1.iloc[0])
+        if abs(cum_prev) > 1 and cum_profit_prev / cum_prev > 0:
+            capital = cum_profit_prev / cum_prev * 100
+            _set_value(preds["roi_cum_pct"], cum_prev + preds["net_profit"]["value"] / capital * 100, signed=True,
+                       plus_minus=(preds["net_profit"]["plus_minus"] or 0) / capital * 100)
 
     @staticmethod
     def _consistent_roi(preds: dict, yh: pd.DataFrame, X: pd.DataFrame, year: int, prev_cum_override: Optional[float] = None,
@@ -233,7 +272,13 @@ class MarketLensPredictor:
         X, notes = build_year_features(yh, year, promo_months, prev_override)
         notes = extra_notes + notes
         preds = self._format("yearly", YEARLY_METRICS, X)
-        _cap_units_at_demand(preds, "units_sold", "demand_units")
+        # Revenue, price and profit are the strongest yearly models: units = revenue / price (91% vs 86%),
+        # margin = profit / revenue, demand >= units, and ROI follows profit.
+        if preds["avg_price"]["value"] > 0:
+            _set_relative(preds["units_sold"], preds["gross_revenue"]["value"] / preds["avg_price"]["value"], preds["units_sold"])
+        _demand_at_least_units(preds, "units_sold", "demand_units")
+        if preds["gross_revenue"]["value"] > 0:
+            _set_value(preds["profit_margin_pct"], preds["net_profit"]["value"] / preds["gross_revenue"]["value"] * 100, signed=True)
         self._consistent_roi(preds, yh, X, year, prev_cum, prev_cum_err)
         # Year-over-year demand change: the yearly demand forecast compared with last year's demand
         prev_demand, prev_months = float(X.demand_units_prev_year.iloc[0]), int(X.months_active_prev_year.iloc[0])

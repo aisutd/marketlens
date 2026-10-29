@@ -104,3 +104,20 @@ def test_roi_range_follows_profit_range(predictor):
         roi_lo, roi_hi = p["roi_year_pct"]["range"]
         assert (profit_lo > 0) == (roi_lo > 0) and roi_lo < p["roi_year_pct"]["value"] < roi_hi
         assert profit_hi / profit_lo == pytest.approx(roi_hi / roi_lo, rel=0.01) if profit_lo > 0 else True
+
+
+def test_money_identities_hold(predictor, power_bank):
+    """revenue = units × price, profit = revenue × margin, monthly demand = 12-month demand / 12."""
+    approx = lambda a, b: a == pytest.approx(b, rel=2e-3, abs=0.05)
+    l = predictor.predict_launch(power_bank)["predictions"]
+    assert approx(l["units_sold_12m"]["value"] * l["avg_price_12m"]["value"], l["revenue_12m"]["value"])
+    assert approx(l["avg_monthly_demand_12m"]["value"] * 12, l["demand_units_12m"]["value"])
+    assert l["demand_units_12m"]["value"] >= l["units_sold_12m"]["value"]
+    for pid in predictor.products().product_id.iloc[:15]:
+        m = predictor.predict_next_month(pid)["predictions"]
+        assert approx(m["units_sold"]["value"] * m["avg_price"]["value"], m["gross_revenue"]["value"])
+        assert approx(m["gross_revenue"]["value"] * m["profit_margin_pct"]["value"] / 100, m["net_profit"]["value"])
+        y = predictor.predict_year(pid, 2026)["predictions"]
+        assert approx(y["units_sold"]["value"] * y["avg_price"]["value"], y["gross_revenue"]["value"])
+        assert approx(y["gross_revenue"]["value"] * y["profit_margin_pct"]["value"] / 100, y["net_profit"]["value"])
+        assert y["demand_units"]["value"] >= y["units_sold"]["value"]

@@ -42,10 +42,13 @@ This part of the project covers data preparation, model training and a Python `p
 
 Every prediction comes with a `plus_minus` (the model's typical error on unseen test data) and a `range`.
 
-**Consistency rules:** each metric has its own model, so the predictor enforces basic business logic on top:
-units sold never exceed demand; 24-month totals are at least the 12-month totals; yearly ROI is computed from the
-predicted profit and the product's investment, and cumulative ROI is last year's cumulative ROI plus this year's.
-When last year is only partly observed (history ends Sep 2026), its full-year forecast is used as "last year".
+**Consistency rules:** each metric has its own model, so the predictor makes related numbers agree, always deriving
+the weaker figure from the stronger ones (checked on test data):
+revenue = units × price and profit = revenue × margin everywhere; units sold never exceed demand;
+launch and yearly units come from revenue ÷ price (more accurate than the units models); monthly revenue and profit come
+from units × price × margin; 24-month totals are at least the 12-month totals; ROI is computed from predicted profit and
+the product's investment, and cumulative ROI chains period to period. When last year is only partly observed
+(history ends Sep 2026), its full-year forecast is used as "last year".
 
 **Demand trends** come from the demand forecast compared with the last actual period, not from a separate model:
 the monthly increase/decrease is right ~82% of the time; the yearly change is right ~87% on direction and typically ±7 % points.
