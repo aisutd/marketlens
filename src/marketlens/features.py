@@ -194,8 +194,16 @@ def build_next_month_features(history: pd.DataFrame, calendar: pd.DataFrame, rat
 OBS_PARTIAL_YEAR = 2026   # the simulated history ends in Sep 2026
 
 
-def build_year_features(yearly: pd.DataFrame, year: int, promo_months: Optional[int] = None) -> tuple[pd.DataFrame, list]:
-    """Feature row for `year` (one product, yearly rows from data/final). Returns (row, notes)."""
+PREV_YEAR_FIELDS = ["units_sold", "demand_units", "gross_revenue", "net_profit", "profit_margin_pct", "avg_price"]
+
+
+def build_year_features(yearly: pd.DataFrame, year: int, promo_months: Optional[int] = None,
+                        prev_override: Optional[dict] = None) -> tuple[pd.DataFrame, list]:
+    """Feature row for `year` (one product, yearly rows from data/final). Returns (row, notes).
+
+    prev_override: full-year figures to use for the previous year (e.g. its forecast when that year is only
+    partly observed). Without it, a partly observed previous year is annualised linearly.
+    """
     y = yearly.sort_values("year").set_index("year")
     notes = []
     if year - 1 not in y.index:
@@ -203,7 +211,11 @@ def build_year_features(yearly: pd.DataFrame, year: int, promo_months: Optional[
     last = y.iloc[-1]
     launch_year = int(last.name - last.years_since_launch)
     prev = y.loc[year - 1].copy()
-    if year - 1 == OBS_PARTIAL_YEAR and prev.months_active < 12 and launch_year < OBS_PARTIAL_YEAR:
+    if prev_override is not None:
+        for c in PREV_YEAR_FIELDS:
+            prev[c] = prev_override[c]
+        prev["months_active"] = 12
+    elif year - 1 == OBS_PARTIAL_YEAR and prev.months_active < 12 and launch_year < OBS_PARTIAL_YEAR:
         scale = 12 / prev.months_active
         for c in ["units_sold", "demand_units", "gross_revenue", "net_profit"]:
             prev[c] = prev[c] * scale
@@ -214,7 +226,7 @@ def build_year_features(yearly: pd.DataFrame, year: int, promo_months: Optional[
     row.update({"year": year, "years_since_launch": year - launch_year, "months_active": months_active,
                 "is_partial_year": int(months_active < 12),
                 "promo_months": promo_months if promo_months is not None else int(round(prev.promo_months * 12 / max(prev.months_active, 1)))})
-    for c in ["units_sold", "demand_units", "gross_revenue", "net_profit", "profit_margin_pct", "avg_price"]:
+    for c in PREV_YEAR_FIELDS:
         row[f"{c}_prev_year"] = float(prev[c])
     row["months_active_prev_year"] = int(prev.months_active)
     return pd.DataFrame([row]), notes

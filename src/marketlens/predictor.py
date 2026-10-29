@@ -15,8 +15,8 @@ import numpy as np
 import pandas as pd
 
 from . import config
-from .features import (ProductInput, build_next_month_features, build_product_features, build_year_features,
-                       category_info)
+from .features import (OBS_PARTIAL_YEAR, PREV_YEAR_FIELDS, ProductInput, build_next_month_features,
+                       build_product_features, build_year_features, category_info)
 from .models import load_bundles, predict_target
 
 # target -> (label, unit, can_be_negative)
@@ -62,6 +62,21 @@ YEARLY_METRICS = {
 
 
 RELATIVE_UNITS = {"units", "units/month", "USD", "months"}
+
+
+def _set_value(metric: dict, value: float, signed: bool = False) -> None:
+    """Replace a metric's value (after a consistency rule), keeping its typical error and recomputing the range."""
+    metric["value"] = round(float(value), 2)
+    err = metric.get("plus_minus")
+    if err is not None:
+        lo = metric["value"] - err
+        metric["range"] = [round(lo if signed else max(lo, 0.0), 2), round(metric["value"] + err, 2)]
+
+
+def _cap_units_at_demand(preds: dict, units: str, demand: str) -> None:
+    """You can't sell more than customers want: units sold <= demand."""
+    if preds[units]["value"] > preds[demand]["value"]:
+        _set_value(preds[units], preds[demand]["value"])
 
 
 def _direction(change_pct: float) -> str:
@@ -119,6 +134,10 @@ class MarketLensPredictor:
             product = ProductInput(**product)
         X = build_product_features(product, self.ref, self.encoders)
         preds = self._format("product", LAUNCH_METRICS, X)
+        _cap_units_at_demand(preds, "units_sold_12m", "demand_units_12m")
+        for m in ("units_sold", "revenue"):
+            if preds[f"{m}_24m"]["value"] < preds[f"{m}_12m"]["value"]:
+                _set_value(preds[f"{m}_24m"], preds[f"{m}_12m"]["value"])
         be = preds["break_even_months"]
         be["display"] = (f"{config.BREAK_EVEN_CAP_MONTHS}+ months" if be["value"] >= config.BREAK_EVEN_CAP_MONTHS - 0.5
                          else f"~{be['value']:.0f} months")
@@ -156,6 +175,7 @@ class MarketLensPredictor:
             promo_depth_pct = round(float(np.clip((1 - expected_price / X0.everyday_price.iloc[0]) * 100, 0, 50)), 1)
             X = build(promo_depth_pct)
         preds = self._format("monthly", MONTHLY_METRICS, X)
+        _cap_units_at_demand(preds, "units_sold", "demand_units")
         if planned:   # the seller sets the price, so it is known exactly
             preds["avg_price"].update(value=round(float(X.avg_price.iloc[0]), 2), plus_minus=0.0,
                                       range=[round(float(X.avg_price.iloc[0]), 2)] * 2, source="planned")
@@ -169,13 +189,46 @@ class MarketLensPredictor:
                 "promo_source": "planned by seller" if planned else "expected from history",
                 "predictions": preds, "demand_trend": trend, "notes": []}
 
+    @staticmethod
+    def _consistent_roi(preds: dict, yh: pd.DataFrame, X: pd.DataFrame, year: int, prev_cum_override: Optional[float] = None) -> None:
+        """ROI = profit / capital invested. Capital is recovered from the product's own history
+        (net_profit / roi_year_pct), so ROI moves with the profit forecast, and
+        cumulative ROI = cumulative ROI at the end of last year + this year's ROI."""
+        hist = yh[yh.roi_year_pct.abs() > 1]
+        if hist.empty:
+            return
+        capital = float((hist.net_profit / hist.roi_year_pct * 100).median())
+        if capital <= 0:
+            return
+        roi_year = preds["net_profit"]["value"] / capital * 100
+        _set_value(preds["roi_year_pct"], roi_year, signed=True)
+        if prev_cum_override is not None:     # last year was itself forecast (partly observed year)
+            prev_cum = prev_cum_override
+        else:
+            prev = yh[yh.year == year - 1].iloc[0]
+            prev_cum = float(prev.roi_cum_pct)
+        _set_value(preds["roi_cum_pct"], prev_cum + roi_year, signed=True)
+
     def predict_year(self, product_id: str, year: int = 2026, promo_months: Optional[int] = None) -> dict:
         """Full-year forecast for a calendar year (needs the previous year's history)."""
         yh = self.yearly_history[self.yearly_history.product_id == product_id]
         if yh.empty:
             raise KeyError(f"Unknown product_id {product_id!r}")
-        X, notes = build_year_features(yh, year, promo_months)
+        # If last year is only partly observed (history ends Sep 2026), use its full-year forecast as "last year",
+        # so the numbers chain together: this year's change, ROI and cumulative ROI build on that forecast.
+        prev_override, prev_cum, extra_notes = None, None, []
+        prev_rows = yh[yh.year == year - 1]
+        if (year - 1 == OBS_PARTIAL_YEAR and len(prev_rows) and prev_rows.months_active.iloc[0] < 12
+                and (yh.year < OBS_PARTIAL_YEAR).any()):
+            prev_fc = self.predict_year(product_id, year - 1, promo_months)["predictions"]
+            prev_override = {k: prev_fc[k]["value"] for k in PREV_YEAR_FIELDS}
+            prev_cum = prev_fc["roi_cum_pct"]["value"]
+            extra_notes.append(f"{year - 1} is only observed through September; its full-year forecast is used as last year.")
+        X, notes = build_year_features(yh, year, promo_months, prev_override)
+        notes = extra_notes + notes
         preds = self._format("yearly", YEARLY_METRICS, X)
+        _cap_units_at_demand(preds, "units_sold", "demand_units")
+        self._consistent_roi(preds, yh, X, year, prev_cum)
         # Year-over-year demand change: the yearly demand forecast compared with last year's demand
         prev_demand, prev_months = float(X.demand_units_prev_year.iloc[0]), int(X.months_active_prev_year.iloc[0])
         acc = self.ref["trend_accuracy"]

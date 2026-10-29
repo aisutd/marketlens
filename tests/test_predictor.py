@@ -51,7 +51,7 @@ def test_next_month_forecast(predictor):
     json.dumps(r)
 
 
-def test_year_forecasts_and_annualised_partial_year(predictor):
+def test_year_forecasts_chain_onto_partial_year(predictor):
     pid = predictor.products().product_id.iloc[0]
     r26 = predictor.predict_year(pid, 2026)
     r27 = predictor.predict_year(pid, 2027)
@@ -60,7 +60,8 @@ def test_year_forecasts_and_annualised_partial_year(predictor):
     assert yoy["direction"] in {"increase", "decrease", "stable"}
     expected = (r26["predictions"]["demand_units"]["value"] / yoy["last_year_demand"] - 1) * 100
     assert yoy["value"] == pytest.approx(expected, abs=0.1)
-    assert any("annualised" in n for n in r27["notes"])
+    assert any("full-year forecast is used as last year" in n for n in r27["notes"])
+    assert r27["demand_change_yoy"]["last_year_demand"] == round(r26["predictions"]["demand_units"]["value"])
     with pytest.raises(ValueError):
         predictor.predict_year(pid, 2035)
 
@@ -73,3 +74,23 @@ def test_only_34_models_are_deployed(predictor):
 def test_unknown_product_id(predictor):
     with pytest.raises(KeyError):
         predictor.predict_next_month("NOT_A_PRODUCT")
+
+
+def test_predictions_are_internally_consistent(predictor, power_bank):
+    """Separate models can disagree; the predictor enforces basic business rules."""
+    launch = predictor.predict_launch(power_bank)["predictions"]
+    assert launch["units_sold_12m"]["value"] <= launch["demand_units_12m"]["value"]
+    assert launch["units_sold_24m"]["value"] >= launch["units_sold_12m"]["value"]
+    assert launch["revenue_24m"]["value"] >= launch["revenue_12m"]["value"]
+    for pid in predictor.products().product_id.iloc[:20]:
+        month = predictor.predict_next_month(pid)["predictions"]
+        assert month["units_sold"]["value"] <= month["demand_units"]["value"]
+        r26, r27 = predictor.predict_year(pid, 2026), predictor.predict_year(pid, 2027)
+        for r in (r26, r27):
+            p = r["predictions"]
+            assert p["units_sold"]["value"] <= p["demand_units"]["value"]
+            assert p["roi_year_pct"]["range"][0] <= p["roi_year_pct"]["value"] <= p["roi_year_pct"]["range"][1]
+        # higher profit <-> higher ROI (same investment), and cumulative ROI keeps adding up
+        a, b = r26["predictions"], r27["predictions"]
+        assert (a["net_profit"]["value"] - b["net_profit"]["value"]) * (a["roi_year_pct"]["value"] - b["roi_year_pct"]["value"]) >= 0
+        assert b["roi_cum_pct"]["value"] - a["roi_cum_pct"]["value"] == pytest.approx(b["roi_year_pct"]["value"], abs=0.05)
