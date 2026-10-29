@@ -94,3 +94,13 @@ def test_predictions_are_internally_consistent(predictor, power_bank):
         a, b = r26["predictions"], r27["predictions"]
         assert (a["net_profit"]["value"] - b["net_profit"]["value"]) * (a["roi_year_pct"]["value"] - b["roi_year_pct"]["value"]) >= 0
         assert b["roi_cum_pct"]["value"] - a["roi_cum_pct"]["value"] == pytest.approx(b["roi_year_pct"]["value"], abs=0.05)
+
+
+def test_roi_range_follows_profit_range(predictor):
+    pid = predictor.products().product_id.iloc[0]
+    for year in (2026, 2027):
+        p = predictor.predict_year(pid, year)["predictions"]
+        profit_lo, profit_hi = p["net_profit"]["range"]
+        roi_lo, roi_hi = p["roi_year_pct"]["range"]
+        assert (profit_lo > 0) == (roi_lo > 0) and roi_lo < p["roi_year_pct"]["value"] < roi_hi
+        assert profit_hi / profit_lo == pytest.approx(roi_hi / roi_lo, rel=0.01) if profit_lo > 0 else True

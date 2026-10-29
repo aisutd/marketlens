@@ -64,9 +64,12 @@ YEARLY_METRICS = {
 RELATIVE_UNITS = {"units", "units/month", "USD", "months"}
 
 
-def _set_value(metric: dict, value: float, signed: bool = False) -> None:
-    """Replace a metric's value (after a consistency rule), keeping its typical error and recomputing the range."""
+def _set_value(metric: dict, value: float, signed: bool = False, plus_minus: Optional[float] = None) -> None:
+    """Replace a metric's value (after a consistency rule) and recompute its range.
+    Keeps the metric's typical error unless a derived one is given."""
     metric["value"] = round(float(value), 2)
+    if plus_minus is not None:
+        metric["plus_minus"] = round(float(plus_minus), 2)
     err = metric.get("plus_minus")
     if err is not None:
         lo = metric["value"] - err
@@ -190,7 +193,8 @@ class MarketLensPredictor:
                 "predictions": preds, "demand_trend": trend, "notes": []}
 
     @staticmethod
-    def _consistent_roi(preds: dict, yh: pd.DataFrame, X: pd.DataFrame, year: int, prev_cum_override: Optional[float] = None) -> None:
+    def _consistent_roi(preds: dict, yh: pd.DataFrame, X: pd.DataFrame, year: int, prev_cum_override: Optional[float] = None,
+                        prev_cum_err: float = 0.0) -> None:
         """ROI = profit / capital invested. Capital is recovered from the product's own history
         (net_profit / roi_year_pct), so ROI moves with the profit forecast, and
         cumulative ROI = cumulative ROI at the end of last year + this year's ROI."""
@@ -201,13 +205,15 @@ class MarketLensPredictor:
         if capital <= 0:
             return
         roi_year = preds["net_profit"]["value"] / capital * 100
-        _set_value(preds["roi_year_pct"], roi_year, signed=True)
+        roi_err = (preds["net_profit"]["plus_minus"] or 0) / capital * 100     # ROI uncertainty follows profit's
+        _set_value(preds["roi_year_pct"], roi_year, signed=True, plus_minus=roi_err)
         if prev_cum_override is not None:     # last year was itself forecast (partly observed year)
             prev_cum = prev_cum_override
         else:
             prev = yh[yh.year == year - 1].iloc[0]
             prev_cum = float(prev.roi_cum_pct)
-        _set_value(preds["roi_cum_pct"], prev_cum + roi_year, signed=True)
+        # past years are known; only forecast years add uncertainty
+        _set_value(preds["roi_cum_pct"], prev_cum + roi_year, signed=True, plus_minus=prev_cum_err + roi_err)
 
     def predict_year(self, product_id: str, year: int = 2026, promo_months: Optional[int] = None) -> dict:
         """Full-year forecast for a calendar year (needs the previous year's history)."""
@@ -216,19 +222,19 @@ class MarketLensPredictor:
             raise KeyError(f"Unknown product_id {product_id!r}")
         # If last year is only partly observed (history ends Sep 2026), use its full-year forecast as "last year",
         # so the numbers chain together: this year's change, ROI and cumulative ROI build on that forecast.
-        prev_override, prev_cum, extra_notes = None, None, []
+        prev_override, prev_cum, prev_cum_err, extra_notes = None, None, 0.0, []
         prev_rows = yh[yh.year == year - 1]
         if (year - 1 == OBS_PARTIAL_YEAR and len(prev_rows) and prev_rows.months_active.iloc[0] < 12
                 and (yh.year < OBS_PARTIAL_YEAR).any()):
             prev_fc = self.predict_year(product_id, year - 1, promo_months)["predictions"]
             prev_override = {k: prev_fc[k]["value"] for k in PREV_YEAR_FIELDS}
-            prev_cum = prev_fc["roi_cum_pct"]["value"]
+            prev_cum, prev_cum_err = prev_fc["roi_cum_pct"]["value"], prev_fc["roi_cum_pct"]["plus_minus"] or 0.0
             extra_notes.append(f"{year - 1} is only observed through September; its full-year forecast is used as last year.")
         X, notes = build_year_features(yh, year, promo_months, prev_override)
         notes = extra_notes + notes
         preds = self._format("yearly", YEARLY_METRICS, X)
         _cap_units_at_demand(preds, "units_sold", "demand_units")
-        self._consistent_roi(preds, yh, X, year, prev_cum)
+        self._consistent_roi(preds, yh, X, year, prev_cum, prev_cum_err)
         # Year-over-year demand change: the yearly demand forecast compared with last year's demand
         prev_demand, prev_months = float(X.demand_units_prev_year.iloc[0]), int(X.months_active_prev_year.iloc[0])
         acc = self.ref["trend_accuracy"]
