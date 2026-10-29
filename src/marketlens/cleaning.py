@@ -1,11 +1,16 @@
 """Raw Amazon scrape -> clean U.S. product table (port of notebooks/01_data_cleaning.ipynb).
 
-The output matches data/interim/amazon_us_clean.csv exactly for the same seed.
+The output matches data/interim/amazon_us_clean.csv exactly for the same seed, on any machine:
+the row order used for the seeded price noise is pinned in data/reference/cleaning_row_order.csv.
+(Sorting alone isn't enough: products with tied review counts can sort differently across CPU
+architectures, which would shuffle the noise between them.)
 """
 import numpy as np
 import pandas as pd
 
-from .config import DISCOUNT_CAP_PCT, FX_INR_PER_USD, SEED
+from .config import DISCOUNT_CAP_PCT, FX_INR_PER_USD, REFERENCE, SEED
+
+ROW_ORDER_FILE = REFERENCE / "cleaning_row_order.csv"
 
 TEXT_COLS = ["review_title", "review_content", "user_id", "review_id"]
 BRAND_FIX = {"boAt": "boAt", "MI": "Xiaomi", "Redmi": "Xiaomi", "Mi": "Xiaomi"}
@@ -59,6 +64,17 @@ def _join_unique(s: pd.Series) -> str:
     return ",".join(parts)
 
 
+def _pinned_rows(raw: pd.DataFrame):
+    """Raw row labels (in order) behind the committed cleaned data, if this is that same raw file."""
+    if not ROW_ORDER_FILE.exists():
+        return None
+    pinned = pd.read_csv(ROW_ORDER_FILE)
+    rows = pinned.raw_row.tolist()
+    if not raw.index.is_unique or not set(rows) <= set(raw.index) or (raw.loc[rows, "product_id"].values != pinned.product_id.values).any():
+        return None
+    return rows
+
+
 def clean_raw(raw: pd.DataFrame, seed: int = SEED) -> dict:
     """Clean the raw scrape. Returns {"clean", "catalogue", "audit"} DataFrames."""
     rng = np.random.default_rng(seed)
@@ -75,10 +91,13 @@ def clean_raw(raw: pd.DataFrame, seed: int = SEED) -> dict:
     p10 = df.groupby(main)["rating_count"].transform(lambda s: s.quantile(0.10))
     df["rating_count"] = df["rating_count"].fillna(p10).round()
 
-    # One row per ASIN: numbers from the snapshot with the most reviews, union of review text
-    df = df.sort_values("rating_count", ascending=False)
+    # One row per ASIN: numbers from the snapshot with the most reviews, union of review text.
+    # Stable sort + pinned row order -> identical results on every platform.
+    df = df.sort_values("rating_count", ascending=False, kind="mergesort")
     merged_text = df.groupby("product_id")[TEXT_COLS].agg(_join_unique)
-    df = df.drop_duplicates("product_id", keep="first").set_index("product_id")
+    pinned = _pinned_rows(raw)
+    df = df.loc[pinned] if pinned is not None else df.drop_duplicates("product_id", keep="first")
+    df = df.set_index("product_id")
     df[TEXT_COLS] = merged_text
     df = df.reset_index()
 

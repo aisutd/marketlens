@@ -35,3 +35,19 @@ def test_cleaning_reproduces_saved_interim_output():
     saved = pd.read_csv(INTERIM / "amazon_us_clean.csv").sort_values("product_id").reset_index(drop=True)
     assert len(clean) == 1351 and clean.product_id.is_unique
     pd.testing.assert_frame_equal(clean, saved, check_dtype=False, check_exact=False, rtol=1e-9)
+
+
+@pytest.mark.skipif(not RAW_CSV.exists(), reason="raw amazon.csv not available")
+def test_cleaning_is_independent_of_tie_order(monkeypatch):
+    """Products with equal review counts can sort differently on other CPUs; output must not change."""
+    original = pd.DataFrame.sort_values
+
+    def flipped_ties(self, by, *args, **kwargs):
+        kwargs.pop("kind", None)
+        return original(self.iloc[::-1], by, *args, kind="mergesort", **kwargs)
+
+    monkeypatch.setattr(pd.DataFrame, "sort_values", flipped_ties)
+    clean = load_and_clean(RAW_CSV)["clean"].sort_values("product_id").reset_index(drop=True)
+    monkeypatch.undo()
+    saved = pd.read_csv(INTERIM / "amazon_us_clean.csv").sort_values("product_id").reset_index(drop=True)
+    pd.testing.assert_frame_equal(clean, saved, check_dtype=False, check_exact=False, rtol=1e-9)
