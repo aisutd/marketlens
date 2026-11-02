@@ -1,0 +1,14 @@
+# Send only what the API needs to Docker; everything else is excluded.
+*
+!requirements-api.txt
+!pyproject.toml
+!src
+!models/final
+!data/reference
+!data/final/monthly_train.csv
+!data/final/monthly_test.csv
+!data/final/yearly_train.csv
+!data/final/yearly_test.csv
+!data/final/yearly_2026_partial.csv
+**/__pycache__
+**/.DS_Store
