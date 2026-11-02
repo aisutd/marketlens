@@ -7,10 +7,11 @@ data/
 .DS_Store
 
 # ---- Shared rules for every team's folder ----
-# Data and models never go into git: the shared data/ at the root, product_success/models/, and model or
+# Data and models never go into git: the shared data/ at the root, each team's models/ folder, and model or
 # data files anywhere (by extension). Ask before adding an exception for a small file.
 DATA/
 product_success/models/
+sales_forecast/models/
 *.joblib
 *.npy
 *.onnx
