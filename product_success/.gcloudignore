@@ -1,0 +1,41 @@
+# Upload to Cloud Build only what the Dockerfile copies. Without this file gcloud falls back to .gitignore,
+# which leaves models/ out. Same syntax as .gitignore: ignore everything, then re-include.
+/*
+
+!/Dockerfile
+!/.dockerignore
+
+!/api/
+/api/tests/
+/api/requirements-dev.txt
+
+!/predict.py
+!/paths.py
+
+!/training/
+/training/*
+!/training/__init__.py
+!/training/compare_models.py
+!/training/improve_xgb.py
+!/training/optional_features.py
+
+!/models/
+/models/*
+!/models/embed_model.joblib
+!/models/reference_tables.joblib
+!/models/minilm-onnx/
+
+# Never, even if a rule above would let them in
+data/
+DATA/
+*.csv
+*.csv.gz
+*.jsonl.gz
+*.parquet
+.git/
+.venv/
+venv*/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
