@@ -53,7 +53,22 @@ on held-out data, monthly revenue, monthly profit and launch units improved, whi
 **Demand trends** come from the demand forecast compared with the last actual period, not from a separate model:
 the monthly increase/decrease is right ~82% of the time; the yearly change is right ~87% on direction and typically ±7 % points.
 
+### Getting the data and models
+
+The data (`amazon.csv`, `data/`) and the trained models (`models/final/`) are not in git. They are kept at the tag
+`sales-forecast-data-v1`. Restore them into this folder from the repository root:
+
+```bash
+git fetch origin tag sales-forecast-data-v1
+git archive sales-forecast-data-v1 models/final data amazon.csv | tar -x -C sales_forecast
+```
+
+This writes 58 files (about 184 MB) to `sales_forecast/amazon.csv`, `sales_forecast/data/` and `sales_forecast/models/final/`,
+all gitignored. The notebooks (`notebooks/`) and figures and metrics (`reports/`) are not on `main`; they stay at the same tag.
+
 ### Quick start
+
+Run these from the `sales_forecast/` folder (`cd sales_forecast`):
 
 ```bash
 python3 -m venv .venv
@@ -91,7 +106,7 @@ predictor.predict_year("B07JW9H4J1", 2026)
 All results are plain JSON-serialisable dicts, ready to return from an API endpoint.
 
 The package finds the project folder (the one holding `models/final`) automatically when run from inside it.
-Elsewhere, set `MARKETLENS_ROOT=/path/to/MarketLens`.
+Elsewhere, set `MARKETLENS_ROOT=/path/to/MarketLens/sales_forecast`.
 
 ### Project structure
 
@@ -170,7 +185,7 @@ The API wraps `MarketLensPredictor` and `ProductInput` without retraining models
 
 ### Install and run
 
-Use Python 3.11 or newer (validated with Python 3.12), from the repository root:
+Use Python 3.11 or newer (validated with Python 3.12), from the `sales_forecast/` folder:
 
 ```bash
 python3 -m venv .venv
@@ -182,7 +197,7 @@ export MARKETLENS_CORS_ORIGINS="http://localhost:3000,http://localhost:5173"
 python -m uvicorn marketlens.api.app:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-Alternatively, `pip install -e '.[api,dev]'` alone installs the library, API, and test dependencies without the optional notebook tools; `requirements.txt` pins the versions tested together. `--reload` is for development. Run from the repository root or set `MARKETLENS_ROOT` to its absolute path so the library can find model and data files. Each additional server worker loads its own models and histories.
+Alternatively, `pip install -e '.[api,dev]'` alone installs the library, API, and test dependencies without the optional notebook tools; `requirements.txt` pins the versions tested together. `--reload` is for development. Run from the `sales_forecast/` folder or set `MARKETLENS_ROOT` to its absolute path so the library can find model and data files. Each additional server worker loads its own models and histories.
 
 Open `/docs` on your running server for Swagger UI, `/redoc` for ReDoc, and `/openapi.json` for the schema. For a basic readiness check:
 
@@ -241,6 +256,8 @@ console.log(forecast.predictions.gross_revenue); // value, unit, plus_minus, ran
 Set `MARKETLENS_CORS_ORIGINS` before starting the server to a comma-separated list of exact frontend origins (scheme, hostname, port; no paths). By default, no cross-origin browser access is enabled. Wildcards are rejected; browser credentials are disabled. CORS is a browser policy, not authentication. Authentication, rate limiting, and deployment hardening remain future integration work; this development API should not be exposed publicly as-is.
 
 ### Tests and data limitations
+
+From the `sales_forecast/` folder:
 
 ```bash
 python -m pytest -q                   # existing ML tests plus API tests

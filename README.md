@@ -31,6 +31,7 @@ requirements and (if it deploys) its own Dockerfile.
 | Folder | What it is |
 |--------|------------|
 | [`product_success/`](product_success/README.md) | The product success model: training, the `predict.py` CLI, and the scoring API on Cloud Run |
+| [`sales_forecast/`](sales_forecast/README.md) | The sales forecast: units, revenue, profit, margin, ROI and break-even predictions, and their API |
 | [`frontend/`](frontend/README.md) | The web app (React + Vite) |
 | `data/` | Shared raw and cleaned CSVs, **gitignored**: every team reads from here, nobody commits it |
 
