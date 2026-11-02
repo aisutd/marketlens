@@ -20,7 +20,7 @@ import LaunchFeasibility from "./pages/LaunchFeasibility";
 /**
  * Main MarketLens application.
  *
- * Manages product information and the independent results
+ * Manages the current product and the independent results
  * returned by the scoring and forecasting backends.
  */
 export default function App() {
@@ -39,17 +39,17 @@ export default function App() {
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-gradient-to-b from-[#F8FAFC] to-[#DCE3EA]">
-        {/* Navigation shared by all application pages. */}
+        {/* Shared navigation. */}
         <Header />
 
         <Routes>
-          {/* Open Discover when visiting the application root. */}
+          {/* Redirect the root URL to Discover. */}
           <Route
             path="/"
             element={<Navigate to="/discover" replace />}
           />
 
-          {/* Search by attributes or Product ID. */}
+          {/* Search by product details or Product ID. */}
           <Route
             path="/discover"
             element={
@@ -62,7 +62,7 @@ export default function App() {
             }
           />
 
-          {/* Display scoring and forecasting results together. */}
+          {/* Display scoring and forecasting results. */}
           <Route
             path="/overview"
             element={
@@ -74,15 +74,22 @@ export default function App() {
             }
           />
 
-          {/* Explain the current product's opportunity score. */}
+          {/*
+            FIX: Pass both the scored product and its prediction.
+            ScoreDetails needs both to display the opportunity
+            score and request explanations from the scoring API.
+          */}
           <Route
             path="/score-details"
             element={
-              <ScoreDetails product={scoredProduct} />
+              <ScoreDetails
+                product={scoredProduct}
+                prediction={prediction}
+              />
             }
           />
 
-          {/* Run pricing scenarios for scored products only. */}
+          {/* Pricing scenarios for scored products only. */}
           <Route
             path="/launch-feasibility"
             element={
