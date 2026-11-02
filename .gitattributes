@@ -1,0 +1,2 @@
+# Cloud Build uploads the working copy; a CRLF Dockerfile breaks its shell CMD (core.autocrlf is on here)
+Dockerfile text eol=lf
