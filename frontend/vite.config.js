@@ -8,6 +8,15 @@ export default defineConfig({
 
   server: {
     proxy: {
+      "/api/forecasting": {
+        target:
+          "https://marketlens-api-487300511969.us-central1.run.app",
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) =>
+          path.replace(/^\/api\/forecasting/, ""),
+      },
+
       "/api": {
         target:
           "https://marketlens-api-643561615020.us-central1.run.app",
