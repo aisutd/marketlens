@@ -12,3 +12,7 @@ xgboost==3.2.0
 joblib==1.6.0
 onnxruntime==1.31.1
 tokenizers==0.23.3
+# Web service (api/app.py)
+fastapi==0.162.0
+uvicorn[standard]==0.54.0
+pydantic==2.14.2
