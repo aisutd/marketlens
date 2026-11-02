@@ -16,3 +16,6 @@ reports/html/
 models/monthly/
 models/yearly/
 models/product/
+
+# Retrained models waiting for review (scripts/train.py)
+models/candidate/
