@@ -5,3 +5,27 @@ DATA/*.jsonl
 data/
 .venv/
 .DS_Store
+
+# ---- Shared rules for every team's folder ----
+# Data and models never go into git: the shared data/ at the root, product_success/models/, and model or
+# data files anywhere (by extension). Ask before adding an exception for a small file.
+DATA/
+product_success/models/
+*.joblib
+*.npy
+*.onnx
+*.parquet
+*.csv
+*.csv.gz
+*.jsonl.gz
+cleaning_report.txt
+
+# Python
+venv*/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Personal notes
+MERGE_NOTES.md
