@@ -1,0 +1,1 @@
+"""MarketLens scoring API (FastAPI)."""
