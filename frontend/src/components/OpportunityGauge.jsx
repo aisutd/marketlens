@@ -8,7 +8,24 @@ export default function OpportunityGauge({ score }) {
     ? Math.max(0, Math.min(100, score))
     : 0;
 
+  const scoreColor = !hasScore
+    ? "#94A3B8"
+    : normalizedScore < 40
+    ? "#DC2626"
+    : normalizedScore < 70
+    ? "#CA8A04"
+    : "#16A34A";
+
+  const scoreLabel = !hasScore
+    ? "Not scored"
+    : normalizedScore < 40
+    ? "Poor"
+    : normalizedScore < 70
+    ? "Moderate"
+    : "Good";
+
   const totalSegments = 40;
+
   const activeSegments = Math.round(
     (normalizedScore / 100) * totalSegments
   );
@@ -42,7 +59,7 @@ export default function OpportunityGauge({ score }) {
       role="img"
       aria-label={
         hasScore
-          ? `Opportunity score: ${score} out of 100`
+          ? `Opportunity score: ${score} out of 100. ${scoreLabel}`
           : "Opportunity score not available"
       }
     >
@@ -64,8 +81,12 @@ export default function OpportunityGauge({ score }) {
               segment.angle + 90
             } ${segment.x} ${segment.y})`}
             fill={
-              segment.active
-                ? "#FFD45A"
+              !hasScore
+                ? "#E2E8F0"
+                : normalizedScore === 0
+                ? "#FECACA"
+                : segment.active
+                ? scoreColor
                 : "#E2E8F0"
             }
           />
@@ -74,7 +95,10 @@ export default function OpportunityGauge({ score }) {
 
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <div className="flex items-baseline">
-          <span className="text-[46px] font-semibold leading-none text-[#0F172A]">
+          <span
+            className="text-[46px] font-semibold leading-none"
+            style={{ color: scoreColor }}
+          >
             {hasScore ? score : "—"}
           </span>
 
@@ -83,11 +107,12 @@ export default function OpportunityGauge({ score }) {
           </span>
         </div>
 
-        {!hasScore && (
-          <span className="mt-3 text-xs text-slate-400">
-            Not scored
-          </span>
-        )}
+        <span
+          className="mt-3 text-xs font-medium"
+          style={{ color: scoreColor }}
+        >
+          {scoreLabel}
+        </span>
       </div>
     </div>
   );

@@ -26,7 +26,31 @@ export default function EvaluationSummary({
     requirements.every(([, completed]) => completed) &&
     originalPriceValid;
 
-  const hasPrediction = prediction !== null;
+  const score = prediction?.opportunity_score;
+
+  const hasPrediction =
+    typeof score === "number" &&
+    Number.isFinite(score);
+
+  const normalizedScore = hasPrediction
+    ? Math.max(0, Math.min(100, score))
+    : 0;
+
+  const scoreColor = !hasPrediction
+    ? "#94A3B8"
+    : normalizedScore < 40
+    ? "#DC2626"
+    : normalizedScore < 70
+    ? "#CA8A04"
+    : "#16A34A";
+
+  const scoreLabel = !hasPrediction
+    ? "Not scored"
+    : normalizedScore < 40
+    ? "Poor"
+    : normalizedScore < 70
+    ? "Moderate"
+    : "Good";
 
   return (
     <aside className="space-y-5">
@@ -55,24 +79,29 @@ export default function EvaluationSummary({
                 Product Opportunity Score
               </p>
 
-              <p className="mt-3 text-5xl font-bold text-[#0F172A]">
-                {prediction.opportunity_score}
+              <p
+                className="mt-3 text-5xl font-bold"
+                style={{ color: scoreColor }}
+              >
+                {score}
                 <span className="text-lg text-slate-400">
                   /100
                 </span>
               </p>
 
+              <p
+                className="mt-2 text-sm font-semibold"
+                style={{ color: scoreColor }}
+              >
+                {scoreLabel}
+              </p>
+
               <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-200">
                 <div
-                  className="h-full rounded-full bg-[#FFD45A] transition-all"
+                  className="h-full rounded-full transition-all"
                   style={{
-                    width: `${Math.max(
-                      0,
-                      Math.min(
-                        100,
-                        prediction.opportunity_score
-                      )
-                    )}%`,
+                    width: `${normalizedScore}%`,
+                    backgroundColor: scoreColor,
                   }}
                 />
               </div>
@@ -80,17 +109,19 @@ export default function EvaluationSummary({
               <div className="mt-5 space-y-2 text-left text-xs text-slate-600">
                 <p>
                   <strong>Probability:</strong>{" "}
-                  {(prediction.probability * 100).toFixed(1)}%
+                  {typeof prediction.probability === "number"
+                    ? `${(prediction.probability * 100).toFixed(1)}%`
+                    : "N/A"}
                 </p>
 
                 <p>
                   <strong>Model:</strong>{" "}
-                  {prediction.model_used}
+                  {prediction.model_used ?? "N/A"}
                 </p>
 
                 <p>
                   <strong>Version:</strong>{" "}
-                  {prediction.model_version}
+                  {prediction.model_version ?? "N/A"}
                 </p>
               </div>
             </div>
@@ -139,16 +170,16 @@ export default function EvaluationSummary({
             {loading
               ? "Analyzing product..."
               : hasPrediction
-                ? "Score again →"
-                : "Score product →"}
+              ? "Score again →"
+              : "Score product →"}
           </button>
 
           <p className="mt-3 text-center text-xs text-slate-500">
             {!ready
               ? "Complete the required fields with valid prices."
               : hasPrediction
-                ? "Prediction received from MarketLens API."
-                : "Ready for product evaluation."}
+              ? "Prediction received from MarketLens API."
+              : "Ready for product evaluation."}
           </p>
         </div>
       </section>
