@@ -83,7 +83,7 @@ def _cap_units_at_demand(preds: dict, units: str, demand: str) -> None:
 
 
 def _demand_at_least_units(preds: dict, units: str, demand: str) -> None:
-    """Used where units sold is the more accurate figure: demand is raised to at least units sold."""
+    """Used where units sold is derived from revenue and price: demand is raised to at least units sold."""
     if preds[demand]["value"] < preds[units]["value"]:
         _set_relative(preds[demand], preds[units]["value"], preds[demand])
 
@@ -204,8 +204,8 @@ class MarketLensPredictor:
 
     @staticmethod
     def _consistent_launch(preds: dict) -> None:
-        """Revenue and price are the most accurate launch models (test accuracy 92% / 94%), so units are derived from
-        them (units = revenue / price: 92% vs 80% for the units model), and the rest follows."""
+        """Units are derived from the revenue and price models (units = revenue / price), and the rest follows.
+        On held-out data this scores 68% for 12-month units, vs 66% for the units model."""
         if preds["revenue_24m"]["value"] < preds["revenue_12m"]["value"]:
             _set_relative(preds["revenue_24m"], preds["revenue_12m"]["value"], preds["revenue_24m"])
         price = preds["avg_price_12m"]["value"]
@@ -219,7 +219,7 @@ class MarketLensPredictor:
     @staticmethod
     def _consistent_month(preds: dict, X: pd.DataFrame) -> None:
         """Units and price are predicted directly; revenue = units × price and profit = revenue × margin
-        (both more accurate on test data than the separate revenue / profit models)."""
+        (on held-out data, 81% and 80% accurate vs 78% and 74% for the separate models)."""
         _cap_units_at_demand(preds, "units_sold", "demand_units")
         revenue = preds["units_sold"]["value"] * preds["avg_price"]["value"]
         _set_relative(preds["gross_revenue"], revenue, preds["gross_revenue"])
@@ -272,8 +272,8 @@ class MarketLensPredictor:
         X, notes = build_year_features(yh, year, promo_months, prev_override)
         notes = extra_notes + notes
         preds = self._format("yearly", YEARLY_METRICS, X)
-        # Revenue, price and profit are the strongest yearly models: units = revenue / price (91% vs 86%),
-        # margin = profit / revenue, demand >= units, and ROI follows profit.
+        # For consistency: units = revenue / price, margin = profit / revenue, demand >= units, and ROI follows profit.
+        # This costs accuracy on held-out data: units 78% -> 74%, margin 88% -> 80%.
         if preds["avg_price"]["value"] > 0:
             _set_relative(preds["units_sold"], preds["gross_revenue"]["value"] / preds["avg_price"]["value"], preds["units_sold"])
         _demand_at_least_units(preds, "units_sold", "demand_units")

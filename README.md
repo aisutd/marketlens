@@ -42,13 +42,13 @@ This part of the project covers data preparation, model training and a Python `p
 
 Every prediction comes with a `plus_minus` (the model's typical error on unseen test data) and a `range`.
 
-**Consistency rules:** each metric has its own model, so the predictor makes related numbers agree, always deriving
-the weaker figure from the stronger ones (checked on test data):
+**Consistency rules:** each metric has its own model, so the predictor makes related numbers agree:
 revenue = units × price and profit = revenue × margin everywhere; units sold never exceed demand;
-launch and yearly units come from revenue ÷ price (more accurate than the units models); monthly revenue and profit come
-from units × price × margin; 24-month totals are at least the 12-month totals; ROI is computed from predicted profit and
-the product's investment, and cumulative ROI chains period to period. When last year is only partly observed
-(history ends Sep 2026), its full-year forecast is used as "last year".
+launch and yearly units come from revenue ÷ price; monthly revenue and profit come from units × price × margin;
+24-month totals are at least the 12-month totals; ROI is computed from predicted profit and the product's investment,
+and cumulative ROI chains period to period. When last year is only partly observed (history ends Sep 2026), its
+full-year forecast is used as "last year". These rules are for consistency and don't always improve accuracy:
+on held-out data, monthly revenue, monthly profit and launch units improved, while yearly units (78% to 74%) and yearly margin (88% to 80%) got worse.
 
 **Demand trends** come from the demand forecast compared with the last actual period, not from a separate model:
 the monthly increase/decrease is right ~82% of the time; the yearly change is right ~87% on direction and typically ±7 % points.
@@ -127,26 +127,37 @@ reports/                        figures and metrics (model_metrics*.csv)
 
 ### Model accuracy (held-out test data)
 
-Accuracy = 100 − average % error. R² = how much of the variation the model explains (1.0 = perfect).
+Scores of the final outputs, after the consistency rules, from models trained without the test data (`reports/metrics/final_output_scores.csv`).
+Accuracy = 100 − average % error. R² = how much of the variation is explained (1.0 = perfect).
 
 | Monthly | Acc. | R² | Yearly | Acc. | R² | Launch (12m / 24m) | Acc. | R² |
 |---|---|---|---|---|---|---|---|---|
-| Units sold | 80% | 0.90 | Units sold | 78% | 0.93 | Units 12m / 24m | 66% / 67% | 0.76 / 0.74 |
-| Demand | 82% | 0.92 | Demand | 76% | 0.91 | Demand 12m | 65% | 0.75 |
-| Demand share | 86% | 0.99 | Demand share | 78% | 0.98 | Avg monthly demand | 66% | 0.76 |
-| Demand trend (derived) | 82% right direction | | Demand change YoY (derived) | 87% right direction, ±7 pts | 0.64 | Demand share 12m | 73% | 0.90 |
+| Units sold | 80% | 0.90 | Units sold | 74% | 0.86 | Units 12m / 24m | 68% / 67% | 0.82 / 0.77 |
+| Demand | 82% | 0.92 | Demand | 76% | 0.91 | Demand 12m | 69% | 0.83 |
+| Demand share | 86% | 0.99 | Demand share | 78% | 0.98 | Avg monthly demand | 69% | 0.83 |
 | Price | 95% | 0.99 | Price | 94% | 0.98 | Price 12m | 89% | 0.95 |
-| Revenue | 78% | 0.89 | Revenue | 65% | 0.80 | Revenue 12m / 24m | 69% / 69% | 0.90 / 0.91 |
-| Net profit | 74% | 0.88 | Net profit | 78% | 0.95 | Profit 12m / 24m | 68% / 66% | 0.90 / 0.90 |
-| Margin | 91% | 0.99 | Margin | 88% | 0.98 | Margin 12m / 24m | 89% / 91% | 0.98 / 0.99 |
-| ROI per unit | 90% | 0.99 | ROI (year) | 74% | 0.91 | ROI 12m / 24m | 74% / 75% | 0.89 / 0.90 |
-| Cumulative ROI | ~99% | 1.00 | Cumulative ROI | 84% | 0.97 | Break-even (≤36m) | 75% | 0.81 |
-| | | | | | | Never pays back | 96% | AUC 0.995 |
+| Revenue | 81% | 0.94 | Revenue | 65% | 0.80 | Revenue 12m / 24m | 69% / 69% | 0.90 / 0.91 |
+| Net profit | 80% | 0.95 | Net profit | 78% | 0.95 | Profit 12m / 24m | 68% / 66% | 0.90 / 0.90 |
+| Margin | 91% | 0.99 | Margin | 80% | 0.93 | Margin 12m / 24m | 89% / 91% | 0.98 / 0.99 |
+| ROI per unit | 90% | 0.99 | ROI (year) | 79% | 0.93 | ROI 12m / 24m | 74% / 75% | 0.89 / 0.90 |
+| Cumulative ROI | ~100% | 1.00 | Cumulative ROI | 97% | 1.00 | Demand share 12m | 73% | 0.90 |
+| | | | | | | Break-even (≤36m) | 75% | 0.81 |
+| | | | | | | Never pays back | 96% | AUC 0.995; precision and recall 93% |
+
+Derived trends, not models: monthly demand direction is right 82% of the time; yearly demand change is right on direction 87% of the time and typically off by 7 points.
+
+How to read these scores:
+- All scores are on simulated data, so they don't show real-world accuracy.
+- Some fixes were chosen after seeing test results (for example the 36-month break-even cap), so scores may be slightly optimistic.
+- Monthly scores use the actual promotions from the test months; the app estimates these unless the seller enters one.
+- Launch scores use each product's lifetime review count, which includes reviews from after the first 12 months, so a new idea benchmarked on a competitor will likely do worse.
+- `plus_minus` ranges use each model's typical error before the consistency rules, except yearly ROI, whose range follows profit.
 
 ### Known limitations
 
 - **Demand growth % models were dropped:** month-to-month and year-to-year swings are mostly random in the data, and the dedicated
   models scored 47% / 39%. Trends are now derived from the (much more accurate) demand forecasts instead.
+- **Discounts above about 30%** are beyond what the models saw in training, so those forecasts are unreliable.
 - **Break-even** is capped at 36 months. Longer paybacks are shown as "36+ months", and `never_breaks_even` flags non-payers.
 - **Launch predictions need market traction:** review count and months on market of the listing, or of a comparable competitor for a new idea.
 - Monthly and yearly forecasts work for the 1,351 catalogue products (history up to Sep 2026). New products use `predict_launch`.
