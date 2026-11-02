@@ -3,6 +3,9 @@
 # embedded with ONNX Runtime (api/embed_onnx.py). onnx is only needed to export, not to serve.
 numpy==2.5.4
 pandas==3.0.6
+# pandas 3 pickles its str columns as pyarrow arrays: embed_model.joblib and reference_tables.joblib
+# cannot be loaded without it.
+pyarrow==26.0.0
 scikit-learn==1.9.1
 scipy==1.18.1
 xgboost==3.2.0
