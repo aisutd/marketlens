@@ -1,0 +1,8 @@
+# Exact versions for the API container. The saved models need this scikit-learn version.
+pandas==3.0.6
+numpy==2.5.4
+scikit-learn==1.9.1
+joblib==1.6.0
+pyarrow==26.0.0  # the saved encoders contain pandas data stored with pyarrow
+fastapi==0.159.1
+uvicorn==0.54.0
