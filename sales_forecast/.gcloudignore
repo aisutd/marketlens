@@ -1,0 +1,30 @@
+# Upload to Cloud Build only what the Dockerfile copies (kept in step with .dockerignore), for
+# gcloud run deploy --source sales_forecast. Same syntax as .gitignore: ignore everything, then re-include.
+/*
+
+!/Dockerfile
+!/.dockerignore
+!/requirements-api.txt
+!/pyproject.toml
+!/src/
+
+!/models/
+/models/*
+!/models/final/
+
+!/data/
+/data/*
+!/data/reference/
+!/data/final/
+/data/final/*
+!/data/final/monthly_train.csv
+!/data/final/monthly_test.csv
+!/data/final/yearly_train.csv
+!/data/final/yearly_test.csv
+!/data/final/yearly_2026_partial.csv
+
+# Never, even if a rule above would let them in
+__pycache__/
+*.pyc
+*.egg-info/
+.DS_Store
