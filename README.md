@@ -136,3 +136,36 @@ Opportunity Score band were really successful:
 | 60-79 | 23.5% | 22.4% |
 | 80-89 | 35.7% | 32.9% |
 | 90-100 | 54.4% | 48.7% |
+
+## Deployment
+
+The scoring API (`api/app.py`, FastAPI) runs on Google Cloud Run from the `Dockerfile` in the repo
+root: one vCPU, 2 GiB of memory, one uvicorn worker, CPU only. `.gcloudignore` uploads only the
+Dockerfile, `api/`, the four training modules the API imports and three model items
+(`embed_model.joblib`, `reference_tables.joblib`, `minilm-onnx/`). The API gives exactly the same
+probability, score and reasons as `predict.py`. `pytest api/tests` checks that on 117 products,
+and with `API_BASE_URL` set it runs the same tests against a deployed service.
+
+### Cloud Run timings
+
+Measured on 2026-11-01 with
+`python tools\measure_api.py --base-url https://<service>.run.app`: 50 HTTP calls per case,
+three runs, timed from the development laptop to the service in `us-central1`. Each cell gives the lowest and
+highest of the three runs. The targets apply to the median. Every call includes the network round
+trip, which `GET /health` measures (about 37 ms). Subtract it to get the server's own time.
+
+| Call | Median | p95 | Target (median) | Same call on the laptop (median) |
+|------|-------:|----:|----------------:|---------------------------------:|
+| `GET /health` (round trip) | 36-38 ms | 41-49 ms | | 1 ms |
+| `/predict`, new title | 127-130 ms | 166-255 ms | under 200 ms | 79 ms |
+| `/rescore`, price change | 192-252 ms | 313-325 ms | under 300 ms | 136 ms |
+| `/reasons`, launch-time product | 678-724 ms | 793-1,341 ms | | 526 ms |
+| `/reasons`, full product | 184-205 ms | 291-300 ms | | 105 ms |
+| `/what-if`, 20 prices | 1,547-1,619 ms | 1,770-2,302 ms | under 2 s | 1,191 ms |
+
+All three medians are within their targets in every run. One score takes about 85-90 ms on a
+Cloud Run vCPU against about 65 ms on the laptop (a ThinkPad CPU). `/rescore` scores two products
+(the original and the edited one), and `/what-if` scores one per price. `/reasons` on a launch-time
+product is the slowest call, because exact SHAP on that model's 3,864 trees takes about 0.5 s.
+
+Memory was not measured on Cloud Run. On the laptop the server's peak working set is 744-851 MB.
