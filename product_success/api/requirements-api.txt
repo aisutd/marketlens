@@ -1,0 +1,18 @@
+# Serving dependencies for the MarketLens success model, pinned to the training venv
+# (api/requirements-freeze.txt). No torch, transformers or sentence-transformers: titles are
+# embedded with ONNX Runtime (api/embed_onnx.py). onnx is only needed to export, not to serve.
+numpy==2.5.4
+pandas==3.0.6
+# pandas 3 pickles its str columns as pyarrow arrays: embed_model.joblib and reference_tables.joblib
+# cannot be loaded without it.
+pyarrow==26.0.0
+scikit-learn==1.9.1
+scipy==1.18.1
+xgboost==3.2.0
+joblib==1.6.0
+onnxruntime==1.31.1
+tokenizers==0.23.3
+# Web service (api/app.py)
+fastapi==0.162.0
+uvicorn[standard]==0.54.0
+pydantic==2.14.2
