@@ -12,6 +12,11 @@ function buildProductPayload(product) {
     payload.list_price = Number(product.originalPrice);
   }
 
+  // Left out when empty, so the API scores a product idea.
+  if (Number.isSafeInteger(product.reviews)) {
+    payload.reviews = product.reviews;
+  }
+
   return payload;
 }
 
