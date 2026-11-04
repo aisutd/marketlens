@@ -83,11 +83,16 @@ export default function Discover({
 
     try {
       if (search.method === "details") {
+        // The forecast is skipped for categories it doesn't cover.
+        const notCovered = search.forecastingProduct === null;
+
         // Both APIs independently evaluate the same input product.
         const [scoringResult, launchResult] =
           await Promise.allSettled([
             predictProduct(search.scoringProduct),
-            predictLaunch(search.forecastingProduct),
+            notCovered
+              ? null
+              : predictLaunch(search.forecastingProduct),
           ]);
 
         const score =
@@ -103,7 +108,9 @@ export default function Discover({
         // At least one backend must return successfully.
         if (score === null && launch === null) {
           throw new Error(
-            "Product scoring and launch forecasting both failed."
+            notCovered
+              ? "Product scoring failed, and the sales forecast doesn't cover this category."
+              : "Product scoring and launch forecasting both failed."
           );
         }
 
@@ -119,6 +126,7 @@ export default function Discover({
           launch,
           monthly: null,
           yearly: null,
+          notCovered,
         });
       } else if (search.method === "id") {
         // Product ID is supported by the forecasting backend.
