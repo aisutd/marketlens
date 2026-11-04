@@ -1,9 +1,12 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+
+import { getPredictionReasons } from "../services/marketlensApi";
 
 import OpportunityGauge from "../components/OpportunityGauge";
 import NewIdeaTag from "../components/NewIdeaTag";
+import ScoreReasons from "../components/ScoreReasons";
 import ScoreSentence from "../components/ScoreSentence";
 
 /**
@@ -82,6 +85,33 @@ export default function Overview({
   const hasScore =
     prediction?.opportunity_score !== undefined &&
     prediction?.opportunity_score !== null;
+
+  // Reasons are kept with the prediction they explain,
+  // so an older result never shows under a newer score.
+  const [loadedReasons, setLoadedReasons] = useState(null);
+
+  useEffect(() => {
+    if (!hasScore || !product?.title) return;
+
+    let active = true;
+
+    getPredictionReasons(product)
+      .then((data) => {
+        if (active) setLoadedReasons({ prediction, data });
+      })
+      .catch(() => {
+        // The chips are extra: without them the score still reads fine.
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [hasScore, product, prediction]);
+
+  const reasons =
+    loadedReasons?.prediction === prediction
+      ? loadedReasons.data
+      : null;
 
   const isLaunch = forecast?.type === "launch";
   const isExisting = forecast?.type === "existing";
@@ -221,6 +251,8 @@ export default function Overview({
               categoryName={product?.categoryName}
             />
           )}
+
+          <ScoreReasons reasons={reasons} />
 
           {!hasScore && (
             <p className="mt-3 text-sm text-[#61738B]">
