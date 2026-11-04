@@ -123,6 +123,7 @@ export default function ProductSearch({
       scoringProduct: {
         title: details.title.trim(),
         category: category.id,
+        categoryName: category.name,
         price,
         reviews,
         stars,
