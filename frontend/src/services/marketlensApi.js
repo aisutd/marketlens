@@ -12,9 +12,16 @@ function buildProductPayload(product) {
     payload.list_price = Number(product.originalPrice);
   }
 
-  // Left out when empty, so the API scores a product idea.
-  if (Number.isSafeInteger(product.reviews)) {
+  // Sent only as a pair. The API reads a missing value as 0, so reviews
+  // alone would reach the full model as "N reviews, 0 stars". Without
+  // the pair, the launch-time model scores it as a new product idea.
+  if (
+    Number.isSafeInteger(product.reviews) &&
+    product.reviews > 0 &&
+    Number.isFinite(product.stars)
+  ) {
     payload.reviews = product.reviews;
+    payload.stars = product.stars;
   }
 
   return payload;

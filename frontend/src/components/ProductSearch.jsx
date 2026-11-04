@@ -20,6 +20,7 @@ export default function ProductSearch({
     category: "",
     price: "",
     review_count: "0",
+    stars: "",
     months_on_market: "0",
   });
 
@@ -63,6 +64,10 @@ export default function ProductSearch({
     const reviews = Number(details.review_count);
     const months = Number(details.months_on_market);
 
+    // Optional, so empty stays null instead of becoming 0.
+    const stars =
+      details.stars === "" ? null : Number(details.stars);
+
     const category = categories.find(
       (item) =>
         String(item.id) === String(details.category)
@@ -79,6 +84,8 @@ export default function ProductSearch({
       details.review_count === "" ||
       !Number.isSafeInteger(reviews) ||
       reviews < 0 ||
+      (stars !== null &&
+        (!Number.isFinite(stars) || stars < 0 || stars > 5)) ||
       details.months_on_market === "" ||
       !Number.isSafeInteger(months) ||
       months < 0
@@ -99,6 +106,7 @@ export default function ProductSearch({
         category: category.id,
         price,
         reviews,
+        stars,
       },
 
       // Null when the forecast doesn't cover this category.
@@ -226,6 +234,22 @@ export default function ProductSearch({
                     "review_count",
                     e.target.value
                   )
+                }
+              />
+            </label>
+
+            <label className="text-sm font-medium text-[#25334A]">
+              Star rating (optional)
+              <input
+                className={inputStyle}
+                type="number"
+                min="0"
+                max="5"
+                step="0.1"
+                placeholder="4.5"
+                value={details.stars}
+                onChange={(e) =>
+                  updateDetails("stars", e.target.value)
                 }
               />
             </label>
