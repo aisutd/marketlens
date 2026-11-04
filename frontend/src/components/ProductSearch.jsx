@@ -85,7 +85,7 @@ export default function ProductSearch({
       !Number.isSafeInteger(reviews) ||
       reviews < 0 ||
       (stars !== null &&
-        (!Number.isFinite(stars) || stars < 0 || stars > 5)) ||
+        (!Number.isFinite(stars) || stars < 1 || stars > 5)) ||
       details.months_on_market === "" ||
       !Number.isSafeInteger(months) ||
       months < 0
@@ -243,7 +243,7 @@ export default function ProductSearch({
               <input
                 className={inputStyle}
                 type="number"
-                min="0"
+                min="1"
                 max="5"
                 step="0.1"
                 placeholder="4.5"
@@ -271,6 +271,14 @@ export default function ProductSearch({
               />
             </label>
           </div>
+
+          {Number(details.review_count) > 0 &&
+            details.stars === "" && (
+              <p className="mt-6 text-xs text-[#61738B]">
+                Add a star rating to use your review count in the
+                score. Scored as a new idea for now.
+              </p>
+            )}
 
           <p className="mt-6 text-xs text-[#61738B]">
             Evaluates opportunity score and launch forecast.

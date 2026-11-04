@@ -18,7 +18,7 @@ function buildProductPayload(product) {
   if (
     Number.isSafeInteger(product.reviews) &&
     product.reviews > 0 &&
-    Number.isFinite(product.stars)
+    product.stars >= 1
   ) {
     payload.reviews = product.reviews;
     payload.stars = product.stars;
