@@ -5,15 +5,16 @@ import { Link } from "react-router-dom";
 import OpportunityGauge from "../components/OpportunityGauge";
 import { getPredictionReasons } from "../services/marketlensApi";
 
-// ----------------------------------------
-// FORMATTING HELPERS
-// ----------------------------------------
+const currency = (value) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(value);
 
 function formatMetric(metric) {
   if (
     !metric ||
-    metric.value === null ||
-    metric.value === undefined ||
+    metric.value == null ||
     !Number.isFinite(Number(metric.value))
   ) {
     return "—";
@@ -22,11 +23,7 @@ function formatMetric(metric) {
   const value = Number(metric.value);
 
   if (metric.unit === "USD") {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    }).format(value);
+    return currency(value);
   }
 
   if (metric.unit === "%") {
@@ -50,11 +47,11 @@ function MetricCard({ label, metric }) {
     range.length === 2 &&
     range.every(
       (value) =>
-        value !== null &&
+        value != null &&
         Number.isFinite(Number(value))
     ) &&
-    Number(range[0]) <= Number(range[1]) &&
     metric?.value != null &&
+    Number(range[0]) <= Number(range[1]) &&
     Number(range[0]) <= Number(metric.value) &&
     Number(metric.value) <= Number(range[1]);
 
@@ -98,7 +95,9 @@ function MetricCard({ label, metric }) {
 
 function FactorCard({ reason, positive }) {
   const impact = Number(reason.impact);
-  const validImpact = Number.isFinite(impact);
+
+  const validImpact =
+    reason.impact != null && Number.isFinite(impact);
 
   return (
     <div className="rounded-lg border border-[#D7E0EB] bg-white p-4">
@@ -135,6 +134,200 @@ function FactorCard({ reason, positive }) {
 }
 
 // ----------------------------------------
+// COMPACT PRICE SCENARIO PREVIEW
+// ----------------------------------------
+
+function PriceScenarioPreview({ product }) {
+  const originalPrice = Number(product.price);
+
+  const [selectedPrice, setSelectedPrice] = useState(
+    () => String(product.price)
+  );
+
+  const minPrice = Math.max(
+    0.01,
+    Number(
+      Math.min(
+        100000,
+        originalPrice * 0.5
+      ).toFixed(2)
+    )
+  );
+
+  const maxPrice = Math.min(
+    100000,
+    Number(
+      Math.max(
+        originalPrice * 1.5,
+        minPrice
+      ).toFixed(2)
+    )
+  );
+
+  const numericPrice = Number(selectedPrice);
+
+  const validPrice =
+    selectedPrice.trim() !== "" &&
+    Number.isFinite(numericPrice) &&
+    numericPrice >= 0.01 &&
+    numericPrice <= 100000;
+
+  const priceChange =
+    validPrice && originalPrice > 0
+      ? (numericPrice / originalPrice - 1) * 100
+      : null;
+
+  return (
+    <section className="mt-7 rounded-xl border border-[#D5DADF] bg-white p-6">
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
+        <div>
+          <h2 className="text-xl font-semibold text-[#25334A]">
+            Explore price scenarios
+          </h2>
+
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61738B]">
+            Preview a different selling price, then
+            open the What-If simulator to calculate
+            opportunity scores and profitability.
+          </p>
+        </div>
+
+        <Link
+          to="/launch-feasibility"
+          state={{
+            suggestedPrice: validPrice
+              ? numericPrice
+              : originalPrice,
+          }}
+          className={`shrink-0 rounded-lg px-6 py-3 text-center text-sm font-semibold ${
+            validPrice
+              ? "bg-[#FFD45A] text-[#25334A] hover:bg-[#F5C842]"
+              : "pointer-events-none bg-slate-200 text-slate-400"
+          }`}
+          aria-disabled={!validPrice}
+          tabIndex={validPrice ? undefined : -1}
+        >
+          Explore Price Scenarios →
+        </Link>
+      </div>
+
+      <div className="mt-6 grid gap-6 md:grid-cols-2">
+        <div>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-xs text-[#61738B]">
+                Original price
+              </p>
+
+              <p className="mt-2 text-xl font-semibold text-[#25334A]">
+                {currency(originalPrice)}
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="preview-price"
+                className="text-xs text-[#61738B]"
+              >
+                Scenario price
+              </label>
+
+              <div className="mt-2 flex items-center gap-2">
+                <span className="font-semibold">
+                  $
+                </span>
+
+                <input
+                  id="preview-price"
+                  type="number"
+                  min="0.01"
+                  max="100000"
+                  step="0.01"
+                  value={selectedPrice}
+                  onChange={(event) =>
+                    setSelectedPrice(
+                      event.target.value
+                    )
+                  }
+                  className="h-11 w-32 rounded-lg border border-[#D7E0EB] px-3 text-base font-semibold outline-none focus:border-[#193B66]"
+                />
+              </div>
+            </div>
+          </div>
+
+          <input
+            type="range"
+            min={minPrice}
+            max={maxPrice}
+            step="0.01"
+            value={
+              validPrice
+                ? Math.max(
+                    minPrice,
+                    Math.min(maxPrice, numericPrice)
+                  )
+                : originalPrice
+            }
+            onChange={(event) =>
+              setSelectedPrice(event.target.value)
+            }
+            disabled={minPrice >= maxPrice}
+            aria-label="Preview selling price"
+            className="mt-6 w-full cursor-pointer accent-[#193B66]"
+          />
+
+          <div className="mt-2 flex justify-between text-xs text-[#61738B]">
+            <span>{currency(minPrice)}</span>
+            <span>{currency(maxPrice)}</span>
+          </div>
+        </div>
+
+        <div className="rounded-lg bg-[#F6F9FD] p-5">
+          <p className="text-sm text-[#61738B]">
+            Price adjustment
+          </p>
+
+          <p className="mt-3 text-3xl font-bold text-[#193B66]">
+            {priceChange === null
+              ? "—"
+              : `${
+                  priceChange > 0 ? "+" : ""
+                }${priceChange.toFixed(1)}%`}
+          </p>
+
+          <p className="mt-3 text-sm text-[#61738B]">
+            {validPrice
+              ? `Scenario price: ${currency(
+                  numericPrice
+                )}`
+              : "Enter a valid scenario price."}
+          </p>
+
+          <button
+            type="button"
+            onClick={() =>
+              setSelectedPrice(
+                String(originalPrice)
+              )
+            }
+            className="mt-4 text-sm font-semibold text-[#193B66] underline"
+          >
+            Reset price
+          </button>
+        </div>
+      </div>
+
+      <p className="mt-5 text-xs leading-5 text-[#61738B]">
+        This preview does not calculate a new
+        opportunity score or modify the launch
+        forecast. The selected price will be
+        carried into the What-If simulator.
+      </p>
+    </section>
+  );
+}
+
+// ----------------------------------------
 // PRODUCT OVERVIEW
 // ----------------------------------------
 
@@ -143,13 +336,11 @@ export default function Overview({
   prediction,
   forecast,
 }) {
-  // ----------------------------------------
-  // OPPORTUNITY SCORING STATE
-  // ----------------------------------------
-
   const hasScore =
-    prediction?.opportunity_score !== null &&
-    prediction?.opportunity_score !== undefined;
+    prediction?.opportunity_score != null &&
+    Number.isFinite(
+      Number(prediction.opportunity_score)
+    );
 
   const [showExplanations, setShowExplanations] =
     useState(false);
@@ -163,13 +354,9 @@ export default function Overview({
   const [reasonsError, setReasonsError] =
     useState("");
 
-  const [retryCount, setRetryCount] = useState(0);
+  const [retryCount, setRetryCount] =
+    useState(0);
 
-  // ----------------------------------------
-  // LAUNCH FORECAST STATE
-  // ----------------------------------------
-
-  // NEW: User-selected forecast timeframe.
   const [launchTimeframe, setLaunchTimeframe] =
     useState("12m");
 
@@ -188,15 +375,15 @@ export default function Overview({
     launch?.input?.name ||
     "Selected product";
 
-  // ----------------------------------------
-  // SCORE EXPLANATIONS
-  // ----------------------------------------
-
   const reasons =
     loadedReasons?.product === product &&
     loadedReasons?.prediction === prediction
       ? loadedReasons.data
       : null;
+
+  // ----------------------------------------
+  // SCORE EXPLANATIONS
+  // ----------------------------------------
 
   useEffect(() => {
     if (
@@ -224,6 +411,7 @@ export default function Overview({
             prediction,
             data,
           });
+
           setReasonsError("");
         }
       } catch (err) {
@@ -255,13 +443,11 @@ export default function Overview({
     retryCount,
   ]);
 
-  function toggleExplanations() {
-    setShowExplanations((previous) => !previous);
-  }
-
   function retryExplanations() {
     setReasonsError("");
-    setRetryCount((previous) => previous + 1);
+    setRetryCount(
+      (previous) => previous + 1
+    );
   }
 
   const positiveReasons = Array.isArray(
@@ -277,7 +463,7 @@ export default function Overview({
     : [];
 
   // ----------------------------------------
-  // NEW: DYNAMIC LAUNCH FORECAST METRICS
+  // LAUNCH FORECAST
   // ----------------------------------------
 
   const isTwelveMonths =
@@ -360,10 +546,6 @@ export default function Overview({
     );
   }
 
-  // ----------------------------------------
-  // MAIN PAGE
-  // ----------------------------------------
-
   return (
     <main className="mx-auto max-w-[1440px] px-6 py-5 text-[#0F172A] lg:px-24">
       {/* BREADCRUMB */}
@@ -390,26 +572,18 @@ export default function Overview({
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3">
-          {hasScore && (
-            <Link
-              to="/launch-feasibility"
-              className="rounded-lg bg-[#193B66] px-6 py-3 text-sm font-semibold text-white"
-            >
-              What-If →
-            </Link>
-          )}
-
-          <Link
-            to="/discover"
-            className="rounded-lg border border-[#D5DADF] bg-white px-6 py-3 text-sm font-semibold"
-          >
-            Explore another product
-          </Link>
-        </div>
+        {/* Only the Discover navigation remains
+            in the header. Pricing navigation
+            lives in PriceScenarioPreview. */}
+        <Link
+          to="/discover"
+          className="rounded-lg border border-[#D5DADF] bg-white px-6 py-3 text-sm font-semibold"
+        >
+          Explore another product
+        </Link>
       </div>
 
-      {/* INTERACTIVE OPPORTUNITY SCORE */}
+      {/* OPPORTUNITY SCORE */}
       <section className="mt-6 overflow-hidden rounded-lg border border-[#D5DADF] bg-white">
         <div className="flex flex-col items-center gap-6 px-6 py-6 md:flex-row">
           <OpportunityGauge
@@ -455,7 +629,11 @@ export default function Overview({
           {hasScore && (
             <button
               type="button"
-              onClick={toggleExplanations}
+              onClick={() =>
+                setShowExplanations(
+                  (previous) => !previous
+                )
+              }
               aria-expanded={showExplanations}
               aria-controls="score-explanations-panel"
               className="rounded-lg bg-[#FFD45A] px-6 py-3 text-sm font-semibold text-[#25334A] transition hover:bg-[#F5C842]"
@@ -467,7 +645,7 @@ export default function Overview({
           )}
         </div>
 
-        {/* EXPANDABLE EXPLANATIONS */}
+        {/* EXPANDABLE SCORE EXPLANATIONS */}
         {hasScore && showExplanations && (
           <div
             id="score-explanations-panel"
@@ -493,7 +671,6 @@ export default function Overview({
               </Link>
             </div>
 
-            {/* LOADING */}
             {loadingReasons && (
               <div
                 role="status"
@@ -506,7 +683,6 @@ export default function Overview({
               </div>
             )}
 
-            {/* ERROR */}
             {reasonsError && !loadingReasons && (
               <div
                 role="alert"
@@ -526,7 +702,6 @@ export default function Overview({
               </div>
             )}
 
-            {/* POSITIVE AND NEGATIVE FACTORS */}
             {reasons && !loadingReasons && (
               <div className="mt-6 grid gap-6 md:grid-cols-2">
                 {/* POSITIVE FACTORS */}
@@ -642,16 +817,7 @@ export default function Overview({
               </p>
 
               <p className="mt-1 font-semibold">
-                {Number.isFinite(
-                  Number(product.price)
-                )
-                  ? new Intl.NumberFormat("en-US", {
-                      style: "currency",
-                      currency: "USD",
-                    }).format(
-                      Number(product.price)
-                    )
-                  : "—"}
+                {currency(Number(product.price))}
               </p>
             </div>
 
@@ -668,9 +834,18 @@ export default function Overview({
         </section>
       )}
 
-      {/* ----------------------------------------
-          INTERACTIVE LAUNCH FORECAST
-          ---------------------------------------- */}
+      {/* PRICE SCENARIO PREVIEW */}
+      {hasScore &&
+        product &&
+        Number.isFinite(Number(product.price)) &&
+        Number(product.price) > 0 && (
+          <PriceScenarioPreview
+            key={JSON.stringify(product)}
+            product={product}
+          />
+        )}
+
+      {/* INTERACTIVE LAUNCH FORECAST */}
       <section className="mt-7">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
@@ -684,7 +859,6 @@ export default function Overview({
             </p>
           </div>
 
-          {/* NEW: TIMEFRAME SELECTOR */}
           {predictions && (
             <div
               role="group"
@@ -726,7 +900,6 @@ export default function Overview({
 
         {predictions ? (
           <>
-            {/* DYNAMIC METRICS */}
             <div
               key={launchTimeframe}
               className="mt-5 grid gap-4 md:grid-cols-3"
@@ -742,7 +915,6 @@ export default function Overview({
               )}
             </div>
 
-            {/* CURRENT TIMEFRAME NOTE */}
             <div className="mt-5 rounded-lg border border-[#D7E0EB] bg-white px-5 py-4">
               <p className="text-sm font-semibold text-[#25334A]">
                 {isTwelveMonths
@@ -757,15 +929,14 @@ export default function Overview({
               </p>
             </div>
 
-            {/* FORECAST DISCLAIMER */}
             <p className="mt-4 text-xs leading-5 text-[#61738B]">
               Launch forecasts are based partly on
               simulated market data. Estimated ranges
               reflect typical model errors rather
               than guaranteed confidence intervals.
               Switching timeframes displays different
-              model outputs without retraining or
-              submitting another prediction request.
+              model outputs without submitting another
+              prediction request.
             </p>
           </>
         ) : (
