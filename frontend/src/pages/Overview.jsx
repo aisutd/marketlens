@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import OpportunityGauge from "../components/OpportunityGauge";
+import NewIdeaTag from "../components/NewIdeaTag";
 import ScoreSentence from "../components/ScoreSentence";
 
 /**
@@ -206,9 +207,13 @@ export default function Overview({
         />
 
         <div className="flex-1">
-          <h2 className="text-xl font-semibold">
-            Opportunity score
-          </h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-xl font-semibold">
+              Opportunity score
+            </h2>
+
+            <NewIdeaTag prediction={prediction} />
+          </div>
 
           {hasScore && (
             <ScoreSentence

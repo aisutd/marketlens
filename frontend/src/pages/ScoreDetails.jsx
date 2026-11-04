@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getPredictionReasons } from "../services/marketlensApi";
 import OpportunityGauge from "../components/OpportunityGauge";
+import NewIdeaTag from "../components/NewIdeaTag";
 import ScoreSentence from "../components/ScoreSentence";
 
 export default function ScoreDetails({ product, prediction }) {
@@ -132,9 +133,13 @@ export default function ScoreDetails({ product, prediction }) {
           />
 
           <div className="text-center sm:text-left">
-            <h2 className="text-2xl font-bold text-[#0F172A]">
-              Opportunity score
-            </h2>
+            <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-start">
+              <h2 className="text-2xl font-bold text-[#0F172A]">
+                Opportunity score
+              </h2>
+
+              <NewIdeaTag prediction={prediction} />
+            </div>
 
             <p className="mt-3 text-sm text-slate-600">
               {product?.title || "Selected product"}
