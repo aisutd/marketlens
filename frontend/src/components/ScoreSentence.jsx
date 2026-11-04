@@ -6,21 +6,25 @@ import { getScoreBand } from "../constants/scoreBands";
  * among its category's listings, and how often such scores sell.
  */
 export default function ScoreSentence({ score, categoryName }) {
-  const peers = categoryName
-    ? `real ${categoryName} listings`
-    : "real products in this category";
-
-  const { odds } = getScoreBand(score);
+  const rank =
+    score === 100
+      ? `Ranks above every real ${
+          categoryName
+            ? `${categoryName} listing`
+            : "product in this category"
+        } in our data.`
+      : `Beats ${score}% of real ${
+          categoryName
+            ? `${categoryName} listings`
+            : "products in this category"
+        }.`;
 
   return (
     <>
-      <p className="mt-2 text-sm text-[#475569]">
-        Beats {score}% of {peers}.
-      </p>
+      <p className="mt-2 text-sm text-[#475569]">{rank}</p>
 
       <p className="mt-1 text-sm text-[#475569]">
-        {odds.charAt(0).toUpperCase() + odds.slice(1)} (average is
-        1 in 5)
+        {getScoreBand(score).odds}
       </p>
     </>
   );

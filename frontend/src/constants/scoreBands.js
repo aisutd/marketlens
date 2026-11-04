@@ -11,25 +11,25 @@ const BANDS = [
     min: 90,
     label: "Top pick",
     color: GREEN,
-    odds: "about 1 in 2 products scoring this high reach top-20% sales in their category",
+    odds: "About 1 in 2 products scoring this high reach top-20% sales in their category (average is 1 in 5)",
   },
   {
     min: 80,
     label: "Strong",
     color: GREEN,
-    odds: "about 1 in 3 products scoring this high reach top-20% sales in their category",
+    odds: "About 1 in 3 products scoring this high reach top-20% sales in their category (average is 1 in 5)",
   },
   {
     min: 40,
     label: "Average",
     color: AMBER,
-    odds: "about 1 in 5 products in this range reach top-20% sales in their category, like most products",
+    odds: "About 1 in 5 products in this range reach top-20% sales in their category, the same as the average product.",
   },
   {
     min: 0,
     label: "Weak",
     color: RED,
-    odds: "fewer than 1 in 10 products scoring this low reach top-20% sales in their category",
+    odds: "Fewer than 1 in 10 products scoring this low reach top-20% sales in their category (average is 1 in 5)",
   },
 ];
 
