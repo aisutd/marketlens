@@ -7,7 +7,8 @@ import { categoryUsesReviews } from "../constants/reviewCategories";
 const inputStyle =
   "mt-2 h-11 w-full rounded-lg border border-[#D7E0EB] " +
   "bg-white px-4 text-sm text-[#25334A] outline-none " +
-  "focus:border-[#193B66] focus:ring-2 focus:ring-blue-100";
+  "focus:border-[#193B66] focus:ring-2 focus:ring-blue-100 " +
+  "disabled:cursor-not-allowed disabled:bg-[#EEF2F6]";
 
 export default function ProductSearch({
   categories = [],
@@ -32,6 +33,23 @@ export default function ProductSearch({
     setDetails((previous) => ({
       ...previous,
       [field]: value,
+    }));
+    setError("");
+  }
+
+  // A rating doesn't carry over into a category that can't use it.
+  function selectCategory(value) {
+    const category = categories.find(
+      (item) => String(item.id) === String(value)
+    );
+
+    setDetails((previous) => ({
+      ...previous,
+      category: value,
+      stars:
+        category && !categoryUsesReviews(category.id)
+          ? ""
+          : previous.stars,
     }));
     setError("");
   }
@@ -127,6 +145,9 @@ export default function ProductSearch({
     (item) => String(item.id) === String(details.category)
   );
 
+  const reviewsUnused =
+    selectedCategory && !categoryUsesReviews(selectedCategory.id);
+
   const panelStyle = (value) =>
     `rounded-xl border bg-white p-6 transition ${
       method === value
@@ -178,9 +199,7 @@ export default function ProductSearch({
                       ? "forecast-category-hint"
                       : undefined
                   }
-                  onChange={(e) =>
-                    updateDetails("category", e.target.value)
-                  }
+                  onChange={(e) => selectCategory(e.target.value)}
                 >
                   <option value="">Select category</option>
                   {categories.map((category) => (
@@ -247,7 +266,8 @@ export default function ProductSearch({
                 min="1"
                 max="5"
                 step="0.1"
-                placeholder="4.5"
+                placeholder={reviewsUnused ? "" : "4.5"}
+                disabled={reviewsUnused}
                 value={details.stars}
                 onChange={(e) =>
                   updateDetails("stars", e.target.value)
@@ -273,10 +293,12 @@ export default function ProductSearch({
             </label>
           </div>
 
-          {selectedCategory &&
-          !categoryUsesReviews(selectedCategory.id) ? (
+          {reviewsUnused ? (
             <p className="mt-6 text-xs text-[#61738B]">
-              Reviews aren't used for this category's score.
+              Star rating and reviews aren't used for this
+              category's score.
+              {toForecastCategory(selectedCategory.name) &&
+                " The review count still feeds the sales forecast."}
             </p>
           ) : (
             Number(details.review_count) > 0 &&
