@@ -1,6 +1,8 @@
 
 import { useState } from "react";
 
+import { toForecastCategory } from "../constants/forecastCategoryMap";
+
 const inputStyle =
   "mt-2 h-11 w-full rounded-lg border border-[#D7E0EB] " +
   "bg-white px-4 text-sm text-[#25334A] outline-none " +
@@ -87,6 +89,8 @@ export default function ProductSearch({
       return;
     }
 
+    const forecastCategory = toForecastCategory(category.name);
+
     onAnalyze({
       method: "details",
 
@@ -97,15 +101,22 @@ export default function ProductSearch({
         reviews,
       },
 
-      forecastingProduct: {
-        name: details.title.trim(),
-        category: category.name,
-        price,
-        review_count: reviews,
-        months_on_market: months,
-      },
+      // Null when the forecast doesn't cover this category.
+      forecastingProduct: forecastCategory
+        ? {
+            name: details.title.trim(),
+            category: forecastCategory,
+            price,
+            review_count: reviews,
+            months_on_market: months,
+          }
+        : null,
     });
   }
+
+  const selectedCategory = categories.find(
+    (item) => String(item.id) === String(details.category)
+  );
 
   const panelStyle = (value) =>
     `rounded-xl border bg-white p-6 transition ${
@@ -147,26 +158,44 @@ export default function ProductSearch({
               />
             </label>
 
-            <label className="text-sm font-medium text-[#25334A]">
-              Category
-              <select
-                className={inputStyle}
-                value={details.category}
-                onChange={(e) =>
-                  updateDetails("category", e.target.value)
-                }
-              >
-                <option value="">Select category</option>
-                {categories.map((category) => (
-                  <option
-                    key={category.id}
-                    value={category.id}
-                  >
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div>
+              <label className="block text-sm font-medium text-[#25334A]">
+                Category
+                <select
+                  className={inputStyle}
+                  value={details.category}
+                  aria-describedby={
+                    selectedCategory
+                      ? "forecast-category-hint"
+                      : undefined
+                  }
+                  onChange={(e) =>
+                    updateDetails("category", e.target.value)
+                  }
+                >
+                  <option value="">Select category</option>
+                  {categories.map((category) => (
+                    <option
+                      key={category.id}
+                      value={category.id}
+                    >
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {selectedCategory && (
+                <p
+                  id="forecast-category-hint"
+                  className="mt-2 text-xs text-[#61738B]"
+                >
+                  Sales forecast:{" "}
+                  {toForecastCategory(selectedCategory.name) ??
+                    "not available for this category"}
+                </p>
+              )}
+            </div>
 
             <label className="text-sm font-medium text-[#25334A]">
               Selling price (USD)

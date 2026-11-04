@@ -133,6 +133,14 @@ export default function Overview({
   const hasAnyResult =
     hasScore || launch || monthly || yearly;
 
+  // Why no forecast numbers are shown: a skipped forecast,
+  // a request that ran and failed, or no search yet.
+  const noForecastMessage = forecast?.notCovered
+    ? "The sales forecast doesn't cover this category yet, so only the opportunity score is shown."
+    : forecast
+      ? "The sales forecast request failed, so no forecast is shown for this product or timeframe."
+      : "Forecast results are unavailable for the selected product or timeframe.";
+
   // Identify the currently analyzed product.
   const productName =
     product?.title ||
@@ -231,11 +239,11 @@ export default function Overview({
             </h2>
 
             <p className="mt-2 text-sm text-[#61738B]">
-              {isLaunch
-                ? "Estimated performance during the first 12 months."
-                : isExisting
-                  ? "Estimated sales performance for an existing product."
-                  : "No sales forecast is available."}
+              {!predictions
+                ? "No sales forecast is available."
+                : isLaunch
+                  ? "Estimated performance during the first 12 months."
+                  : "Estimated sales performance for an existing product."}
             </p>
           </div>
 
@@ -316,8 +324,7 @@ export default function Overview({
           </>
         ) : (
           <div className="mt-5 rounded-lg border border-[#D5DADF] bg-white p-6 text-sm text-[#61738B]">
-            Forecast results are unavailable for the selected
-            product or timeframe.
+            {noForecastMessage}
           </div>
         )}
 
