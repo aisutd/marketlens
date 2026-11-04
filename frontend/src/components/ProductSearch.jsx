@@ -2,6 +2,7 @@
 import { useState } from "react";
 
 import { toForecastCategory } from "../constants/forecastCategoryMap";
+import { categoryUsesReviews } from "../constants/reviewCategories";
 
 const inputStyle =
   "mt-2 h-11 w-full rounded-lg border border-[#D7E0EB] " +
@@ -272,13 +273,20 @@ export default function ProductSearch({
             </label>
           </div>
 
-          {Number(details.review_count) > 0 &&
+          {selectedCategory &&
+          !categoryUsesReviews(selectedCategory.id) ? (
+            <p className="mt-6 text-xs text-[#61738B]">
+              Reviews aren't used for this category's score.
+            </p>
+          ) : (
+            Number(details.review_count) > 0 &&
             details.stars === "" && (
               <p className="mt-6 text-xs text-[#61738B]">
                 Add a star rating to use your review count in the
                 score. Scored as a new idea for now.
               </p>
-            )}
+            )
+          )}
 
           <p className="mt-6 text-xs text-[#61738B]">
             Evaluates opportunity score and launch forecast.

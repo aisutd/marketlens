@@ -1,4 +1,6 @@
 
+import { categoryUsesReviews } from "../constants/reviewCategories";
+
 const API_BASE_URL = "/api";
 
 function buildProductPayload(product) {
@@ -14,8 +16,10 @@ function buildProductPayload(product) {
 
   // Sent only as a pair. The API reads a missing value as 0, so reviews
   // alone would reach the full model as "N reviews, 0 stars". Without
-  // the pair, the launch-time model scores it as a new product idea.
+  // the pair, the launch-time model scores it as a new product idea. The
+  // same goes for categories with no reviews in the scorer's training data.
   if (
+    categoryUsesReviews(product.category) &&
     Number.isSafeInteger(product.reviews) &&
     product.reviews > 0 &&
     product.stars >= 1
