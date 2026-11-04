@@ -5,7 +5,10 @@ import { Link } from "react-router-dom";
 import OpportunityGauge from "../components/OpportunityGauge";
 import { getPredictionReasons } from "../services/marketlensApi";
 
-// Format API metrics consistently.
+// ----------------------------------------
+// FORMATTING HELPERS
+// ----------------------------------------
+
 function formatMetric(metric) {
   if (
     !metric ||
@@ -35,10 +38,28 @@ function formatMetric(metric) {
   }).format(value);
 }
 
-// Existing launch forecast metric cards.
+// ----------------------------------------
+// FORECAST METRIC CARD
+// ----------------------------------------
+
 function MetricCard({ label, metric }) {
+  const range = metric?.range;
+
+  const validRange =
+    Array.isArray(range) &&
+    range.length === 2 &&
+    range.every(
+      (value) =>
+        value !== null &&
+        Number.isFinite(Number(value))
+    ) &&
+    Number(range[0]) <= Number(range[1]) &&
+    metric?.value != null &&
+    Number(range[0]) <= Number(metric.value) &&
+    Number(metric.value) <= Number(range[1]);
+
   return (
-    <div className="min-h-[120px] rounded-lg border border-[#D5DADF] bg-white p-5">
+    <div className="min-h-[120px] rounded-lg border border-[#D5DADF] bg-white p-5 transition-shadow hover:shadow-md">
       <p className="text-sm font-semibold text-[#475569]">
         {label}
       </p>
@@ -47,29 +68,36 @@ function MetricCard({ label, metric }) {
         {formatMetric(metric)}
       </p>
 
-      {Array.isArray(metric?.range) &&
-        metric.range.length === 2 && (
-          <p className="mt-2 text-xs text-[#61738B]">
-            Estimated range:{" "}
-            {formatMetric({
-              value: metric.range[0],
-              unit: metric.unit,
-            })}
-            {" – "}
-            {formatMetric({
-              value: metric.range[1],
-              unit: metric.unit,
-            })}
-          </p>
-        )}
+      {validRange && (
+        <p className="mt-2 text-xs text-[#61738B]">
+          Estimated range:{" "}
+          {formatMetric({
+            value: range[0],
+            unit: metric.unit,
+          })}
+          {" – "}
+          {formatMetric({
+            value: range[1],
+            unit: metric.unit,
+          })}
+        </p>
+      )}
+
+      {metric?.range && !validRange && (
+        <p className="mt-2 text-xs text-[#61738B]">
+          Estimated range unavailable.
+        </p>
+      )}
     </div>
   );
 }
 
-// Reusable factor card for positive/negative explanations.
+// ----------------------------------------
+// SCORE FACTOR CARD
+// ----------------------------------------
+
 function FactorCard({ reason, positive }) {
   const impact = Number(reason.impact);
-
   const validImpact = Number.isFinite(impact);
 
   return (
@@ -77,7 +105,9 @@ function FactorCard({ reason, positive }) {
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-[#25334A]">
-            {reason.label || reason.feature || "Factor"}
+            {reason.label ||
+              reason.feature ||
+              "Factor"}
           </p>
 
           {reason.feature && (
@@ -104,6 +134,10 @@ function FactorCard({ reason, positive }) {
   );
 }
 
+// ----------------------------------------
+// PRODUCT OVERVIEW
+// ----------------------------------------
+
 export default function Overview({
   product,
   prediction,
@@ -129,22 +163,48 @@ export default function Overview({
   const [reasonsError, setReasonsError] =
     useState("");
 
-  // Only display explanations belonging to
-  // the current product and prediction.
+  const [retryCount, setRetryCount] = useState(0);
+
+  // ----------------------------------------
+  // LAUNCH FORECAST STATE
+  // ----------------------------------------
+
+  // NEW: User-selected forecast timeframe.
+  const [launchTimeframe, setLaunchTimeframe] =
+    useState("12m");
+
+  const launch =
+    forecast?.type === "launch"
+      ? forecast.launch
+      : null;
+
+  const predictions = launch?.predictions;
+
+  const hasProductResult =
+    hasScore || Boolean(launch);
+
+  const productName =
+    product?.title ||
+    launch?.input?.name ||
+    "Selected product";
+
+  // ----------------------------------------
+  // SCORE EXPLANATIONS
+  // ----------------------------------------
+
   const reasons =
     loadedReasons?.product === product &&
     loadedReasons?.prediction === prediction
       ? loadedReasons.data
       : null;
 
-  // Fetch explanations only when the user
-  // expands the panel for the first time.
   useEffect(() => {
     if (
       !showExplanations ||
       !hasScore ||
       !product?.title ||
-      reasons
+      reasons ||
+      reasonsError
     ) {
       return;
     }
@@ -153,10 +213,10 @@ export default function Overview({
 
     async function loadReasons() {
       setLoadingReasons(true);
-      setReasonsError("");
 
       try {
-        const data = await getPredictionReasons(product);
+        const data =
+          await getPredictionReasons(product);
 
         if (active) {
           setLoadedReasons({
@@ -164,6 +224,7 @@ export default function Overview({
             prediction,
             data,
           });
+          setReasonsError("");
         }
       } catch (err) {
         if (active) {
@@ -190,30 +251,18 @@ export default function Overview({
     product,
     prediction,
     reasons,
+    reasonsError,
+    retryCount,
   ]);
 
   function toggleExplanations() {
     setShowExplanations((previous) => !previous);
   }
 
-  // ----------------------------------------
-  // LAUNCH FORECAST DATA
-  // ----------------------------------------
-
-  const launch =
-    forecast?.type === "launch"
-      ? forecast.launch
-      : null;
-
-  const predictions = launch?.predictions;
-
-  const hasProductResult =
-    hasScore || Boolean(launch);
-
-  const productName =
-    product?.title ||
-    launch?.input?.name ||
-    "Selected product";
+  function retryExplanations() {
+    setReasonsError("");
+    setRetryCount((previous) => previous + 1);
+  }
 
   const positiveReasons = Array.isArray(
     reasons?.reasons_up
@@ -227,32 +276,62 @@ export default function Overview({
     ? reasons.reasons_down
     : [];
 
-  const launchMetrics = [
-    {
-      label: "Units sold — first 12 months",
-      metric: predictions?.units_sold_12m,
-    },
-    {
-      label: "Revenue — first 12 months",
-      metric: predictions?.revenue_12m,
-    },
-    {
-      label: "Net profit — first 12 months",
-      metric: predictions?.profit_12m,
-    },
-    {
-      label: "Profit margin",
-      metric: predictions?.margin_pct_12m,
-    },
-    {
-      label: "Return on investment",
-      metric: predictions?.roi_pct_12m,
-    },
-    {
-      label: "Average selling price",
-      metric: predictions?.avg_price_12m,
-    },
-  ];
+  // ----------------------------------------
+  // NEW: DYNAMIC LAUNCH FORECAST METRICS
+  // ----------------------------------------
+
+  const isTwelveMonths =
+    launchTimeframe === "12m";
+
+  const launchMetrics = isTwelveMonths
+    ? [
+        {
+          label: "Units sold — first 12 months",
+          metric: predictions?.units_sold_12m,
+        },
+        {
+          label: "Revenue — first 12 months",
+          metric: predictions?.revenue_12m,
+        },
+        {
+          label: "Net profit — first 12 months",
+          metric: predictions?.profit_12m,
+        },
+        {
+          label: "Profit margin — first 12 months",
+          metric: predictions?.margin_pct_12m,
+        },
+        {
+          label: "ROI — first 12 months",
+          metric: predictions?.roi_pct_12m,
+        },
+        {
+          label: "Average selling price",
+          metric: predictions?.avg_price_12m,
+        },
+      ]
+    : [
+        {
+          label: "Units sold — first 24 months",
+          metric: predictions?.units_sold_24m,
+        },
+        {
+          label: "Revenue — first 24 months",
+          metric: predictions?.revenue_24m,
+        },
+        {
+          label: "Net profit — first 24 months",
+          metric: predictions?.profit_24m,
+        },
+        {
+          label: "Profit margin — first 24 months",
+          metric: predictions?.margin_pct_24m,
+        },
+        {
+          label: "ROI — first 24 months",
+          metric: predictions?.roi_pct_24m,
+        },
+      ];
 
   // ----------------------------------------
   // EMPTY STATE
@@ -280,6 +359,10 @@ export default function Overview({
       </main>
     );
   }
+
+  // ----------------------------------------
+  // MAIN PAGE
+  // ----------------------------------------
 
   return (
     <main className="mx-auto max-w-[1440px] px-6 py-5 text-[#0F172A] lg:px-24">
@@ -349,10 +432,10 @@ export default function Overview({
             {hasScore ? (
               <>
                 <p className="mt-3 text-sm leading-6 text-[#61738B]">
-                  Explore the factors influencing this
-                  product's opportunity score. Expand
-                  the analysis to see positive and
-                  negative model factors.
+                  Explore the factors influencing
+                  this product's opportunity score.
+                  Expand the analysis to see positive
+                  and negative model factors.
                 </p>
 
                 <p className="mt-2 text-xs text-[#61738B]">
@@ -384,7 +467,7 @@ export default function Overview({
           )}
         </div>
 
-        {/* EXPANDABLE SCORE BREAKDOWN */}
+        {/* EXPANDABLE EXPLANATIONS */}
         {hasScore && showExplanations && (
           <div
             id="score-explanations-panel"
@@ -410,7 +493,7 @@ export default function Overview({
               </Link>
             </div>
 
-            {/* LOADING STATE */}
+            {/* LOADING */}
             {loadingReasons && (
               <div
                 role="status"
@@ -423,7 +506,7 @@ export default function Overview({
               </div>
             )}
 
-            {/* ERROR STATE */}
+            {/* ERROR */}
             {reasonsError && !loadingReasons && (
               <div
                 role="alert"
@@ -435,13 +518,7 @@ export default function Overview({
 
                 <button
                   type="button"
-                  onClick={() => {
-                    setReasonsError("");
-                    setShowExplanations(false);
-                    setTimeout(() => {
-                      setShowExplanations(true);
-                    }, 0);
-                  }}
+                  onClick={retryExplanations}
                   className="mt-3 text-sm font-semibold text-red-700 underline"
                 >
                   Retry analysis
@@ -449,7 +526,7 @@ export default function Overview({
               </div>
             )}
 
-            {/* MODEL FACTORS */}
+            {/* POSITIVE AND NEGATIVE FACTORS */}
             {reasons && !loadingReasons && (
               <div className="mt-6 grid gap-6 md:grid-cols-2">
                 {/* POSITIVE FACTORS */}
@@ -530,8 +607,8 @@ export default function Overview({
 
             {reasons && (
               <p className="mt-5 text-xs leading-5 text-[#61738B]">
-                These are model explanation impacts,
-                not direct percentage changes or
+                Model explanation impacts are not
+                direct percentage changes or
                 guaranteed causal effects.
               </p>
             )}
@@ -565,11 +642,15 @@ export default function Overview({
               </p>
 
               <p className="mt-1 font-semibold">
-                {Number.isFinite(Number(product.price))
+                {Number.isFinite(
+                  Number(product.price)
+                )
                   ? new Intl.NumberFormat("en-US", {
                       style: "currency",
                       currency: "USD",
-                    }).format(Number(product.price))
+                    }).format(
+                      Number(product.price)
+                    )
                   : "—"}
               </p>
             </div>
@@ -587,36 +668,104 @@ export default function Overview({
         </section>
       )}
 
-      {/* EXISTING LAUNCH FORECAST */}
+      {/* ----------------------------------------
+          INTERACTIVE LAUNCH FORECAST
+          ---------------------------------------- */}
       <section className="mt-7">
-        <div>
-          <h2 className="text-xl font-semibold">
-            Product launch estimates
-          </h2>
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div>
+            <h2 className="text-xl font-semibold">
+              Product launch estimates
+            </h2>
 
-          <p className="mt-2 text-sm text-[#61738B]">
-            Estimated performance during the
-            first 12 months of a product launch.
-          </p>
+            <p className="mt-2 text-sm text-[#61738B]">
+              Compare projected launch performance
+              over the first 12 or 24 months.
+            </p>
+          </div>
+
+          {/* NEW: TIMEFRAME SELECTOR */}
+          {predictions && (
+            <div
+              role="group"
+              aria-label="Launch forecast timeframe"
+              className="flex gap-2"
+            >
+              <button
+                type="button"
+                onClick={() =>
+                  setLaunchTimeframe("12m")
+                }
+                aria-pressed={isTwelveMonths}
+                className={`rounded-lg px-5 py-3 text-sm font-semibold transition ${
+                  isTwelveMonths
+                    ? "bg-[#FFD45A] text-[#25334A]"
+                    : "border border-[#D5DADF] bg-white text-[#25334A] hover:bg-[#F3F6FA]"
+                }`}
+              >
+                12 Months
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setLaunchTimeframe("24m")
+                }
+                aria-pressed={!isTwelveMonths}
+                className={`rounded-lg px-5 py-3 text-sm font-semibold transition ${
+                  !isTwelveMonths
+                    ? "bg-[#FFD45A] text-[#25334A]"
+                    : "border border-[#D5DADF] bg-white text-[#25334A] hover:bg-[#F3F6FA]"
+                }`}
+              >
+                24 Months
+              </button>
+            </div>
+          )}
         </div>
 
         {predictions ? (
           <>
-            <div className="mt-5 grid gap-4 md:grid-cols-3">
-              {launchMetrics.map(({ label, metric }) => (
-                <MetricCard
-                  key={label}
-                  label={label}
-                  metric={metric}
-                />
-              ))}
+            {/* DYNAMIC METRICS */}
+            <div
+              key={launchTimeframe}
+              className="mt-5 grid gap-4 md:grid-cols-3"
+            >
+              {launchMetrics.map(
+                ({ label, metric }) => (
+                  <MetricCard
+                    key={label}
+                    label={label}
+                    metric={metric}
+                  />
+                )
+              )}
             </div>
 
+            {/* CURRENT TIMEFRAME NOTE */}
+            <div className="mt-5 rounded-lg border border-[#D7E0EB] bg-white px-5 py-4">
+              <p className="text-sm font-semibold text-[#25334A]">
+                {isTwelveMonths
+                  ? "First-year launch forecast"
+                  : "Two-year launch forecast"}
+              </p>
+
+              <p className="mt-2 text-sm leading-6 text-[#61738B]">
+                {isTwelveMonths
+                  ? "These estimates cover the first 12 months after launch."
+                  : "These are cumulative estimates covering the first 24 months after launch, not just the second year."}
+              </p>
+            </div>
+
+            {/* FORECAST DISCLAIMER */}
             <p className="mt-4 text-xs leading-5 text-[#61738B]">
               Launch forecasts are based partly on
               simulated market data. Estimated ranges
-              reflect typical model errors rather than
-              guaranteed confidence intervals.
+              reflect typical model errors rather
+              than guaranteed confidence intervals.
+              Switching timeframes displays different
+              model outputs without retraining or
+              submitting another prediction request.
             </p>
           </>
         ) : (
