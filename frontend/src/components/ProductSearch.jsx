@@ -21,6 +21,7 @@ export default function ProductSearch({
     title: "",
     category: "",
     price: "",
+    list_price: "",
     review_count: "0",
     stars: "",
     months_on_market: "0",
@@ -115,6 +116,22 @@ export default function ProductSearch({
       return;
     }
 
+    // Optional, and never below what the product actually sells for.
+    const listPrice =
+      details.list_price === ""
+        ? null
+        : Number(details.list_price);
+
+    if (
+      listPrice !== null &&
+      (!Number.isFinite(listPrice) || listPrice < price)
+    ) {
+      setError(
+        "List price can't be lower than the selling price."
+      );
+      return;
+    }
+
     const forecastCategory = toForecastCategory(category.name);
 
     onAnalyze({
@@ -125,6 +142,7 @@ export default function ProductSearch({
         category: category.id,
         categoryName: category.name,
         price,
+        originalPrice: listPrice ?? "",
         reviews,
         stars,
       },
@@ -135,6 +153,7 @@ export default function ProductSearch({
             name: details.title.trim(),
             category: forecastCategory,
             price,
+            ...(listPrice !== null && { list_price: listPrice }),
             review_count: reviews,
             months_on_market: months,
           }
@@ -238,6 +257,21 @@ export default function ProductSearch({
                 value={details.price}
                 onChange={(e) =>
                   updateDetails("price", e.target.value)
+                }
+              />
+            </label>
+
+            <label className="text-sm font-medium text-[#25334A]">
+              List price (before discount)
+              <input
+                className={inputStyle}
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="Optional"
+                value={details.list_price}
+                onChange={(e) =>
+                  updateDetails("list_price", e.target.value)
                 }
               />
             </label>
