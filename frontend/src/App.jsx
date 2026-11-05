@@ -8,48 +8,48 @@ import {
   Routes,
 } from "react-router-dom";
 
-// Shared navigation component.
+// Shared navigation
 import Header from "./components/Header";
 
-// MarketLens application pages.
+// Pages
 import Discover from "./pages/Discover";
 import Overview from "./pages/Overview";
+import SalesForecastOverview from "./pages/SalesForecastOverview";
 import ScoreDetails from "./pages/ScoreDetails";
 import LaunchFeasibility from "./pages/LaunchFeasibility";
 
-/**
- * Main MarketLens application.
- *
- * Manages the current product and the independent results
- * returned by the scoring and forecasting backends.
- */
 export default function App() {
-  // Product details currently entered or submitted.
+  // Currently selected/scored product.
   const [product, setProduct] = useState(null);
 
-  // Opportunity score returned by the product-scoring API.
+  // Product opportunity scoring result.
   const [prediction, setPrediction] = useState(null);
 
-  // Snapshot of the product associated with the current score.
+  // Product associated with the score.
   const [scoredProduct, setScoredProduct] = useState(null);
 
-  // Forecasting results for launch or existing products.
+  // Forecasting result: launch or existing product.
   const [forecast, setForecast] = useState(null);
+
+  // Keep older links to /overview working.
+  const overviewDestination =
+    forecast?.type === "existing"
+      ? "/sales-forecast-overview"
+      : "/product-overview";
 
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-gradient-to-b from-[#F8FAFC] to-[#DCE3EA]">
-        {/* Shared navigation. */}
         <Header />
 
         <Routes>
-          {/* Redirect the root URL to Discover. */}
+          {/* Default route */}
           <Route
             path="/"
             element={<Navigate to="/discover" replace />}
           />
 
-          {/* Search by product details or Product ID. */}
+          {/* Product discovery and search */}
           <Route
             path="/discover"
             element={
@@ -62,9 +62,9 @@ export default function App() {
             }
           />
 
-          {/* Display scoring and forecasting results. */}
+          {/* Product details analysis */}
           <Route
-            path="/overview"
+            path="/product-overview"
             element={
               <Overview
                 product={scoredProduct}
@@ -74,11 +74,28 @@ export default function App() {
             }
           />
 
-          {/*
-            FIX: Pass both the scored product and its prediction.
-            ScoreDetails needs both to display the opportunity
-            score and request explanations from the scoring API.
-          */}
+          {/* Existing product sales forecasting */}
+          <Route
+            path="/sales-forecast-overview"
+            element={
+              <SalesForecastOverview
+                forecast={forecast}
+              />
+            }
+          />
+
+          {/* Compatibility with existing navigation */}
+          <Route
+            path="/overview"
+            element={
+              <Navigate
+                to={overviewDestination}
+                replace
+              />
+            }
+          />
+
+          {/* Product scoring explanations */}
           <Route
             path="/score-details"
             element={
@@ -89,7 +106,7 @@ export default function App() {
             }
           />
 
-          {/* Pricing scenarios for scored products only. */}
+          {/* Product pricing and scenario simulator */}
           <Route
             path="/launch-feasibility"
             element={
@@ -103,6 +120,12 @@ export default function App() {
                 prediction={prediction}
               />
             }
+          />
+
+          {/* Unknown routes */}
+          <Route
+            path="*"
+            element={<Navigate to="/discover" replace />}
           />
         </Routes>
       </div>

@@ -15,15 +15,6 @@ import {
   predictYearly,
 } from "../services/forecastingApi";
 
-/**
- * Discover page.
- *
- * Supports two search methods:
- * 1. Product Details: scoring + launch forecasting.
- * 2. Product ID: monthly + yearly forecasting.
- *
- * Both methods share one Analyze Product button.
- */
 export default function Discover({
   setProduct,
   setPrediction,
@@ -32,15 +23,14 @@ export default function Discover({
 }) {
   const navigate = useNavigate();
 
-  // Categories used by the Product Details dropdown.
   const [categories, setCategories] = useState([]);
 
-  // Request and error states for the Discover page.
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [categoriesError, setCategoriesError] = useState("");
+  const [categoriesError, setCategoriesError] =
+    useState("");
 
-  // Load available product categories from the scoring backend.
+  // Load categories for product-details scoring.
   useEffect(() => {
     let active = true;
 
@@ -69,12 +59,6 @@ export default function Discover({
     };
   }, []);
 
-  /**
-   * Processes a search submitted by ProductSearch.
-   *
-   * Promise.allSettled allows one backend to succeed
-   * even when the other backend fails.
-   */
   async function handleAnalyze(search) {
     if (loading) return;
 
@@ -82,9 +66,12 @@ export default function Discover({
     setError("");
 
     try {
+      // ----------------------------------------
+      // MODEL 1: PRODUCT DETAILS
+      // ----------------------------------------
       if (search.method === "details") {
         // The forecast is skipped for categories it doesn't cover.
-        const notCovered = search.forecastingProduct === null;
+        const notCovered = search.forecastingProduct == null;
 
         // Both APIs independently evaluate the same input product.
         const [scoringResult, launchResult] =
@@ -105,21 +92,21 @@ export default function Discover({
             ? launchResult.value
             : null;
 
-        // At least one backend must return successfully.
         if (score === null && launch === null) {
           throw new Error(
             notCovered
-              ? "Product scoring failed, and the sales forecast doesn't cover this category."
+              ? "Product scoring failed, and the launch forecast doesn't cover this category."
               : "Product scoring and launch forecasting both failed."
           );
         }
 
-        // Save the product and scoring result for other pages.
+        // Preserve product information and scoring.
         setProduct(search.scoringProduct);
         setScoredProduct(search.scoringProduct);
         setPrediction(score);
 
-        // Store launch forecasting separately from scoring.
+        // Launch forecasts remain associated
+        // with product-details analysis.
         setForecast({
           type: "launch",
           productId: null,
@@ -128,12 +115,28 @@ export default function Discover({
           yearly: null,
           notCovered,
         });
-      } else if (search.method === "id") {
-        // Product ID is supported by the forecasting backend.
+
+        // Navigate to product overview.
+        navigate("/product-overview");
+      }
+
+      // ----------------------------------------
+      // MODEL 2: EXISTING PRODUCT FORECASTING
+      // ----------------------------------------
+      else if (search.method === "id") {
+        const productId = String(
+          search.productId ?? ""
+        ).trim();
+
+        if (!productId) {
+          throw new Error("Enter a valid Product ID.");
+        }
+
+        // Generate forecasts independently.
         const [monthlyResult, yearlyResult] =
           await Promise.allSettled([
-            predictMonthly(search.productId),
-            predictYearly(search.productId),
+            predictMonthly(productId),
+            predictYearly(productId),
           ]);
 
         const monthly =
@@ -152,26 +155,29 @@ export default function Discover({
           );
         }
 
-        // Clear old scoring results to avoid showing
-        // a score belonging to a previously searched product.
+        // Prevent a previous product's scoring
+        // data from appearing with this forecast.
         setProduct(null);
         setScoredProduct(null);
         setPrediction(null);
 
-        // Save monthly and yearly forecasts.
+        // Save both forecasting responses.
         setForecast({
           type: "existing",
-          productId: search.productId,
+          productId,
           launch: null,
           monthly,
           yearly,
+          notCovered: false,
         });
-      } else {
-        throw new Error("Unknown search method.");
+
+        // Navigate to forecasting overview.
+        navigate("/sales-forecast-overview");
       }
 
-      // Display whichever results were successfully retrieved.
-      navigate("/overview");
+      else {
+        throw new Error("Unknown search method.");
+      }
     } catch (err) {
       setError(
         err.message || "Unable to analyze this product."
@@ -183,7 +189,6 @@ export default function Discover({
 
   return (
     <main className="mx-auto max-w-[1440px] px-6 py-10 lg:px-24">
-      {/* Page heading */}
       <div className="mb-8">
         <p className="mb-3 text-xs font-medium text-[#61738B]">
           Discover / Product search
@@ -194,11 +199,11 @@ export default function Discover({
         </h1>
 
         <p className="mt-2 text-base text-[#61738B]">
-          Search by product details or an existing Product ID.
+          Evaluate a product using its details, or
+          forecast sales using an existing Product ID.
         </p>
       </div>
 
-      {/* Category loading failures */}
       {categoriesError && (
         <p
           role="alert"
@@ -208,7 +213,6 @@ export default function Discover({
         </p>
       )}
 
-      {/* Product analysis failures */}
       {error && (
         <p
           role="alert"
@@ -218,7 +222,6 @@ export default function Discover({
         </p>
       )}
 
-      {/* Unified search interface */}
       <ProductSearch
         categories={categories}
         loading={loading}

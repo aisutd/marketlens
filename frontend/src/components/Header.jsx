@@ -7,9 +7,22 @@ export default function Header() {
   const location = useLocation();
 
   const menuItems = [
-    { label: "Discover", path: "/discover" },
-    { label: "Overview", path: "/overview" },
-    { label: "Score Explanations", path: "/score-details" },
+    {
+      label: "Discover",
+      path: "/discover",
+    },
+    {
+      label: "Product Overview",
+      path: "/product-overview",
+    },
+    {
+      label: "Sales Forecasting",
+      path: "/sales-forecast-overview",
+    },
+    {
+      label: "Score Explanations",
+      path: "/score-details",
+    },
     {
       label: "Launch Feasibility",
       path: "/launch-feasibility",
@@ -40,7 +53,9 @@ export default function Header() {
         <div className="relative">
           <button
             type="button"
-            onClick={() => setMenuOpen((open) => !open)}
+            onClick={() =>
+              setMenuOpen((open) => !open)
+            }
             aria-expanded={menuOpen}
             aria-controls="marketlens-menu"
             className="rounded-lg bg-[#F1F5FA] px-6 py-2 text-sm font-medium text-[#263549] hover:bg-white"
@@ -55,14 +70,19 @@ export default function Header() {
               className="absolute right-0 top-12 z-10 w-56 rounded-lg border border-slate-200 bg-white p-2 text-sm text-slate-800 shadow-lg"
             >
               {menuItems.map((item) => {
-                const active = location.pathname === item.path;
+                const active =
+                  location.pathname === item.path;
 
                 return (
                   <Link
                     key={item.path}
                     to={item.path}
-                    onClick={() => setMenuOpen(false)}
-                    aria-current={active ? "page" : undefined}
+                    onClick={() =>
+                      setMenuOpen(false)
+                    }
+                    aria-current={
+                      active ? "page" : undefined
+                    }
                     className={`block rounded-md px-4 py-3 transition ${
                       active
                         ? "bg-[#FFFAE9] font-semibold text-[#0F172A]"
