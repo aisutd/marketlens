@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check:categories": "node scripts/check-category-map.mjs",
+    "generate:review-categories": "node scripts/generate-review-categories.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

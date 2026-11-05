@@ -1,4 +1,6 @@
 
+import { getScoreBand } from "../constants/scoreBands";
+
 export default function OpportunityGauge({ score }) {
   const hasScore =
     typeof score === "number" &&
@@ -8,21 +10,8 @@ export default function OpportunityGauge({ score }) {
     ? Math.max(0, Math.min(100, score))
     : 0;
 
-  const scoreColor = !hasScore
-    ? "#94A3B8"
-    : normalizedScore < 40
-    ? "#DC2626"
-    : normalizedScore < 70
-    ? "#CA8A04"
-    : "#16A34A";
-
-  const scoreLabel = !hasScore
-    ? "Not scored"
-    : normalizedScore < 40
-    ? "Poor"
-    : normalizedScore < 70
-    ? "Moderate"
-    : "Good";
+  const { label: scoreLabel, color: scoreColor } =
+    getScoreBand(score);
 
   const totalSegments = 40;
 

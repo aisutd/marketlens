@@ -356,6 +356,7 @@ export default function ProductSearch({
     setError("");
   }
 
+  // A rating doesn't carry over into a category that can't use it.
   function selectCategory(value) {
     const category = categories.find(
       (item) => String(item.id) === String(value)
@@ -432,6 +433,7 @@ export default function ProductSearch({
     const reviews = Number(details.review_count);
     const months = Number(details.months_on_market);
 
+    // Optional, so empty stays null instead of becoming 0.
     const stars =
       details.stars === ""
         ? null
@@ -467,6 +469,7 @@ export default function ProductSearch({
       return;
     }
 
+    // Optional, and never below what the product actually sells for.
     const listPrice =
       details.list_price === ""
         ? null
@@ -501,6 +504,7 @@ export default function ProductSearch({
         stars,
       },
 
+      // Null when the forecast doesn't cover this category.
       forecastingProduct: forecastCategory
         ? {
             name: details.title.trim(),
@@ -801,7 +805,7 @@ export default function ProductSearch({
                 <p className="mt-6 text-xs text-[#61738B]">
                   Add a star rating to use your review
                   count in the score. Scored as a new
-                  product idea for now.
+                  idea for now.
                 </p>
               )
             )}

@@ -1,4 +1,6 @@
 
+import { getScoreBand } from "../constants/scoreBands";
+
 export default function EvaluationSummary({
   product,
   prediction,
@@ -36,21 +38,8 @@ export default function EvaluationSummary({
     ? Math.max(0, Math.min(100, score))
     : 0;
 
-  const scoreColor = !hasPrediction
-    ? "#94A3B8"
-    : normalizedScore < 40
-    ? "#DC2626"
-    : normalizedScore < 70
-    ? "#CA8A04"
-    : "#16A34A";
-
-  const scoreLabel = !hasPrediction
-    ? "Not scored"
-    : normalizedScore < 40
-    ? "Poor"
-    : normalizedScore < 70
-    ? "Moderate"
-    : "Good";
+  const { label: scoreLabel, color: scoreColor } =
+    getScoreBand(score);
 
   return (
     <aside className="space-y-5">

@@ -70,19 +70,16 @@ export default function Discover({
       // MODEL 1: PRODUCT DETAILS
       // ----------------------------------------
       if (search.method === "details") {
-        // A category without forecasting support
-        // can still receive a product score.
-        const notCovered =
-          search.forecastingProduct == null;
+        // The forecast is skipped for categories it doesn't cover.
+        const notCovered = search.forecastingProduct == null;
 
+        // Both APIs independently evaluate the same input product.
         const [scoringResult, launchResult] =
           await Promise.allSettled([
             predictProduct(search.scoringProduct),
             notCovered
-              ? Promise.resolve(null)
-              : predictLaunch(
-                  search.forecastingProduct
-                ),
+              ? null
+              : predictLaunch(search.forecastingProduct),
           ]);
 
         const score =
@@ -98,7 +95,7 @@ export default function Discover({
         if (score === null && launch === null) {
           throw new Error(
             notCovered
-              ? "Product scoring failed. Launch forecasting is not supported for this category."
+              ? "Product scoring failed, and the launch forecast doesn't cover this category."
               : "Product scoring and launch forecasting both failed."
           );
         }
