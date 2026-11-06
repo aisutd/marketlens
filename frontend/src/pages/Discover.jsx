@@ -10,7 +10,6 @@ import {
 } from "../services/marketlensApi";
 
 import {
-  predictLaunch,
   predictMonthly,
   predictYearly,
 } from "../services/forecastingApi";
@@ -24,13 +23,15 @@ export default function Discover({
   const navigate = useNavigate();
 
   const [categories, setCategories] = useState([]);
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [categoriesError, setCategoriesError] =
     useState("");
 
-  // Load categories for product-details scoring.
+  // ----------------------------------------
+  // LOAD SCORING CATEGORIES
+  // ----------------------------------------
+
   useEffect(() => {
     let active = true;
 
@@ -46,7 +47,8 @@ export default function Discover({
       } catch (err) {
         if (active) {
           setCategoriesError(
-            err.message || "Unable to load categories."
+            err.message ||
+              "Unable to load categories."
           );
         }
       }
@@ -59,6 +61,10 @@ export default function Discover({
     };
   }, []);
 
+  // ----------------------------------------
+  // HANDLE ANALYSIS
+  // ----------------------------------------
+
   async function handleAnalyze(search) {
     if (loading) return;
 
@@ -66,73 +72,54 @@ export default function Discover({
     setError("");
 
     try {
-      // ----------------------------------------
-      // MODEL 1: PRODUCT DETAILS
-      // ----------------------------------------
+      // ========================================
+      // MODEL 1: PRODUCT OPPORTUNITY ANALYSIS
+      // ========================================
+
       if (search.method === "details") {
-        // The forecast is skipped for categories it doesn't cover.
-        const notCovered = search.forecastingProduct == null;
+        const product = search.scoringProduct;
 
-        // Both APIs independently evaluate the same input product.
-        const [scoringResult, launchResult] =
-          await Promise.allSettled([
-            predictProduct(search.scoringProduct),
-            notCovered
-              ? null
-              : predictLaunch(search.forecastingProduct),
-          ]);
-
-        const score =
-          scoringResult.status === "fulfilled"
-            ? scoringResult.value
-            : null;
-
-        const launch =
-          launchResult.status === "fulfilled"
-            ? launchResult.value
-            : null;
-
-        if (score === null && launch === null) {
+        if (!product) {
           throw new Error(
-            notCovered
-              ? "Product scoring failed, and the launch forecast doesn't cover this category."
-              : "Product scoring and launch forecasting both failed."
+            "Valid product details are required."
           );
         }
 
-        // Preserve product information and scoring.
-        setProduct(search.scoringProduct);
-        setScoredProduct(search.scoringProduct);
+        // Product Scoring API only.
+        const score = await predictProduct(product);
+
+        if (!score) {
+          throw new Error(
+            "No opportunity score was returned."
+          );
+        }
+
+        setProduct(product);
+        setScoredProduct(product);
         setPrediction(score);
 
-        // Launch forecasts remain associated
-        // with product-details analysis.
-        setForecast({
-          type: "launch",
-          productId: null,
-          launch,
-          monthly: null,
-          yearly: null,
-          notCovered,
-        });
+        // Remove previous forecast data
+        // from the current analysis.
+        setForecast(null);
 
-        // Navigate to product overview.
         navigate("/product-overview");
       }
 
-      // ----------------------------------------
+      // ========================================
       // MODEL 2: EXISTING PRODUCT FORECASTING
-      // ----------------------------------------
+      // ========================================
+
       else if (search.method === "id") {
         const productId = String(
           search.productId ?? ""
         ).trim();
 
         if (!productId) {
-          throw new Error("Enter a valid Product ID.");
+          throw new Error(
+            "Enter a valid Product ID."
+          );
         }
 
-        // Generate forecasts independently.
         const [monthlyResult, yearlyResult] =
           await Promise.allSettled([
             predictMonthly(productId),
@@ -155,13 +142,10 @@ export default function Discover({
           );
         }
 
-        // Prevent a previous product's scoring
-        // data from appearing with this forecast.
         setProduct(null);
         setScoredProduct(null);
         setPrediction(null);
 
-        // Save both forecasting responses.
         setForecast({
           type: "existing",
           productId,
@@ -171,16 +155,25 @@ export default function Discover({
           notCovered: false,
         });
 
-        // Navigate to forecasting overview.
         navigate("/sales-forecast-overview");
       }
 
-      else {
-        throw new Error("Unknown search method.");
+      // Step 2 includes a launch form,
+      // but standalone launch routing is
+      // intentionally not implemented yet.
+      else if (search.method === "launch") {
+        throw new Error(
+          "New Product Launch is not connected yet."
+        );
+      } else {
+        throw new Error(
+          "Unknown analysis method."
+        );
       }
     } catch (err) {
       setError(
-        err.message || "Unable to analyze this product."
+        err.message ||
+          "Unable to analyze this product."
       );
     } finally {
       setLoading(false);
@@ -199,8 +192,8 @@ export default function Discover({
         </h1>
 
         <p className="mt-2 text-base text-[#61738B]">
-          Evaluate a product using its details, or
-          forecast sales using an existing Product ID.
+          Choose between independent Product
+          Opportunity Analysis and Sales Forecasting.
         </p>
       </div>
 

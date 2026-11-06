@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   BrowserRouter,
@@ -8,126 +8,339 @@ import {
   Routes,
 } from "react-router-dom";
 
-// Shared navigation
+// ========================================
+// SHARED COMPONENTS
+// ========================================
+
 import Header from "./components/Header";
 
-// Pages
+// ========================================
+// PAGES
+// ========================================
+
 import Discover from "./pages/Discover";
 import Overview from "./pages/Overview";
 import SalesForecastOverview from "./pages/SalesForecastOverview";
 import ScoreDetails from "./pages/ScoreDetails";
 import LaunchFeasibility from "./pages/LaunchFeasibility";
 
+// ========================================
+// LOCAL STORAGE
+// ========================================
+
+const STORAGE_KEY =
+  "marketlens:current-analysis:v1";
+
+const STORAGE_VERSION = 1;
+
+const EMPTY_ANALYSIS = {
+  product: null,
+  prediction: null,
+  scoredProduct: null,
+  forecast: null,
+};
+
+// ========================================
+// RESTORE PREVIOUS ANALYSIS
+// ========================================
+
+function loadStoredAnalysis() {
+  try {
+    const savedData = localStorage.getItem(
+      STORAGE_KEY
+    );
+
+    if (!savedData) {
+      return { ...EMPTY_ANALYSIS };
+    }
+
+    const stored = JSON.parse(savedData);
+
+    if (
+      !stored ||
+      stored.version !== STORAGE_VERSION ||
+      !stored.analysis ||
+      typeof stored.analysis !== "object" ||
+      Array.isArray(stored.analysis)
+    ) {
+      return { ...EMPTY_ANALYSIS };
+    }
+
+    const saved = stored.analysis;
+
+    const isObjectOrNull = (value) =>
+      value == null ||
+      (typeof value === "object" &&
+        !Array.isArray(value));
+
+    if (
+      !isObjectOrNull(saved.product) ||
+      !isObjectOrNull(saved.prediction) ||
+      !isObjectOrNull(saved.scoredProduct) ||
+      !isObjectOrNull(saved.forecast)
+    ) {
+      return { ...EMPTY_ANALYSIS };
+    }
+
+    if (
+      saved.forecast &&
+      saved.forecast.type !== "launch" &&
+      saved.forecast.type !== "existing"
+    ) {
+      return { ...EMPTY_ANALYSIS };
+    }
+
+    return {
+      product: saved.product ?? null,
+      prediction: saved.prediction ?? null,
+      scoredProduct: saved.scoredProduct ?? null,
+      forecast: saved.forecast ?? null,
+    };
+  } catch (error) {
+    console.warn(
+      "Unable to restore MarketLens analysis:",
+      error
+    );
+
+    return { ...EMPTY_ANALYSIS };
+  }
+}
+
+// ========================================
+// SAVE CURRENT ANALYSIS
+// ========================================
+
+function saveStoredAnalysis(analysis) {
+  try {
+    const hasResult = Boolean(
+      analysis.product ||
+        analysis.prediction ||
+        analysis.scoredProduct ||
+        analysis.forecast
+    );
+
+    if (!hasResult) {
+      localStorage.removeItem(STORAGE_KEY);
+      return;
+    }
+
+    const payload = {
+      version: STORAGE_VERSION,
+      analysis,
+    };
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(payload)
+    );
+  } catch (error) {
+    console.warn(
+      "Unable to save MarketLens analysis:",
+      error
+    );
+  }
+}
+
+// ========================================
+// COPYRIGHT FOOTER
+// ========================================
+
+function Footer() {
+  return (
+    <footer className="mt-auto border-t border-[#D7E0EB] bg-white/50 px-6 py-6">
+      <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-center gap-2 text-center">
+        <p className="text-sm font-medium text-[#61738B]">
+          © {new Date().getFullYear()} MarketLens.
+          All rights reserved.
+        </p>
+
+        <p className="text-xs text-[#94A3B8]">
+          AI-Powered Product Intelligence
+        </p>
+      </div>
+    </footer>
+  );
+}
+
+// ========================================
+// MAIN APPLICATION
+// ========================================
+
 export default function App() {
-  // Currently selected/scored product.
-  const [product, setProduct] = useState(null);
+  const [analysis, setAnalysis] = useState(
+    loadStoredAnalysis
+  );
 
-  // Product opportunity scoring result.
-  const [prediction, setPrediction] = useState(null);
+  const {
+    product,
+    prediction,
+    scoredProduct,
+    forecast,
+  } = analysis;
 
-  // Product associated with the score.
-  const [scoredProduct, setScoredProduct] = useState(null);
+  // Persist analysis changes.
+  useEffect(() => {
+    saveStoredAnalysis(analysis);
+  }, [analysis]);
 
-  // Forecasting result: launch or existing product.
-  const [forecast, setForecast] = useState(null);
+  // ----------------------------------------
+  // UPDATE ANALYSIS STATE
+  // ----------------------------------------
 
-  // Keep older links to /overview working.
+  function updateAnalysisField(field, value) {
+    setAnalysis((previous) => ({
+      ...previous,
+      [field]:
+        typeof value === "function"
+          ? value(previous[field])
+          : value,
+    }));
+  }
+
+  const setProduct = (value) =>
+    updateAnalysisField("product", value);
+
+  const setPrediction = (value) =>
+    updateAnalysisField("prediction", value);
+
+  const setScoredProduct = (value) =>
+    updateAnalysisField("scoredProduct", value);
+
+  const setForecast = (value) =>
+    updateAnalysisField("forecast", value);
+
+  // ----------------------------------------
+  // OVERVIEW ROUTING
+  // ----------------------------------------
+
   const overviewDestination =
     forecast?.type === "existing"
       ? "/sales-forecast-overview"
       : "/product-overview";
 
+  // ========================================
+  // APPLICATION LAYOUT
+  // ========================================
+
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-gradient-to-b from-[#F8FAFC] to-[#DCE3EA]">
+      <div className="flex min-h-screen flex-col bg-gradient-to-b from-[#F8FAFC] to-[#DCE3EA]">
+        {/* NAVIGATION */}
+
         <Header />
 
-        <Routes>
-          {/* Default route */}
-          <Route
-            path="/"
-            element={<Navigate to="/discover" replace />}
-          />
+        {/* PAGE CONTENT */}
 
-          {/* Product discovery and search */}
-          <Route
-            path="/discover"
-            element={
-              <Discover
-                setProduct={setProduct}
-                setPrediction={setPrediction}
-                setScoredProduct={setScoredProduct}
-                setForecast={setForecast}
-              />
-            }
-          />
+        <div className="w-full flex-1">
+          <Routes>
+            {/* DEFAULT ROUTE */}
 
-          {/* Product details analysis */}
-          <Route
-            path="/product-overview"
-            element={
-              <Overview
-                product={scoredProduct}
-                prediction={prediction}
-                forecast={forecast}
-              />
-            }
-          />
+            <Route
+              path="/"
+              element={
+                <Navigate
+                  to="/discover"
+                  replace
+                />
+              }
+            />
 
-          {/* Existing product sales forecasting */}
-          <Route
-            path="/sales-forecast-overview"
-            element={
-              <SalesForecastOverview
-                forecast={forecast}
-              />
-            }
-          />
+            {/* DISCOVER */}
 
-          {/* Compatibility with existing navigation */}
-          <Route
-            path="/overview"
-            element={
-              <Navigate
-                to={overviewDestination}
-                replace
-              />
-            }
-          />
+            <Route
+              path="/discover"
+              element={
+                <Discover
+                  setProduct={setProduct}
+                  setPrediction={setPrediction}
+                  setScoredProduct={setScoredProduct}
+                  setForecast={setForecast}
+                />
+              }
+            />
 
-          {/* Product scoring explanations */}
-          <Route
-            path="/score-details"
-            element={
-              <ScoreDetails
-                product={scoredProduct}
-                prediction={prediction}
-              />
-            }
-          />
+            {/* PRODUCT OPPORTUNITY ANALYSIS */}
 
-          {/* Product pricing and scenario simulator */}
-          <Route
-            path="/launch-feasibility"
-            element={
-              <LaunchFeasibility
-                key={
-                  scoredProduct
-                    ? JSON.stringify(scoredProduct)
-                    : "no-product"
-                }
-                product={scoredProduct}
-                prediction={prediction}
-              />
-            }
-          />
+            <Route
+              path="/product-overview"
+              element={
+                <Overview
+                  product={scoredProduct}
+                  prediction={prediction}
+                  forecast={forecast}
+                />
+              }
+            />
 
-          {/* Unknown routes */}
-          <Route
-            path="*"
-            element={<Navigate to="/discover" replace />}
-          />
-        </Routes>
+            {/* EXISTING PRODUCT SALES FORECASTING */}
+
+            <Route
+              path="/sales-forecast-overview"
+              element={
+                <SalesForecastOverview
+                  forecast={forecast}
+                />
+              }
+            />
+
+            {/* LEGACY OVERVIEW REDIRECT */}
+
+            <Route
+              path="/overview"
+              element={
+                <Navigate
+                  to={overviewDestination}
+                  replace
+                />
+              }
+            />
+
+            {/* SCORE EXPLANATIONS */}
+
+            <Route
+              path="/score-details"
+              element={
+                <ScoreDetails
+                  product={scoredProduct}
+                  prediction={prediction}
+                />
+              }
+            />
+
+            {/* WHAT-IF PRICE SIMULATOR */}
+
+            <Route
+              path="/launch-feasibility"
+              element={
+                <LaunchFeasibility
+                  key={
+                    scoredProduct
+                      ? JSON.stringify(scoredProduct)
+                      : "no-product"
+                  }
+                  product={scoredProduct}
+                  prediction={prediction}
+                />
+              }
+            />
+
+            {/* FALLBACK ROUTE */}
+
+            <Route
+              path="*"
+              element={
+                <Navigate
+                  to="/discover"
+                  replace
+                />
+              }
+            />
+          </Routes>
+        </div>
+
+        {/* GLOBAL COPYRIGHT FOOTER */}
+
+        <Footer />
       </div>
     </BrowserRouter>
   );
