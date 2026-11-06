@@ -6,6 +6,7 @@ import {
   Navigate,
   Route,
   Routes,
+  useLocation,
 } from "react-router-dom";
 
 // ========================================
@@ -18,6 +19,7 @@ import Header from "./components/Header";
 // PAGES
 // ========================================
 
+import LandingPage from "./pages/LandingPage";
 import Discover from "./pages/Discover";
 import Overview from "./pages/Overview";
 import SalesForecastOverview from "./pages/SalesForecastOverview";
@@ -142,6 +144,24 @@ function saveStoredAnalysis(analysis) {
 }
 
 // ========================================
+// CONDITIONAL APPLICATION HEADER
+// ========================================
+
+function AppHeader() {
+  const location = useLocation();
+
+  // LandingPage has its own navigation.
+  // Do not display the dashboard header
+  // on the landing page.
+
+  if (location.pathname === "/") {
+    return null;
+  }
+
+  return <Header />;
+}
+
+// ========================================
 // COPYRIGHT FOOTER
 // ========================================
 
@@ -178,14 +198,17 @@ export default function App() {
     forecast,
   } = analysis;
 
-  // Persist analysis changes.
+  // ========================================
+  // PERSIST ANALYSIS STATE
+  // ========================================
+
   useEffect(() => {
     saveStoredAnalysis(analysis);
   }, [analysis]);
 
-  // ----------------------------------------
+  // ========================================
   // UPDATE ANALYSIS STATE
-  // ----------------------------------------
+  // ========================================
 
   function updateAnalysisField(field, value) {
     setAnalysis((previous) => ({
@@ -209,9 +232,9 @@ export default function App() {
   const setForecast = (value) =>
     updateAnalysisField("forecast", value);
 
-  // ----------------------------------------
+  // ========================================
   // OVERVIEW ROUTING
-  // ----------------------------------------
+  // ========================================
 
   const overviewDestination =
     forecast?.type === "existing"
@@ -225,27 +248,26 @@ export default function App() {
   return (
     <BrowserRouter>
       <div className="flex min-h-screen flex-col bg-gradient-to-b from-[#F8FAFC] to-[#DCE3EA]">
-        {/* NAVIGATION */}
 
-        <Header />
+        {/* CONDITIONAL NAVIGATION */}
+        <AppHeader />
 
         {/* PAGE CONTENT */}
-
         <div className="w-full flex-1">
           <Routes>
-            {/* DEFAULT ROUTE */}
+
+            {/* ========================================
+                LANDING PAGE
+            ======================================== */}
 
             <Route
               path="/"
-              element={
-                <Navigate
-                  to="/discover"
-                  replace
-                />
-              }
+              element={<LandingPage />}
             />
 
-            {/* DISCOVER */}
+            {/* ========================================
+                DISCOVER PRODUCTS
+            ======================================== */}
 
             <Route
               path="/discover"
@@ -259,7 +281,9 @@ export default function App() {
               }
             />
 
-            {/* PRODUCT OPPORTUNITY ANALYSIS */}
+            {/* ========================================
+                PRODUCT OPPORTUNITY ANALYSIS
+            ======================================== */}
 
             <Route
               path="/product-overview"
@@ -272,7 +296,9 @@ export default function App() {
               }
             />
 
-            {/* EXISTING PRODUCT SALES FORECASTING */}
+            {/* ========================================
+                EXISTING PRODUCT SALES FORECASTING
+            ======================================== */}
 
             <Route
               path="/sales-forecast-overview"
@@ -283,7 +309,9 @@ export default function App() {
               }
             />
 
-            {/* LEGACY OVERVIEW REDIRECT */}
+            {/* ========================================
+                LEGACY OVERVIEW REDIRECT
+            ======================================== */}
 
             <Route
               path="/overview"
@@ -295,7 +323,9 @@ export default function App() {
               }
             />
 
-            {/* SCORE EXPLANATIONS */}
+            {/* ========================================
+                SCORE EXPLANATIONS
+            ======================================== */}
 
             <Route
               path="/score-details"
@@ -307,7 +337,9 @@ export default function App() {
               }
             />
 
-            {/* WHAT-IF PRICE SIMULATOR */}
+            {/* ========================================
+                WHAT-IF PRICE SIMULATOR
+            ======================================== */}
 
             <Route
               path="/launch-feasibility"
@@ -324,7 +356,9 @@ export default function App() {
               }
             />
 
-            {/* FALLBACK ROUTE */}
+            {/* ========================================
+                FALLBACK ROUTE
+            ======================================== */}
 
             <Route
               path="*"
@@ -335,12 +369,13 @@ export default function App() {
                 />
               }
             />
+
           </Routes>
         </div>
 
         {/* GLOBAL COPYRIGHT FOOTER */}
-
         <Footer />
+
       </div>
     </BrowserRouter>
   );

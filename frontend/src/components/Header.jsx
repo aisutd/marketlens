@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
+import MarketLensLogo from "./MarketLensLogo";
+
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [notice, setNotice] = useState("");
@@ -33,24 +35,13 @@ export default function Header() {
   return (
     <header className="relative z-30 bg-[#131E29] text-white">
       <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-6 py-5 lg:px-24">
+
         {/* MARKETLENS BRAND */}
-        <Link
-          to="/discover"
-          className="flex items-center gap-3"
+        <MarketLensLogo
+          to="/"
+          tagline
           onClick={closeMenu}
-        >
-          <span className="rounded-lg bg-[#FFD45A] px-2 py-1 text-xl text-[#131E29]">
-            ◈
-          </span>
-
-          <span className="text-2xl font-bold">
-            marketlens
-          </span>
-
-          <span className="hidden border-l border-white/20 pl-3 text-sm text-slate-400 sm:block">
-            Product intelligence
-          </span>
-        </Link>
+        />
 
         {/* NAVIGATION MENU */}
         <div className="relative">
@@ -98,6 +89,7 @@ export default function Header() {
               className="absolute right-0 top-[calc(100%+12px)] z-50 w-64 rounded-xl border border-[#D7E0EB] bg-white p-3 text-[#25334A] shadow-xl"
             >
               <div className="space-y-1">
+
                 {/* DISCOVER PRODUCTS */}
                 <Link
                   to="/discover"
