@@ -1,6 +1,27 @@
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { AnimatePresence, motion } from "motion/react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  ArrowDownRight,
+  BarChart3,
+  Calculator,
+  CheckCircle2,
+  DollarSign,
+  Info,
+  Layers3,
+  Package,
+  Play,
+  RotateCcw,
+  SlidersHorizontal,
+  Sparkles,
+  Target,
+  TrendingUp,
+  Wallet,
+} from "lucide-react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -12,50 +33,83 @@ import {
   Tooltip,
 } from "recharts";
 
+import {
+  rescoreProduct,
+  simulatePrices,
+} from "../services/marketlensApi";
+
 // ========================================
-// THEME
+// THEME AND CONSTANTS
 // ========================================
 
 const COLORS = {
   navy: "#193B66",
   gold: "#D4A529",
   green: "#13795B",
+  red: "#B94747",
   slate: "#8FA4BA",
   muted: "#61738B",
 };
 
-const CATEGORIES = [
+const DEFAULT_COSTS = {
+  units: "500",
+  manufacturing: "7.50",
+  shipping: "2.00",
+  amazonFees: "5.00",
+  advertising: "3.00",
+};
+
+const COST_FIELDS = [
   {
-    id: "pricing",
-    label: "Pricing",
-    description: "Selling price and its estimated range.",
-    color: "#D4A529",
-    background: "#FFF8E5",
-  },
-  {
-    id: "demand",
-    label: "Demand",
-    description: "Market demand and category demand share.",
+    id: "manufacturing",
+    label: "Manufacturing",
+    description: "Product production cost per unit",
     color: "#193B66",
-    background: "#F1F6FC",
   },
   {
-    id: "returns",
-    label: "Returns",
-    description: "Return on investment estimates.",
-    color: "#13795B",
-    background: "#F0F8F4",
+    id: "shipping",
+    label: "Shipping",
+    description: "Shipping cost per unit",
+    color: "#8FA4BA",
+  },
+  {
+    id: "amazonFees",
+    label: "Amazon fees",
+    description: "Marketplace fees per unit",
+    color: "#D4A529",
+  },
+  {
+    id: "advertising",
+    label: "Advertising",
+    description: "Advertising cost per unit",
+    color: "#7C6BB1",
   },
 ];
 
+const ENTER_TRANSITION = {
+  duration: 0.45,
+  ease: "easeOut",
+};
+
+const numberFormatter = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 0,
+});
+
+const currencyFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 // ========================================
-// FORMATTING HELPERS
+// FORMATTING AND CALCULATIONS
 // ========================================
 
 function numberOrNull(value) {
   if (
-    value == null ||
     value === "" ||
+    value == null ||
     !Number.isFinite(Number(value))
   ) {
     return null;
@@ -64,109 +118,97 @@ function numberOrNull(value) {
   return Number(value);
 }
 
-function getValue(metric) {
-  return numberOrNull(metric?.value);
+function money(value) {
+  const number = numberOrNull(value);
+
+  return number === null
+    ? "—"
+    : currencyFormatter.format(number);
 }
 
-function formatNumber(value) {
+function numberText(value) {
+  const number = numberOrNull(value);
+
+  return number === null
+    ? "—"
+    : numberFormatter.format(number);
+}
+
+function percent(value) {
+  const number = numberOrNull(value);
+
+  return number === null
+    ? "—"
+    : `${number.toFixed(1)}%`;
+}
+
+function signedMoney(value) {
   const number = numberOrNull(value);
 
   if (number === null) return "—";
 
-  return new Intl.NumberFormat("en-US", {
-    maximumFractionDigits: 0,
-  }).format(number);
+  return `${number > 0 ? "+" : number < 0 ? "−" : ""}${money(
+    Math.abs(number)
+  )}`;
 }
 
-function formatCurrency(value) {
+function signedPercent(value) {
   const number = numberOrNull(value);
 
   if (number === null) return "—";
 
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(number);
+  return `${number > 0 ? "+" : ""}${number.toFixed(1)}%`;
 }
 
-function formatCompact(value) {
-  const number = numberOrNull(value);
+function calculateFinancials(values) {
+  const unitCost =
+    values.manufacturing +
+    values.shipping +
+    values.amazonFees +
+    values.advertising;
 
-  if (number === null) return "—";
+  const revenue = values.price * values.units;
+  const totalCosts = unitCost * values.units;
+  const profit = revenue - totalCosts;
 
-  return new Intl.NumberFormat("en-US", {
-    notation: "compact",
-    maximumFractionDigits: 1,
-  }).format(number);
+  const margin =
+    revenue > 0 ? (profit / revenue) * 100 : 0;
+
+  const roi =
+    totalCosts > 0
+      ? (profit / totalCosts) * 100
+      : null;
+
+  return {
+    unitCost,
+    revenue,
+    totalCosts,
+    profit,
+    margin,
+    roi,
+    contributionPerUnit: values.price - unitCost,
+  };
 }
 
-function formatMetric(metric) {
-  const value = getValue(metric);
-
-  if (value === null) return "—";
-
-  if (metric.unit === "USD") {
-    return formatCurrency(value);
-  }
-
-  if (metric.unit === "%") {
-    return `${value.toFixed(2)}%`;
-  }
-
-  return formatNumber(value);
-}
-
-function validRange(metric) {
-  const value = getValue(metric);
-  const range = metric?.range;
-
+function calculateChange(current, baseline) {
   if (
-    value === null ||
-    !Array.isArray(range) ||
-    range.length !== 2
+    !Number.isFinite(current) ||
+    !Number.isFinite(baseline)
   ) {
     return null;
   }
 
-  const low = numberOrNull(range[0]);
-  const high = numberOrNull(range[1]);
-
-  if (
-    low === null ||
-    high === null ||
-    low > high ||
-    value < low ||
-    value > high
-  ) {
-    return null;
-  }
-
-  return [low, high];
+  return current - baseline;
 }
 
-function formatPeriod(period) {
-  if (period == null) {
-    return "Unavailable";
-  }
+function validSuggestedPrice(suggestedPrice) {
+  const value = numberOrNull(suggestedPrice);
 
-  const text = String(period);
-
-  if (/^\d{4}-\d{2}$/.test(text)) {
-    const [year, month] = text.split("-").map(Number);
-
-    if (month >= 1 && month <= 12) {
-      return new Intl.DateTimeFormat("en-US", {
-        month: "long",
-        year: "numeric",
-        timeZone: "UTC",
-      }).format(
-        new Date(Date.UTC(year, month - 1, 1))
-      );
-    }
-  }
-
-  return text;
+  return value !== null &&
+    value > 0 &&
+    value <= 100000
+    ? value
+    : null;
 }
 
 // ========================================
@@ -177,171 +219,263 @@ function SectionHeading({
   eyebrow,
   title,
   description,
+  action,
 }) {
   return (
-    <div>
-      {eyebrow && (
-        <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
-          {eyebrow}
-        </p>
-      )}
+    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+      <div>
+        {eyebrow && (
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
+            {eyebrow}
+          </p>
+        )}
 
-      <h2 className="text-xl font-bold tracking-tight text-[#25334A] sm:text-2xl">
-        {title}
-      </h2>
+        <h2 className="text-xl font-bold tracking-tight text-[#25334A] sm:text-2xl">
+          {title}
+        </h2>
 
-      {description && (
-        <p className="mt-2 text-sm leading-6 text-[#61738B]">
-          {description}
-        </p>
-      )}
+        {description && (
+          <p className="mt-2 text-sm leading-6 text-[#61738B]">
+            {description}
+          </p>
+        )}
+      </div>
+
+      {action}
     </div>
   );
 }
 
 // ========================================
-// ESTIMATED RANGE TEXT
+// ANIMATED METRIC CARD
 // ========================================
 
-function RangeText({ metric, light = false }) {
-  const range = validRange(metric);
-
-  const color = light
-    ? "text-white/75"
-    : "text-[#61738B]";
-
-  if (!range) {
-    return metric?.range ? (
-      <p className={`mt-3 text-xs ${color}`}>
-        Estimated range unavailable
-      </p>
-    ) : null;
-  }
-
-  return (
-    <p className={`mt-3 text-xs leading-5 ${color}`}>
-      Estimated range:{" "}
-      {formatMetric({
-        value: range[0],
-        unit: metric.unit,
-      })}
-      {" – "}
-      {formatMetric({
-        value: range[1],
-        unit: metric.unit,
-      })}
-    </p>
-  );
-}
-
-// ========================================
-// PRIMARY KPI CARDS
-// ========================================
-
-function HeroMetric({
+function MetricCard({
   label,
-  metric,
-  subtitle,
-  variant = "revenue",
+  value,
+  description,
+  icon: Icon,
+  variant = "navy",
+  delay = 0,
 }) {
   const variants = {
-    revenue: {
+    navy: {
       background:
-        "linear-gradient(135deg, #193B66, #244B7B)",
+        "linear-gradient(135deg, #193B66, #275788)",
       text: "text-white",
-      muted: "text-[#D2DFED]",
-      badge: "bg-white/10 text-[#FFD45A]",
-      badgeLabel: "REVENUE",
+      muted: "text-[#DCE8F5]",
+      icon: "bg-white/15 text-[#FFD45A]",
     },
-
-    units: {
+    gold: {
       background:
         "linear-gradient(135deg, #F6C94D, #F9DD86)",
       text: "text-[#25334A]",
-      muted: "text-[#6C5528]",
-      badge: "bg-white/40 text-[#705211]",
-      badgeLabel: "SALES VOLUME",
+      muted: "text-[#705A31]",
+      icon: "bg-white/40 text-[#705211]",
     },
-
-    profit: {
+    green: {
       background:
         "linear-gradient(135deg, #11684F, #219674)",
       text: "text-white",
       muted: "text-[#D6F3E9]",
-      badge: "bg-white/15 text-[#E1FFF2]",
-      badgeLabel: "PROFIT",
+      icon: "bg-white/15 text-[#E1FFF2]",
     },
   };
 
-  const style = variants[variant] || variants.revenue;
+  const style = variants[variant];
 
   return (
-    <article
-      className="relative flex min-h-[230px] min-w-0 flex-col justify-between overflow-hidden rounded-2xl border border-white/10 p-6 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl motion-reduce:transition-none"
+    <motion.article
+      initial={{ opacity: 0, y: 22 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        ...ENTER_TRANSITION,
+        delay,
+      }}
+      whileHover={{ y: -5 }}
+      className="relative flex min-h-[210px] min-w-0 flex-col justify-between overflow-hidden rounded-2xl p-6 shadow-md"
       style={{ background: style.background }}
     >
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-12 -top-14 h-48 w-48 rounded-full border-[32px] border-white/10"
+        className="pointer-events-none absolute -right-14 -top-14 h-44 w-44 rounded-full border-[30px] border-white/10"
       />
 
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-24 -left-16 h-44 w-44 rounded-full bg-white/5"
-      />
-
-      <div className="relative z-10">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <p className={`text-sm font-semibold ${style.muted}`}>
-            {label}
-          </p>
-
-          <span
-            className={`rounded-full px-3 py-1 text-[10px] font-bold tracking-wide ${style.badge}`}
-          >
-            {style.badgeLabel}
-          </span>
-        </div>
-
-        <p
-          className={`mt-7 break-words text-[clamp(1.75rem,2.8vw,2.5rem)] font-bold leading-tight tracking-tight ${style.text}`}
-        >
-          {formatMetric(metric)}
+      <div className="relative z-10 flex items-start justify-between gap-3">
+        <p className={`text-sm font-semibold ${style.muted}`}>
+          {label}
         </p>
+
+        <div
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${style.icon}`}
+        >
+          <Icon size={21} aria-hidden="true" />
+        </div>
+      </div>
+
+      <div className="relative z-10 mt-8">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.p
+            key={String(value)}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.16 }}
+            aria-live="polite"
+            className={`break-words text-[clamp(1.8rem,3vw,2.6rem)] font-bold tracking-tight ${style.text}`}
+          >
+            {value}
+          </motion.p>
+        </AnimatePresence>
 
         <p className={`mt-3 text-sm ${style.muted}`}>
-          {subtitle}
+          {description}
         </p>
       </div>
-
-      <div className="relative z-10 mt-3">
-        <RangeText metric={metric} light />
-      </div>
-    </article>
+    </motion.article>
   );
 }
 
 // ========================================
-// CHART CONTAINER
+// SYNCHRONIZED SLIDER + INPUT
 // ========================================
 
-function ChartCard({
-  title,
+function ScenarioControl({
+  label,
   description,
-  children,
+  value,
+  onChange,
+  min = 0,
+  max = 100,
+  step = 0.01,
+  prefix = "",
+  suffix = "",
+  icon: Icon,
+}) {
+  const numeric = numberOrNull(value);
+
+  const sliderValue =
+    numeric === null
+      ? min
+      : Math.max(min, Math.min(max, numeric));
+
+  const valid =
+    numeric !== null &&
+    numeric >= min &&
+    (numeric <= 100000);
+
+  return (
+    <div className="rounded-2xl border border-[#E4EBF3] bg-white p-4 sm:p-5">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div className="flex min-w-0 items-center gap-3">
+          {Icon && (
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EDF3FA] text-[#193B66]">
+              <Icon size={19} aria-hidden="true" />
+            </div>
+          )}
+
+          <div className="min-w-0">
+            <label className="text-sm font-bold text-[#25334A]">
+              {label}
+            </label>
+
+            {description && (
+              <p className="mt-1 text-xs leading-5 text-[#61738B]">
+                {description}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-2">
+          {prefix && (
+            <span className="text-sm font-semibold text-[#61738B]">
+              {prefix}
+            </span>
+          )}
+
+          <input
+            type="number"
+            aria-label={label}
+            value={value}
+            min={min}
+            max={100000}
+            step={step}
+            onChange={(event) =>
+              onChange(event.target.value)
+            }
+            className={`h-11 w-32 rounded-xl border bg-white px-3 text-right text-sm font-bold text-[#25334A] outline-none focus:ring-2 focus:ring-[#193B66]/15 ${
+              valid
+                ? "border-[#D7E0EB] focus:border-[#193B66]"
+                : "border-red-400 focus:border-red-500"
+            }`}
+          />
+
+          {suffix && (
+            <span className="text-xs font-medium text-[#61738B]">
+              {suffix}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <input
+        type="range"
+        aria-label={`${label} slider`}
+        min={min}
+        max={max}
+        step={step}
+        value={sliderValue}
+        onChange={(event) =>
+          onChange(event.target.value)
+        }
+        disabled={max <= min}
+        className="mt-5 w-full cursor-pointer accent-[#193B66] disabled:cursor-not-allowed"
+      />
+
+      <div className="mt-2 flex justify-between text-xs text-[#8FA0B4]">
+        <span>
+          {prefix}
+          {numberText(min)}
+        </span>
+
+        <span>
+          {prefix}
+          {numberText(max)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ========================================
+// FINANCIAL DETAIL ROW
+// ========================================
+
+function DetailRow({
+  label,
+  value,
+  highlight = false,
+  negative = false,
 }) {
   return (
-    <article className="min-w-0 rounded-2xl border border-[#D7E0EB] bg-white p-5 shadow-sm sm:p-6">
-      <h3 className="text-lg font-bold text-[#25334A]">
-        {title}
-      </h3>
+    <div className="flex items-center justify-between gap-4 border-b border-[#EDF1F6] py-4 last:border-b-0">
+      <span className="text-sm text-[#61738B]">
+        {label}
+      </span>
 
-      <p className="mt-2 text-sm leading-6 text-[#61738B]">
-        {description}
-      </p>
-
-      <div className="mt-6">{children}</div>
-    </article>
+      <span
+        className={`text-right text-base font-bold ${
+          negative
+            ? "text-red-700"
+            : highlight
+              ? "text-[#13795B]"
+              : "text-[#25334A]"
+        }`}
+      >
+        {value}
+      </span>
+    </div>
   );
 }
 
@@ -349,14 +483,11 @@ function ChartCard({
 // RECHARTS TOOLTIP
 // ========================================
 
-function CustomTooltip({
+function FinancialTooltip({
   active,
   payload,
-  currency = false,
 }) {
-  if (!active || !payload?.length) {
-    return null;
-  }
+  if (!active || !payload?.length) return null;
 
   const entry = payload[0];
 
@@ -366,700 +497,541 @@ function CustomTooltip({
         {entry.payload?.name || entry.name}
       </p>
 
-      <p className="mt-1 text-sm font-medium text-[#193B66]">
-        {currency
-          ? formatCurrency(entry.value)
-          : formatNumber(entry.value)}
+      <p className="mt-1 text-sm text-[#193B66]">
+        {money(entry.value)}
       </p>
     </div>
   );
 }
 
 // ========================================
-// REVENUE VS. COSTS CHART
+// REVENUE VS. COSTS
 // ========================================
 
-function FinancialChart({ predictions }) {
-  const revenue = getValue(predictions?.gross_revenue);
-  const profit = getValue(predictions?.net_profit);
-
-  const costs =
-    revenue !== null && profit !== null
-      ? revenue - profit
-      : null;
-
-  if (
-    revenue === null ||
-    profit === null ||
-    costs === null ||
-    revenue < 0 ||
-    costs < 0
-  ) {
-    return (
-      <p className="py-10 text-sm text-[#61738B]">
-        Financial comparison unavailable.
-      </p>
-    );
-  }
-
+function RevenueCostChart({ financials }) {
   const data = [
     {
       name: "Revenue",
-      value: revenue,
+      value: financials.revenue,
       color: COLORS.gold,
     },
     {
-      name: "Costs",
-      value: costs,
-      color: COLORS.slate,
-    },
-  ];
-
-  return (
-    <>
-      <div
-        className="h-[260px] w-full"
-        role="img"
-        aria-label={`Revenue ${formatCurrency(
-          revenue
-        )}; estimated costs ${formatCurrency(costs)}`}
-      >
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={data}
-            margin={{
-              top: 12,
-              right: 14,
-              bottom: 0,
-              left: 0,
-            }}
-          >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              vertical={false}
-              stroke="#EDF1F5"
-            />
-
-            <XAxis
-              dataKey="name"
-              axisLine={false}
-              tickLine={false}
-              tick={{
-                fill: COLORS.muted,
-                fontSize: 12,
-              }}
-            />
-
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              width={65}
-              tick={{
-                fill: COLORS.muted,
-                fontSize: 11,
-              }}
-              tickFormatter={(value) =>
-                `$${formatCompact(value)}`
-              }
-            />
-
-            <Tooltip
-              content={<CustomTooltip currency />}
-              cursor={{ fill: "#F5F7FA" }}
-            />
-
-            <Bar
-              dataKey="value"
-              maxBarSize={92}
-              radius={[8, 8, 0, 0]}
-            >
-              {data.map((entry) => (
-                <Cell
-                  key={entry.name}
-                  fill={entry.color}
-                />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      <div className="mt-5 rounded-xl bg-[#F5F8FC] p-4">
-        <p className="text-xs text-[#61738B]">
-          Estimated net profit / loss
-        </p>
-
-        <p
-          className={`mt-2 text-2xl font-bold ${
-            profit < 0
-              ? "text-red-700"
-              : "text-[#193B66]"
-          }`}
-        >
-          {formatCurrency(profit)}
-        </p>
-      </div>
-    </>
-  );
-}
-
-// ========================================
-// SALES VS. DEMAND CHART
-// ========================================
-
-function DemandChart({ predictions }) {
-  const units = getValue(predictions?.units_sold);
-  const demand = getValue(predictions?.demand_units);
-
-  if (
-    units === null ||
-    demand === null ||
-    units < 0 ||
-    demand < 0
-  ) {
-    return (
-      <p className="py-10 text-sm text-[#61738B]">
-        Sales and demand comparison unavailable.
-      </p>
-    );
-  }
-
-  const data = [
-    {
-      name: "Sales",
-      value: units,
-      color: COLORS.gold,
-    },
-    {
-      name: "Demand",
-      value: demand,
+      name: "Total costs",
+      value: financials.totalCosts,
       color: COLORS.navy,
     },
   ];
 
   return (
-    <>
+    <div
+      className="h-[275px] w-full"
+      role="img"
+      aria-label={`Revenue ${money(
+        financials.revenue
+      )}; total costs ${money(financials.totalCosts)}`}
+    >
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={data}
+          margin={{
+            top: 14,
+            right: 15,
+            bottom: 0,
+            left: 0,
+          }}
+        >
+          <CartesianGrid
+            strokeDasharray="3 3"
+            vertical={false}
+            stroke="#EDF1F5"
+          />
+
+          <XAxis
+            dataKey="name"
+            axisLine={false}
+            tickLine={false}
+            tick={{
+              fill: COLORS.muted,
+              fontSize: 12,
+            }}
+          />
+
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            width={70}
+            tick={{
+              fill: COLORS.muted,
+              fontSize: 11,
+            }}
+            tickFormatter={(value) =>
+              value >= 1000
+                ? `$${(value / 1000).toFixed(1)}k`
+                : `$${value}`
+            }
+          />
+
+          <Tooltip content={<FinancialTooltip />} />
+
+          <Bar
+            dataKey="value"
+            radius={[8, 8, 0, 0]}
+            maxBarSize={95}
+            isAnimationActive
+            animationDuration={350}
+          >
+            {data.map((entry) => (
+              <Cell
+                key={entry.name}
+                fill={entry.color}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+// ========================================
+// COST BREAKDOWN
+// ========================================
+
+function CostBreakdown({ values }) {
+  const items = COST_FIELDS.map((field) => ({
+    ...field,
+    amount: values[field.id] * values.units,
+  }));
+
+  const total = items.reduce(
+    (sum, item) => sum + item.amount,
+    0
+  );
+
+  const chartData = [
+    Object.fromEntries([
+      ["name", "Costs"],
+      ...items.map((item) => [
+        item.id,
+        item.amount,
+      ]),
+    ]),
+  ];
+
+  return (
+    <section className="rounded-2xl border border-[#D7E0EB] bg-white p-5 shadow-sm sm:p-6">
+      <div className="flex items-center gap-3">
+        <div className="rounded-xl bg-[#EDF3FA] p-3 text-[#193B66]">
+          <Layers3 size={21} />
+        </div>
+
+        <div>
+          <h3 className="text-lg font-bold text-[#25334A]">
+            Where your costs go
+          </h3>
+          <p className="mt-1 text-sm text-[#61738B]">
+            Estimated monthly operating costs
+          </p>
+        </div>
+      </div>
+
       <div
-        className="h-[260px] w-full"
+        className="mt-6 h-[100px] w-full"
         role="img"
-        aria-label={`Sales ${formatNumber(
-          units
-        )}; demand ${formatNumber(demand)}`}
+        aria-label={items
+          .map(
+            (item) =>
+              `${item.label} ${money(item.amount)}`
+          )
+          .join(", ")}
       >
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={data}
             layout="vertical"
+            data={chartData}
             margin={{
               top: 10,
-              right: 28,
-              bottom: 0,
+              right: 0,
+              bottom: 10,
               left: 0,
             }}
           >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              horizontal={false}
-              stroke="#EDF1F5"
-            />
-
-            <XAxis
-              type="number"
-              domain={[0, "auto"]}
-              axisLine={false}
-              tickLine={false}
-              tick={{
-                fill: COLORS.muted,
-                fontSize: 11,
-              }}
-              tickFormatter={formatCompact}
-            />
-
+            <XAxis type="number" hide />
             <YAxis
               type="category"
               dataKey="name"
-              width={65}
-              axisLine={false}
-              tickLine={false}
-              tick={{
-                fill: COLORS.muted,
-                fontSize: 12,
-              }}
+              hide
             />
 
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={{ fill: "#F5F7FA" }}
-            />
-
-            <Bar
-              dataKey="value"
-              maxBarSize={58}
-              radius={[0, 8, 8, 0]}
-            >
-              {data.map((entry) => (
-                <Cell
-                  key={entry.name}
-                  fill={entry.color}
-                />
-              ))}
-            </Bar>
+            {items.map((item) => (
+              <Bar
+                key={item.id}
+                dataKey={item.id}
+                stackId="costs"
+                fill={item.color}
+                isAnimationActive
+                animationDuration={350}
+              />
+            ))}
           </BarChart>
         </ResponsiveContainer>
       </div>
 
-      <div className="mt-5 grid grid-cols-2 gap-3">
-        <div className="rounded-xl bg-[#FFF8E5] p-4">
-          <p className="text-xs text-[#8B6B1E]">
-            Predicted sales
-          </p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {items.map((item) => {
+          const share =
+            total > 0
+              ? (item.amount / total) * 100
+              : 0;
 
-          <p className="mt-2 text-xl font-bold text-[#25334A]">
-            {formatNumber(units)}
-          </p>
-        </div>
+          return (
+            <div
+              key={item.id}
+              className="rounded-xl bg-[#F6F9FD] p-4"
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-3 w-3 rounded-full"
+                  style={{
+                    backgroundColor: item.color,
+                  }}
+                />
+                <p className="text-xs font-medium text-[#61738B]">
+                  {item.label}
+                </p>
+              </div>
 
-        <div className="rounded-xl bg-[#F1F6FC] p-4">
-          <p className="text-xs text-[#61738B]">
-            Estimated demand
-          </p>
+              <p className="mt-3 text-lg font-bold text-[#25334A]">
+                {money(item.amount)}
+              </p>
 
-          <p className="mt-2 text-xl font-bold text-[#25334A]">
-            {formatNumber(demand)}
-          </p>
-        </div>
-      </div>
-    </>
-  );
-}
-
-// ========================================
-// MINI TABS
-// ========================================
-
-function MiniTabs({
-  value,
-  onChange,
-  options,
-  label,
-}) {
-  return (
-    <div
-      role="group"
-      aria-label={label}
-      className="inline-flex rounded-xl bg-[#F1F5F9] p-1"
-    >
-      {options.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          onClick={() => onChange(option.value)}
-          aria-pressed={value === option.value}
-          className={`rounded-lg px-4 py-2 text-xs font-semibold transition-all duration-200 ${
-            value === option.value
-              ? "bg-white text-[#193B66] shadow-sm"
-              : "text-[#61738B] hover:text-[#25334A]"
-          }`}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-// ========================================
-// SHARED 3D FLIP CARD
-// ========================================
-
-function FlipCard({
-  flipped,
-  front,
-  back,
-  height = "390px",
-}) {
-  return (
-    <div
-      className="w-full"
-      style={{ perspective: "1400px" }}
-    >
-      <div
-        className="relative w-full transition-transform duration-700 ease-in-out motion-reduce:transition-none"
-        style={{
-          height,
-          transformStyle: "preserve-3d",
-          transform: flipped
-            ? "rotateY(180deg)"
-            : "rotateY(0deg)",
-        }}
-      >
-        <div
-          className="absolute inset-0 w-full overflow-y-auto rounded-2xl"
-          style={{
-            backfaceVisibility: "hidden",
-            WebkitBackfaceVisibility: "hidden",
-          }}
-          aria-hidden={flipped}
-          inert={flipped}
-        >
-          {front}
-        </div>
-
-        <div
-          className="absolute inset-0 w-full overflow-y-auto rounded-2xl"
-          style={{
-            backfaceVisibility: "hidden",
-            WebkitBackfaceVisibility: "hidden",
-            transform: "rotateY(180deg)",
-          }}
-          aria-hidden={!flipped}
-          inert={!flipped}
-        >
-          {back}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ========================================
-// PROFITABILITY FLIP PANEL
-// ========================================
-
-function ProfitabilityPanel({ predictions }) {
-  const [view, setView] = useState("margin");
-
-  const margin = getValue(predictions?.profit_margin_pct);
-  const roi = getValue(predictions?.roi_cum_pct);
-
-  const barWidth =
-    margin === null
-      ? 0
-      : Math.max(0, Math.min(100, margin));
-
-  const front = (
-    <div className="h-full rounded-2xl bg-gradient-to-br from-[#F4FAF7] to-[#EAF5EF] p-5 sm:p-6">
-      <p className="text-xs font-bold uppercase tracking-wider text-[#547566]">
-        Predicted profit margin
-      </p>
-
-      <p
-        className={`mt-5 text-4xl font-bold ${
-          margin !== null && margin < 0
-            ? "text-red-700"
-            : "text-[#13795B]"
-        }`}
-      >
-        {margin === null
-          ? "—"
-          : `${margin.toFixed(2)}%`}
-      </p>
-
-      <RangeText metric={predictions?.profit_margin_pct} />
-
-      <div className="mt-8">
-        <div
-          className="h-4 overflow-hidden rounded-full bg-[#DCE8E2]"
-          role="progressbar"
-          aria-label="Predicted profit margin"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={barWidth}
-        >
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-[#D4A529] to-[#15966E] transition-all duration-500"
-            style={{ width: `${barWidth}%` }}
-          />
-        </div>
-
-        <div className="mt-3 flex justify-between text-xs text-[#61738B]">
-          <span>0%</span>
-          <span>100%</span>
-        </div>
-      </div>
-
-      <div className="mt-8 rounded-xl bg-white/80 p-4">
-        <p className="text-xs text-[#61738B]">
-          Profitability
-        </p>
-
-        <p className="mt-2 text-lg font-semibold text-[#25334A]">
-          {margin === null
-            ? "Unavailable"
-            : margin > 0
-              ? "Positive margin"
-              : margin < 0
-                ? "Negative margin"
-                : "Break-even margin"}
-        </p>
-      </div>
-    </div>
-  );
-
-  const back = (
-    <div className="relative h-full overflow-hidden rounded-2xl bg-gradient-to-br from-[#193B66] to-[#275788] p-5 text-white sm:p-6">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-14 -top-16 h-52 w-52 rounded-full border-[35px] border-white/5"
-      />
-
-      <div className="relative z-10">
-        <p className="text-xs font-bold uppercase tracking-wider text-[#FFD45A]">
-          Cumulative return on investment
-        </p>
-
-        <p className="mt-8 break-words text-4xl font-bold">
-          {roi === null
-            ? "—"
-            : `${roi.toFixed(2)}%`}
-        </p>
-
-        <RangeText metric={predictions?.roi_cum_pct} light />
-
-        <div className="mt-8 rounded-xl border border-white/15 bg-white/10 p-5">
-          <p className="text-xs text-slate-200">
-            ROI expressed as a ratio
-          </p>
-
-          <p className="mt-2 text-2xl font-bold text-white">
-            {roi === null
-              ? "—"
-              : `${(roi / 100).toFixed(2)}×`}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <section className="min-w-0 rounded-2xl border border-[#D7E0EB] bg-white p-6 shadow-sm">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
-            Profitability
-          </p>
-
-          <h3 className="mt-2 text-lg font-bold text-[#25334A]">
-            Financial efficiency
-          </h3>
-
-          <p className="mt-2 text-sm text-[#61738B]">
-            Profitability performance
-          </p>
-        </div>
-
-        <MiniTabs
-          label="Profitability metric"
-          value={view}
-          onChange={setView}
-          options={[
-            { label: "Margin", value: "margin" },
-            { label: "ROI", value: "roi" },
-          ]}
-        />
-      </div>
-
-      <div className="mt-7">
-        <FlipCard
-          flipped={view === "roi"}
-          front={front}
-          back={back}
-        />
+              <p className="mt-1 text-xs text-[#61738B]">
+                {share.toFixed(1)}% of costs
+              </p>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
 }
 
 // ========================================
-// DEMAND DIRECTION FLIP PANEL
+// ORIGINAL VS. SCENARIO COMPARISON
 // ========================================
 
-function DemandDirectionPanel({
-  timeframe,
-  selectedForecast,
-  predictions,
+function ComparisonCard({
+  label,
+  original,
+  current,
+  format = money,
 }) {
-  const [view, setView] = useState("trend");
-
-  const trend =
-    timeframe === "monthly"
-      ? selectedForecast?.demand_trend
-      : selectedForecast?.demand_change_yoy;
-
-  const previousDemand = numberOrNull(
-    timeframe === "monthly"
-      ? trend?.last_month_demand
-      : trend?.last_year_demand
+  const difference = calculateChange(
+    current,
+    original
   );
 
-  const forecastDemand = getValue(
-    predictions?.demand_units
-  );
+  const isPositive =
+    difference !== null && difference > 0;
 
-  const comparable =
-    previousDemand !== null &&
-    forecastDemand !== null &&
-    previousDemand >= 0 &&
-    forecastDemand >= 0;
+  const isNegative =
+    difference !== null && difference < 0;
 
-  const difference = comparable
-    ? forecastDemand - previousDemand
-    : null;
-
-  const percentChange =
-    comparable && previousDemand > 0
-      ? (difference / previousDemand) * 100
-      : null;
-
-  const direction = String(
-    trend?.direction || "Unavailable"
-  );
-
-  const normalized = direction.toLowerCase();
-
-  const positive = /up|increase|grow/.test(normalized);
-  const negative = /down|decrease|decline|fall/.test(
-    normalized
-  );
-
-  const tone = positive
-    ? "bg-green-50 text-green-700"
-    : negative
-      ? "bg-red-50 text-red-700"
-      : "bg-slate-100 text-[#193B66]";
-
-  const data = comparable
-    ? [
-        {
-          name:
-            timeframe === "monthly"
-              ? "Previous month"
-              : "Previous year",
-          value: previousDemand,
-          color: COLORS.slate,
-        },
-        {
-          name: "Forecast",
-          value: forecastDemand,
-          color: COLORS.green,
-        },
-      ]
-    : [];
-
-  const front = (
-    <div className="h-full rounded-2xl bg-gradient-to-br from-[#F5F8FC] to-[#EDF3FA] p-5 sm:p-6">
-      <p className="text-xs font-bold uppercase tracking-wider text-[#61738B]">
-        Model-indicated trend
+  return (
+    <div className="rounded-2xl border border-[#D7E0EB] bg-white p-5 shadow-sm">
+      <p className="text-sm font-bold text-[#25334A]">
+        {label}
       </p>
 
-      <div className="mt-7 flex items-center gap-4">
-        <div
-          className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-4xl font-bold ${tone}`}
-          aria-hidden="true"
-        >
-          {positive ? "↗" : negative ? "↘" : "→"}
-        </div>
-
-        <div>
-          <p className="text-3xl font-bold capitalize text-[#25334A]">
-            {direction}
+      <div className="mt-5 grid grid-cols-2 gap-3">
+        <div className="rounded-xl bg-[#F5F8FC] p-3">
+          <p className="text-xs text-[#61738B]">
+            Original price
           </p>
 
-          <p className="mt-2 text-xs text-[#61738B]">
-            {timeframe === "monthly"
-              ? "Monthly demand"
-              : "Yearly demand"}
+          <p className="mt-2 break-words text-lg font-bold text-[#25334A]">
+            {format(original)}
+          </p>
+        </div>
+
+        <div className="rounded-xl bg-[#EDF7F2] p-3">
+          <p className="text-xs text-[#61738B]">
+            Scenario
+          </p>
+
+          <p className="mt-2 break-words text-lg font-bold text-[#13795B]">
+            {format(current)}
           </p>
         </div>
       </div>
 
-      <div className="mt-8 grid grid-cols-2 gap-3">
-        <div className="rounded-xl bg-white p-4 shadow-sm">
-          <p className="text-xs text-[#61738B]">
-            Previous demand
-          </p>
-
-          <p className="mt-3 text-xl font-bold text-[#25334A]">
-            {formatNumber(previousDemand)}
-          </p>
-        </div>
-
-        <div className="rounded-xl bg-white p-4 shadow-sm">
-          <p className="text-xs text-[#61738B]">
-            Forecast demand
-          </p>
-
-          <p className="mt-3 text-xl font-bold text-[#25334A]">
-            {formatNumber(forecastDemand)}
-          </p>
-        </div>
-      </div>
-
-      {timeframe === "yearly" &&
-        numberOrNull(trend?.value) !== null && (
-          <div className="mt-5 rounded-xl bg-white p-4">
-            <p className="text-xs text-[#61738B]">
-              Year-over-year change
-            </p>
-
-            <p className="mt-2 text-xl font-bold text-[#25334A]">
-              {Number(trend.value).toFixed(2)}%
-            </p>
-          </div>
+      <div className="mt-4 flex items-center gap-2">
+        {isPositive ? (
+          <ArrowUpRight
+            size={18}
+            className="text-[#13795B]"
+          />
+        ) : isNegative ? (
+          <ArrowDownRight
+            size={18}
+            className="text-[#B94747]"
+          />
+        ) : (
+          <span className="text-sm text-[#61738B]">
+            —
+          </span>
         )}
+
+        <p
+          className={`text-sm font-semibold ${
+            isPositive
+              ? "text-[#13795B]"
+              : isNegative
+                ? "text-[#B94747]"
+                : "text-[#61738B]"
+          }`}
+        >
+          {difference === null
+            ? "Not comparable"
+            : format === money
+              ? signedMoney(difference)
+              : `${difference > 0 ? "+" : ""}${format(
+                  difference
+                )}`}
+        </p>
+
+        <span className="text-xs text-[#61738B]">
+          difference
+        </span>
+      </div>
     </div>
   );
+}
 
-  const back = (
-    <div className="h-full rounded-2xl bg-gradient-to-br from-[#F4FAF7] to-[#EAF5EF] p-4 sm:p-5">
-      <p className="text-xs font-bold uppercase tracking-wider text-[#13795B]">
-        Demand comparison
-      </p>
+// ========================================
+// AI PRICE SIMULATION
+// ========================================
 
-      {comparable ? (
-        <>
+function AIPriceSimulation({
+  product,
+  prediction,
+  values,
+  isValid,
+  loading,
+  error,
+  rescore,
+  simulations,
+  onRun,
+}) {
+  const baselineScore = numberOrNull(
+    prediction?.opportunity_score
+  );
+
+  const newScore = numberOrNull(
+    rescore?.opportunity_score
+  );
+
+  const scoreChange = numberOrNull(
+    rescore?.score_change
+  );
+
+  const chartData = Array.isArray(simulations)
+    ? simulations
+        .map((item) => ({
+          price: numberOrNull(item.price),
+          score: numberOrNull(item.opportunity_score),
+          probability: numberOrNull(item.probability),
+        }))
+        .filter(
+          (item) =>
+            item.price !== null &&
+            item.score !== null
+        )
+    : [];
+
+  return (
+    <section className="mt-10 rounded-2xl border border-[#D7E0EB] bg-white p-6 shadow-sm sm:p-7">
+      <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
+        <div>
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
+            Model-powered analysis
+          </p>
+
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-[#FFF6DD] p-3 text-[#8B6B1E]">
+              <Sparkles size={22} />
+            </div>
+
+            <h2 className="text-xl font-bold text-[#25334A] sm:text-2xl">
+              AI price simulation
+            </h2>
+          </div>
+
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#61738B]">
+            Compare opportunity scores at three selling
+            prices using the product scoring backend.
+            Financial calculations above remain separate
+            from these model results.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          disabled={!isValid || loading || !product || !prediction}
+          onClick={onRun}
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#FFD45A] px-6 py-3 text-sm font-bold text-[#25334A] transition hover:bg-[#F5C842] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {loading ? (
+            <>
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#25334A]/30 border-t-[#25334A]" />
+              Simulating...
+            </>
+          ) : (
+            <>
+              <Play size={17} fill="currentColor" />
+              Run simulation
+            </>
+          )}
+        </button>
+      </div>
+
+      <div className="mt-6 flex items-start gap-3 rounded-xl bg-[#F5F8FC] p-4">
+        <Info
+          size={19}
+          className="mt-0.5 shrink-0 text-[#193B66]"
+        />
+        <p className="text-xs leading-6 text-[#61738B]">
+          The model evaluates three prices: 10% below,
+          equal to, and 10% above your selected scenario
+          price, subject to the API's valid price limits.
+          Running the simulation does not automatically
+          alter your financial assumptions.
+        </p>
+      </div>
+
+      {error && (
+        <div
+          role="alert"
+          className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+        >
+          {error}
+        </div>
+      )}
+
+      <AnimatePresence mode="wait">
+        {rescore && (
+          <motion.div
+            key="rescore"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mt-6 grid gap-4 md:grid-cols-3"
+          >
+            <div className="rounded-2xl bg-[#F1F6FC] p-5">
+              <p className="text-sm text-[#61738B]">
+                Original score
+              </p>
+
+              <p className="mt-3 text-3xl font-bold text-[#193B66]">
+                {baselineScore === null
+                  ? "—"
+                  : `${baselineScore}/100`}
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-[#FFF8E5] p-5">
+              <p className="text-sm text-[#61738B]">
+                Recalculated score
+              </p>
+
+              <p className="mt-3 text-3xl font-bold text-[#25334A]">
+                {newScore === null
+                  ? "—"
+                  : `${newScore}/100`}
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-[#F0F8F4] p-5">
+              <p className="text-sm text-[#61738B]">
+                Score difference
+              </p>
+
+              <p
+                className={`mt-3 text-3xl font-bold ${
+                  scoreChange !== null && scoreChange < 0
+                    ? "text-red-700"
+                    : "text-[#13795B]"
+                }`}
+              >
+                {scoreChange === null
+                  ? "—"
+                  : `${scoreChange > 0 ? "+" : ""}${scoreChange}`}
+              </p>
+
+              <p className="mt-2 text-xs text-[#61738B]">
+                Opportunity-score points
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {chartData.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-7"
+        >
+          <h3 className="text-lg font-bold text-[#25334A]">
+            Price sensitivity
+          </h3>
+
+          <p className="mt-2 text-sm text-[#61738B]">
+            Opportunity scores returned for the
+            simulated selling prices.
+          </p>
+
           <div
-            className="mt-3 h-[220px] w-full"
+            className="mt-5 h-[250px] w-full"
             role="img"
-            aria-label={`Previous demand ${formatNumber(
-              previousDemand
-            )}; forecast demand ${formatNumber(
-              forecastDemand
-            )}`}
+            aria-label={chartData
+              .map(
+                (item) =>
+                  `Price ${money(item.price)}: score ${item.score}`
+              )
+              .join("; ")}
           >
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={data}
-                layout="vertical"
+                data={chartData}
                 margin={{
-                  top: 12,
-                  right: 20,
+                  top: 15,
+                  right: 10,
                   bottom: 0,
                   left: 0,
                 }}
               >
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  horizontal={false}
-                  stroke="#DCE9E2"
+                  vertical={false}
+                  stroke="#EDF1F5"
                 />
 
                 <XAxis
-                  type="number"
-                  domain={[0, "auto"]}
+                  dataKey="price"
+                  tickFormatter={(value) =>
+                    money(value)
+                  }
                   axisLine={false}
                   tickLine={false}
                   tick={{
                     fill: COLORS.muted,
-                    fontSize: 11,
+                    fontSize: 12,
                   }}
-                  tickFormatter={formatCompact}
                 />
 
                 <YAxis
-                  type="category"
-                  dataKey="name"
-                  width={105}
+                  domain={[0, 100]}
                   axisLine={false}
                   tickLine={false}
                   tick={{
@@ -1068,1194 +1040,868 @@ function DemandDirectionPanel({
                   }}
                 />
 
-                <Tooltip content={<CustomTooltip />} />
-
                 <Bar
-                  dataKey="value"
-                  maxBarSize={45}
-                  radius={[0, 8, 8, 0]}
-                >
-                  {data.map((entry) => (
-                    <Cell
-                      key={entry.name}
-                      fill={entry.color}
-                    />
-                  ))}
-                </Bar>
+                  dataKey="score"
+                  radius={[8, 8, 0, 0]}
+                  maxBarSize={95}
+                  fill={COLORS.navy}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          <div className="rounded-xl bg-white p-4 shadow-sm">
-            <p className="text-xs text-[#61738B]">
-              Demand difference
-            </p>
+          <div className="mt-5 overflow-x-auto">
+            <table className="w-full min-w-[450px] text-left text-sm">
+              <thead>
+                <tr className="border-b border-[#D7E0EB] text-[#61738B]">
+                  <th className="py-3 pr-4 font-semibold">
+                    Selling price
+                  </th>
+                  <th className="py-3 pr-4 font-semibold">
+                    Opportunity score
+                  </th>
+                  <th className="py-3 font-semibold">
+                    Model probability
+                  </th>
+                </tr>
+              </thead>
 
-            <p
-              className={`mt-2 text-2xl font-bold ${
-                difference < 0
-                  ? "text-red-700"
-                  : "text-[#13795B]"
-              }`}
-            >
-              {difference > 0 ? "+" : ""}
-              {formatNumber(difference)} units
-            </p>
+              <tbody>
+                {chartData.map((item, index) => (
+                  <tr
+                    key={`${item.price}-${index}`}
+                    className="border-b border-[#EDF1F6] last:border-b-0"
+                  >
+                    <td className="py-4 pr-4 font-medium text-[#25334A]">
+                      {money(item.price)}
+                    </td>
 
-            {percentChange !== null && (
-              <p className="mt-1 text-sm text-[#61738B]">
-                {percentChange > 0 ? "+" : ""}
-                {percentChange.toFixed(2)}%
-              </p>
-            )}
+                    <td className="py-4 pr-4 font-bold text-[#193B66]">
+                      {item.score}/100
+                    </td>
+
+                    <td className="py-4 text-[#61738B]">
+                      {item.probability !== null &&
+                      item.probability >= 0 &&
+                      item.probability <= 1
+                        ? percent(
+                            item.probability * 100
+                          )
+                        : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </>
-      ) : (
-        <p className="mt-8 text-sm text-[#61738B]">
-          Demand comparison unavailable.
-        </p>
+        </motion.div>
       )}
-    </div>
-  );
 
-  return (
-    <section className="min-w-0 rounded-2xl border border-[#D7E0EB] bg-white p-6 shadow-sm">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
-            Demand intelligence
-          </p>
+      {!rescore &&
+        chartData.length === 0 &&
+        !loading &&
+        !error && (
+          <div className="mt-6 flex flex-col items-center rounded-xl border border-dashed border-[#D7E0EB] bg-[#FAFCFE] px-5 py-9 text-center">
+            <Target
+              size={29}
+              className="text-[#8FA4BA]"
+            />
 
-          <h3 className="mt-2 text-lg font-bold text-[#25334A]">
-            Demand direction
-          </h3>
+            <p className="mt-4 font-semibold text-[#25334A]">
+              Ready to compare prices
+            </p>
 
-          <p className="mt-2 text-sm text-[#61738B]">
-            Market demand performance
-          </p>
-        </div>
-
-        <MiniTabs
-          label="Demand display"
-          value={view}
-          onChange={setView}
-          options={[
-            { label: "Trend", value: "trend" },
-            { label: "Compare", value: "compare" },
-          ]}
-        />
-      </div>
-
-      <div className="mt-7">
-        <FlipCard
-          flipped={view === "compare"}
-          front={front}
-          back={back}
-        />
-      </div>
+            <p className="mt-2 max-w-md text-sm leading-6 text-[#61738B]">
+              Run the scoring simulation to see how the
+              model evaluates your selected price and
+              nearby alternatives.
+            </p>
+          </div>
+        )}
     </section>
   );
 }
 
 // ========================================
-// SUPPORTING METRICS RANGE VISUALIZATION
+// MAIN WHAT-IF SIMULATOR
 // ========================================
 
-function RangeVisualization({ metric, color }) {
-  const value = getValue(metric);
-  const range = validRange(metric);
+export default function LaunchFeasibility({
+  product,
+  prediction,
+}) {
+  const location = useLocation();
 
-  if (!range) {
-    return (
-      <p className="text-sm text-[#61738B]">
-        Estimated range unavailable.
-      </p>
-    );
+  const originalPrice = numberOrNull(
+    product?.price
+  );
+
+  const suggestedPrice = validSuggestedPrice(
+    location.state?.suggestedPrice
+  );
+
+  const startingPrice =
+    suggestedPrice ?? originalPrice;
+
+  const [scenario, setScenario] = useState(() => ({
+    price:
+      startingPrice === null
+        ? ""
+        : String(startingPrice),
+    ...DEFAULT_COSTS,
+  }));
+
+  const [rescore, setRescore] = useState(null);
+  const [simulations, setSimulations] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Prevent outdated requests from restoring results
+  // after the user changes the current assumptions.
+  const requestVersion = useRef(0);
+
+  useEffect(() => {
+    return () => {
+      requestVersion.current += 1;
+    };
+  }, []);
+
+  function resetResults() {
+    requestVersion.current += 1;
+    setRescore(null);
+    setSimulations([]);
+    setError("");
+    setLoading(false);
   }
 
-  const [low, high] = range;
-  const span = high - low;
+  function updateField(field, value) {
+    setScenario((previous) => ({
+      ...previous,
+      [field]: value,
+    }));
 
-  const position =
-    span === 0
-      ? 50
-      : Math.max(
-          0,
-          Math.min(100, ((value - low) / span) * 100)
-        );
+    resetResults();
+  }
 
-  const formatBound = (number) =>
-    formatMetric({
-      value: number,
-      unit: metric.unit,
+  function resetAssumptions() {
+    setScenario({
+      price:
+        originalPrice === null
+          ? ""
+          : String(originalPrice),
+      ...DEFAULT_COSTS,
     });
 
-  return (
-    <div>
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-bold uppercase tracking-wide text-[#61738B]">
-          Estimated interval
-        </p>
-
-        <span
-          className="rounded-full px-3 py-1 text-xs font-bold"
-          style={{
-            backgroundColor: `${color}15`,
-            color,
-          }}
-        >
-          {formatBound(value)}
-        </span>
-      </div>
-
-      <div
-        className="relative mt-8 h-3 rounded-full bg-[#E7EDF3]"
-        role="img"
-        aria-label={`Lower ${formatBound(
-          low
-        )}, prediction ${formatBound(
-          value
-        )}, upper ${formatBound(high)}`}
-      >
-        <div
-          className="absolute inset-0 rounded-full opacity-25"
-          style={{ backgroundColor: color }}
-        />
-
-        <div
-          className="absolute top-1/2 z-10 h-6 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-md"
-          style={{
-            left: `${position}%`,
-            backgroundColor: color,
-          }}
-        />
-      </div>
-
-      <div className="mt-5 flex justify-between gap-4 text-xs">
-        <div>
-          <p className="text-[#61738B]">
-            Lower estimate
-          </p>
-
-          <p className="mt-1 font-bold text-[#25334A]">
-            {formatBound(low)}
-          </p>
-        </div>
-
-        <div className="text-right">
-          <p className="text-[#61738B]">
-            Upper estimate
-          </p>
-
-          <p className="mt-1 font-bold text-[#25334A]">
-            {formatBound(high)}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ========================================
-// EXPANDABLE SUPPORTING METRIC CARD
-// ========================================
-
-function SupportingMetricCard({
-  id,
-  label,
-  metric,
-  description,
-  color,
-  background,
-  featured = false,
-}) {
-  const [expanded, setExpanded] = useState(false);
-
-  const range = validRange(metric);
-
-  return (
-    <article
-      className="w-full max-w-[900px] min-w-0 overflow-hidden rounded-2xl border border-[#D7E0EB] shadow-sm transition-shadow duration-300 hover:shadow-md"
-      style={{
-        background: featured
-          ? "linear-gradient(120deg, #193B66, #275788)"
-          : "#FFFFFF",
-      }}
-    >
-      <button
-        type="button"
-        onClick={() => setExpanded((previous) => !previous)}
-        aria-expanded={expanded}
-        aria-controls={`supporting-details-${id}`}
-        className="flex w-full items-start justify-between gap-4 p-5 text-left sm:p-6"
-      >
-        <div className="min-w-0">
-          <p
-            className={`text-sm font-medium ${
-              featured
-                ? "text-slate-200"
-                : "text-[#61738B]"
-            }`}
-          >
-            {label}
-          </p>
-
-          <p
-            className={`mt-3 break-words text-3xl font-bold tracking-tight ${
-              featured
-                ? "text-white"
-                : "text-[#25334A]"
-            }`}
-          >
-            {formatMetric(metric)}
-          </p>
-
-          <p
-            className={`mt-3 text-xs ${
-              featured
-                ? "text-slate-200"
-                : "text-[#61738B]"
-            }`}
-          >
-            {range
-              ? `Estimated range: ${formatMetric({
-                  value: range[0],
-                  unit: metric.unit,
-                })} – ${formatMetric({
-                  value: range[1],
-                  unit: metric.unit,
-                })}`
-              : "Estimated range unavailable"}
-          </p>
-        </div>
-
-        <span
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xl transition-transform duration-300 ${
-            expanded ? "rotate-180" : ""
-          } ${
-            featured
-              ? "bg-white/15 text-[#FFD45A]"
-              : "bg-[#EEF4F7] text-[#193B66]"
-          }`}
-          aria-hidden="true"
-        >
-          ⌄
-        </span>
-      </button>
-
-      <div
-        id={`supporting-details-${id}`}
-        className={`grid transition-[grid-template-rows,opacity] duration-300 motion-reduce:transition-none ${
-          expanded
-            ? "grid-rows-[1fr] opacity-100"
-            : "grid-rows-[0fr] opacity-0"
-        }`}
-        inert={!expanded}
-        aria-hidden={!expanded}
-      >
-        <div className="min-h-0 overflow-hidden">
-          <div
-            className="mx-5 mb-5 rounded-xl p-5 sm:mx-6 sm:mb-6"
-            style={{
-              backgroundColor: featured
-                ? "#FFFFFF"
-                : background,
-            }}
-          >
-            <p className="mb-5 text-sm leading-6 text-[#61738B]">
-              {description}
-            </p>
-
-            <RangeVisualization
-              metric={metric}
-              color={color}
-            />
-          </div>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-// ========================================
-// CATEGORY PANEL CONTENT
-// ========================================
-
-function SupportingCategoryContent({
-  category,
-  predictions,
-  timeframe,
-}) {
-  const activeCategory =
-    CATEGORIES.find((item) => item.id === category) ||
-    CATEGORIES[0];
-
-  const metrics = {
-    pricing: [
-      {
-        id: "price",
-        label: "Average selling price",
-        metric: predictions?.avg_price,
-        description:
-          "Predicted average selling price for the selected forecast period.",
-      },
-    ],
-
-    demand: [
-      {
-        id: "demand",
-        label: "Estimated demand",
-        metric: predictions?.demand_units,
-        description:
-          "Demand quantity estimated by the forecasting model.",
-      },
-      {
-        id: "share",
-        label: "Share of category demand",
-        metric: predictions?.demand_share_pct,
-        description:
-          "Estimated percentage of category demand attributed to this product.",
-      },
-    ],
-
-    returns: [
-      {
-        id: "period-roi",
-        label:
-          timeframe === "yearly"
-            ? "Annual return on investment"
-            : "Return on investment per unit",
-        metric:
-          timeframe === "yearly"
-            ? predictions?.roi_year_pct
-            : predictions?.roi_unit_pct,
-        description:
-          timeframe === "yearly"
-            ? "Annual ROI estimated by the forecasting model."
-            : "Estimated return on investment per unit.",
-      },
-      {
-        id: "cumulative-roi",
-        label: "Cumulative return on investment",
-        metric: predictions?.roi_cum_pct,
-        description:
-          "Cumulative return on investment reported by the model.",
-        featured: true,
-      },
-    ],
-  };
-
-  return (
-    <div
-      className="flex h-full min-h-[490px] flex-col rounded-2xl border border-[#D7E0EB] p-5 sm:p-6"
-      style={{
-        backgroundColor: activeCategory.background,
-      }}
-    >
-      <div className="flex items-center gap-3">
-        <span
-          className="h-3 w-3 shrink-0 rounded-full"
-          style={{
-            backgroundColor: activeCategory.color,
-          }}
-        />
-
-        <div>
-          <h3 className="font-bold text-[#25334A]">
-            {activeCategory.label} insights
-          </h3>
-
-          <p className="mt-1 text-sm text-[#61738B]">
-            {activeCategory.description}
-          </p>
-        </div>
-      </div>
-
-      <div className="my-auto flex flex-col items-center gap-4 py-6">
-        {metrics[category].map((item) => (
-          <SupportingMetricCard
-            key={`${category}-${item.id}`}
-            {...item}
-            color={activeCategory.color}
-            background={activeCategory.background}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ========================================
-// ENTIRE SUPPORTING METRICS PANEL FLIP
-// ========================================
-
-function SupportingMetrics({
-  predictions,
-  timeframe,
-}) {
-  const [category, setCategory] = useState("pricing");
-
-  const [nextCategory, setNextCategory] = useState(null);
-
-  const [flipped, setFlipped] = useState(false);
-
-  function selectCategory(newCategory) {
-    if (
-      newCategory === category ||
-      nextCategory !== null
-    ) {
-      return;
-    }
-
-    // Skip the animation for users who prefer
-    // reduced motion.
-    if (
-      window.matchMedia?.(
-        "(prefers-reduced-motion: reduce)"
-      ).matches
-    ) {
-      setCategory(newCategory);
-      return;
-    }
-
-    setNextCategory(newCategory);
-    setFlipped(true);
+    resetResults();
   }
 
-  function finishFlip(event) {
-    if (
-      event.target !== event.currentTarget ||
-      event.propertyName !== "transform" ||
-      !flipped ||
-      nextCategory === null
-    ) {
-      return;
-    }
+  // ========================================
+  // SCENARIO VALIDATION
+  // ========================================
 
-    // The selected category is now visible.
-    // Make it the permanent front face without
-    // animating the reset.
-    setCategory(nextCategory);
-    setNextCategory(null);
-    setFlipped(false);
-  }
-
-  const selectedCategory = nextCategory ?? category;
-
-  return (
-    <section className="mt-10">
-      {/* STATIONARY HEADING AND CATEGORY TABS */}
-
-      <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
-        <SectionHeading
-          eyebrow="Additional insights"
-          title="Supporting metrics"
-          description="Explore pricing, demand, and returns in more detail."
-        />
-
-        <div
-          role="group"
-          aria-label="Supporting metric category"
-          className="inline-flex w-fit flex-wrap gap-1 rounded-xl border border-[#D7E0EB] bg-white p-1 shadow-sm"
-        >
-          {CATEGORIES.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              disabled={nextCategory !== null}
-              onClick={() => selectCategory(item.id)}
-              aria-pressed={selectedCategory === item.id}
-              className={`rounded-lg px-4 py-3 text-sm font-semibold transition-colors disabled:cursor-default ${
-                selectedCategory === item.id
-                  ? "bg-[#193B66] text-white shadow-sm"
-                  : "text-[#61738B] hover:bg-[#F5F8FC]"
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 3D PERSPECTIVE SCENE */}
-
-      <div
-        className="mt-6 w-full"
-        style={{
-          perspective: "1600px",
-        }}
-      >
-        {/* ROTATING INSIGHTS WINDOW */}
-
-        <div
-          className="grid w-full"
-          onTransitionEnd={finishFlip}
-          style={{
-            transformStyle: "preserve-3d",
-            transform: flipped
-              ? "rotateY(180deg)"
-              : "rotateY(0deg)",
-            transition: flipped
-              ? "transform 700ms cubic-bezier(0.22, 1, 0.36, 1)"
-              : "none",
-          }}
-        >
-          {/* FRONT FACE: CURRENT CATEGORY */}
-
-          <div
-            className="min-w-0"
-            style={{
-              gridArea: "1 / 1",
-              backfaceVisibility: "hidden",
-              WebkitBackfaceVisibility: "hidden",
-            }}
-            aria-hidden={flipped}
-            inert={flipped}
-          >
-            <SupportingCategoryContent
-              category={category}
-              predictions={predictions}
-              timeframe={timeframe}
-            />
-          </div>
-
-          {/* BACK FACE: NEXT CATEGORY */}
-
-          <div
-            className="min-w-0"
-            style={{
-              gridArea: "1 / 1",
-              transform: "rotateY(180deg)",
-              backfaceVisibility: "hidden",
-              WebkitBackfaceVisibility: "hidden",
-            }}
-            aria-hidden={!flipped}
-            inert={!flipped}
-          >
-            {nextCategory ? (
-              <SupportingCategoryContent
-                category={nextCategory}
-                predictions={predictions}
-                timeframe={timeframe}
-              />
-            ) : null}
-          </div>
-        </div>
-      </div>
-    </section>
+  const values = Object.fromEntries(
+    Object.entries(scenario).map(
+      ([key, value]) => [
+        key,
+        numberOrNull(value),
+      ]
+    )
   );
-}
 
-// ========================================
-// FORECAST DETAILS ICONS
-// ========================================
+  const isValid =
+    Object.values(values).every(
+      (value) =>
+        value !== null &&
+        value >= 0 &&
+        value <= 100000
+    ) &&
+    values.price > 0 &&
+    Number.isSafeInteger(values.units);
 
-function DetailIcon({ name }) {
-  const paths = {
-    calendar: (
-      <>
-        <rect x="3" y="5" width="18" height="16" rx="2" />
-        <path d="M7 3v4M17 3v4M3 10h18" />
-      </>
-    ),
+  const financials = isValid
+    ? calculateFinancials(values)
+    : null;
 
-    chart: (
-      <>
-        <rect x="3" y="3" width="18" height="18" rx="3" />
-        <path d="M7 16v-3M12 16V8M17 16v-5" />
-      </>
-    ),
+  // The baseline uses the original selling price
+  // with the CURRENT cost and volume assumptions.
+  // This isolates the impact of changing price.
+  const baselineValues =
+    isValid &&
+    originalPrice !== null &&
+    originalPrice > 0
+      ? {
+          ...values,
+          price: originalPrice,
+        }
+      : null;
 
-    percent: (
-      <>
-        <circle cx="7" cy="7" r="2" />
-        <circle cx="17" cy="17" r="2" />
-        <path d="M5 19 19 5" />
-      </>
-    ),
+  const baseline = baselineValues
+    ? calculateFinancials(baselineValues)
+    : null;
 
-    history: (
-      <>
-        <path d="M3 12a9 9 0 1 0 2.6-6.4L3 8" />
-        <path d="M3 3v5h5M12 7v5l3 2" />
-      </>
-    ),
-  };
+  // ========================================
+  // SLIDER LIMITS
+  // ========================================
 
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="22"
-      height="22"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {paths[name] || paths.chart}
-    </svg>
+  const priceSliderMax = Math.min(
+    100000,
+    Math.max(
+      10,
+      (originalPrice ?? 0) * 1.5,
+      (values.price ?? 0) * 1.2
+    )
   );
-}
 
-// ========================================
-// FORECAST DETAILS
-// ========================================
+  const unitSliderMax = Math.min(
+    100000,
+    Math.max(
+      1000,
+      (values.units ?? 0) * 1.2
+    )
+  );
 
-function ForecastDetails({
-  timeframe,
-  selectedForecast,
-  period,
-}) {
-  const details = [
-    {
-      icon: "chart",
-      label: "Forecast type",
-      value:
-        timeframe === "monthly"
-          ? "Monthly"
-          : "Yearly",
-      color: "text-[#193B66]",
-      background: "bg-[#EBF2FA]",
-    },
-
-    {
-      icon: "calendar",
-      label: "Forecast period",
-      value: formatPeriod(period),
-      color: "text-[#A77E1C]",
-      background: "bg-[#FFF6DD]",
-    },
-  ];
-
-  if (timeframe === "monthly") {
-    details.push(
-      {
-        icon: "percent",
-        label: "Expected promotion discount",
-        value:
-          selectedForecast?.promo_depth_pct != null
-            ? `${selectedForecast.promo_depth_pct}%`
-            : "Unavailable",
-        color: "text-[#13795B]",
-        background: "bg-[#EAF6F0]",
-      },
-
-      {
-        icon: "history",
-        label: "Promotion assumption",
-        value:
-          selectedForecast?.promo_source ||
-          "Unavailable",
-        color: "text-[#7658A8]",
-        background: "bg-[#F2EDFA]",
-      }
+  function costSliderMax(field) {
+    return Math.min(
+      100000,
+      Math.max(
+        25,
+        (values[field] ?? 0) * 1.4
+      )
     );
   }
 
-  return (
-    <section className="mt-9 rounded-2xl border border-[#D7E0EB] bg-white p-6 shadow-sm">
-      <SectionHeading
-        eyebrow="Forecast context"
-        title="Forecast details"
-        description="Period information and model assumptions."
-      />
+  // ========================================
+  // AI SIMULATION
+  // ========================================
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        {details.map((detail) => (
-          <div
-            key={detail.label}
-            className="flex min-w-0 items-start gap-4 rounded-xl border border-[#E6EDF4] bg-[#FAFCFE] p-4 transition-colors hover:bg-[#F5F8FC]"
-          >
-            <div
-              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${detail.background} ${detail.color}`}
-            >
-              <DetailIcon name={detail.icon} />
-            </div>
+  async function runSimulation() {
+    if (
+      !product ||
+      !prediction ||
+      !isValid ||
+      loading
+    ) {
+      return;
+    }
 
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-[#61738B]">
-                {detail.label}
-              </p>
+    const version = ++requestVersion.current;
 
-              <p className="mt-2 break-words text-base font-bold text-[#25334A]">
-                {detail.value}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
+    setLoading(true);
+    setError("");
+    setRescore(null);
+    setSimulations([]);
 
-// ========================================
-// FLOATING FORECAST INFORMATION
-// ========================================
+    const selectedPrice = values.price;
 
-function AboutForecast({ notes }) {
-  const [open, setOpen] = useState(false);
+    const prices = [
+      selectedPrice * 0.9,
+      selectedPrice,
+      selectedPrice * 1.1,
+    ].map((price) =>
+      Math.min(
+        100000,
+        Math.max(
+          0.01,
+          Number(price.toFixed(2))
+        )
+      )
+    );
 
-  return (
-    <>
-      {/* FLOATING BUTTON */}
+    try {
+      const [scoreResponse, whatIfResponse] =
+        await Promise.all([
+          rescoreProduct(product, {
+            price: selectedPrice,
+          }),
+          simulatePrices(product, prices),
+        ]);
 
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label="About this forecast"
-        title="About this forecast"
-        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#193B66] text-white shadow-xl ring-4 ring-white/70 transition-all duration-200 hover:-translate-y-1 hover:bg-[#275788] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#193B66]"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          width="25"
-          height="25"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.9"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <circle cx="12" cy="12" r="9" />
-          <path d="M12 11v5M12 8h.01" />
-        </svg>
-      </button>
+      if (version !== requestVersion.current) {
+        return;
+      }
 
-      {/* INFORMATION DIALOG */}
+      setRescore(scoreResponse);
+      setSimulations(
+        Array.isArray(whatIfResponse)
+          ? whatIfResponse
+          : []
+      );
+    } catch (err) {
+      if (version !== requestVersion.current) {
+        return;
+      }
 
-      {open && (
-        <div
-          className="fixed inset-0 z-50"
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              setOpen(false);
-            }
-          }}
-        >
-          <button
-            type="button"
-            aria-label="Close forecast information"
-            onClick={() => setOpen(false)}
-            className="absolute inset-0 h-full w-full cursor-default bg-[#0F172A]/40 backdrop-blur-[2px]"
-          />
-
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="forecast-info-title"
-            className="absolute bottom-6 right-4 flex max-h-[85vh] w-[calc(100%-2rem)] max-w-[440px] flex-col overflow-hidden rounded-2xl border border-[#D7E0EB] bg-white shadow-2xl sm:right-6"
-          >
-            {/* DIALOG HEADER */}
-
-            <div className="flex items-start justify-between gap-4 border-b border-[#E6EDF4] bg-[#F8FAFD] p-5">
-              <div>
-                <h2
-                  id="forecast-info-title"
-                  className="text-lg font-bold text-[#25334A]"
-                >
-                  About this forecast
-                </h2>
-
-                <p className="mt-1 text-xs text-[#61738B]">
-                  Methodology, uncertainty, and model notes
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label="Close"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#61738B] hover:bg-[#E6EDF4]"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* DIALOG CONTENT */}
-
-            <div className="overflow-y-auto p-5">
-              <h3 className="text-sm font-bold text-[#25334A]">
-                Methodology and limitations
-              </h3>
-
-              <p className="mt-3 text-sm leading-7 text-[#61738B]">
-                MarketLens forecasts are model-generated
-                estimates based partly on simulated market
-                and financial data. Estimated ranges describe
-                typical model errors, not guaranteed
-                confidence intervals.
-              </p>
-
-              <p className="mt-3 text-sm leading-7 text-[#61738B]">
-                The charts and metrics reflect predictions
-                for the selected forecast period. Actual
-                sales and financial performance may differ.
-              </p>
-
-              {Array.isArray(notes) &&
-                notes.length > 0 && (
-                  <div className="mt-5 rounded-xl bg-[#F5F8FC] p-4">
-                    <h4 className="text-sm font-bold text-[#25334A]">
-                      Additional model notes
-                    </h4>
-
-                    <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-[#61738B]">
-                      {notes.map((note, index) => (
-                        <li key={index}>
-                          {note}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-            </div>
-
-            {/* DIALOG FOOTER */}
-
-            <div className="border-t border-[#E6EDF4] p-4">
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="w-full rounded-xl bg-[#193B66] px-5 py-3 text-sm font-semibold text-white hover:bg-[#275788]"
-              >
-                Got it
-              </button>
-            </div>
-          </section>
-        </div>
-      )}
-    </>
-  );
-}
-
-// ========================================
-// MAIN SALES FORECAST PAGE
-// ========================================
-
-export default function SalesForecastOverview({
-  forecast,
-}) {
-  const monthly =
-    forecast?.type === "existing"
-      ? forecast.monthly
-      : null;
-
-  const yearly =
-    forecast?.type === "existing"
-      ? forecast.yearly
-      : null;
-
-  const [timeframe, setTimeframe] = useState(
-    () => (monthly ? "monthly" : "yearly")
-  );
-
-  const hasForecast = Boolean(monthly || yearly);
-
-  const activeTimeframe =
-    timeframe === "monthly" && !monthly
-      ? "yearly"
-      : timeframe === "yearly" && !yearly
-        ? "monthly"
-        : timeframe;
-
-  const selectedForecast =
-    activeTimeframe === "monthly"
-      ? monthly
-      : yearly;
-
-  const predictions =
-    selectedForecast?.predictions;
-
-  const productName =
-    monthly?.product_name ||
-    yearly?.product_name ||
-    "Selected product";
-
-  const productId =
-    forecast?.productId ||
-    monthly?.product_id ||
-    yearly?.product_id;
-
-  const period =
-    activeTimeframe === "monthly"
-      ? selectedForecast?.month
-      : selectedForecast?.year;
-
-  const mainMetrics = [
-    {
-      label: "Gross revenue",
-      metric: predictions?.gross_revenue,
-      subtitle: "Estimated sales revenue",
-      variant: "revenue",
-    },
-
-    {
-      label: "Units sold",
-      metric: predictions?.units_sold,
-      subtitle: "Predicted sales volume",
-      variant: "units",
-    },
-
-    {
-      label: "Net profit",
-      metric: predictions?.net_profit,
-      subtitle: "Estimated net earnings",
-      variant: "profit",
-    },
-  ];
+      setError(
+        err.message ||
+          "Unable to complete the price simulation."
+      );
+    } finally {
+      if (version === requestVersion.current) {
+        setLoading(false);
+      }
+    }
+  }
 
   // ========================================
   // EMPTY STATE
   // ========================================
 
-  if (!hasForecast) {
+  if (!product || !prediction) {
     return (
       <main className="mx-auto max-w-[1440px] px-6 py-12 lg:px-24">
         <h1 className="text-3xl font-bold text-[#25334A]">
-          Sales forecast overview
+          What-If scenario simulator
         </h1>
 
         <p className="mt-4 text-[#61738B]">
-          No existing-product forecast is available.
+          Search and score a product before opening
+          the simulator.
         </p>
 
         <Link
           to="/discover"
-          className="mt-6 inline-block rounded-lg bg-[#FFD45A] px-6 py-3 font-semibold text-[#25334A]"
+          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#FFD45A] px-6 py-3 font-semibold text-[#25334A]"
         >
           Discover products
+          <ArrowRight size={18} />
         </Link>
       </main>
     );
   }
 
-  // ========================================
-  // PAGE LAYOUT
-  // ========================================
+  const priceDifference =
+    isValid &&
+    originalPrice !== null &&
+    originalPrice > 0
+      ? ((values.price / originalPrice) - 1) * 100
+      : null;
 
   return (
     <main className="mx-auto max-w-[1440px] px-5 py-8 text-[#0F172A] sm:px-8 lg:px-16 xl:px-24">
-      {/* BREADCRUMB */}
+      {/* ====================================
+          PAGE HEADER
+      ==================================== */}
 
       <div className="text-xs text-[#61738B]">
         Discover
         <span className="mx-3">›</span>
-        Sales Forecasting
+        Opportunity Analysis
         <span className="mx-3">›</span>
-        Existing Product
+        What-If Simulator
       </div>
 
-      {/* PAGE HEADER */}
-
-      <div className="mt-6 flex flex-col justify-between gap-5 md:flex-row md:items-start">
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={ENTER_TRANSITION}
+        className="mt-6 flex flex-col justify-between gap-5 md:flex-row md:items-start"
+      >
         <div>
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
-            MarketLens / Sales Intelligence
+            MarketLens / Pricing Intelligence
           </p>
 
           <h1 className="text-3xl font-bold tracking-tight text-[#25334A] sm:text-4xl">
-            Sales forecast
+            What-If Simulator
           </h1>
 
-          <p className="mt-3 text-sm leading-6 text-[#61738B] sm:text-base">
-            Estimated sales, demand, and financial
-            performance for an existing product.
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#61738B] sm:text-base">
+            Experiment with selling prices and operating
+            costs to understand how profitability changes.
           </p>
         </div>
 
         <Link
-          to="/discover"
-          className="shrink-0 rounded-xl border border-[#D4A529] bg-white px-5 py-3 text-center text-sm font-semibold text-[#25334A] hover:bg-[#FFFAEC]"
+          to="/product-overview"
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[#D7E0EB] bg-white px-5 py-3 text-sm font-semibold text-[#193B66] shadow-sm transition hover:bg-[#F5F8FC]"
         >
-          Forecast another product
+          <ArrowLeft size={17} />
+          Back to overview
         </Link>
-      </div>
+      </motion.div>
 
-      {/* PRODUCT SUMMARY */}
+      {/* ====================================
+          PRODUCT SUMMARY
+      ==================================== */}
 
-      <section className="mt-7 rounded-2xl border border-[#D7E0EB] bg-white p-6 shadow-sm">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-[#A77E1C]">
-              Existing product
-            </p>
-
-            <h2 className="mt-2 break-words text-lg font-bold text-[#25334A] sm:text-xl">
-              {productName}
-            </h2>
-
-            {productId && (
-              <p className="mt-2 break-all text-sm text-[#61738B]">
-                Product ID: {productId}
-              </p>
-            )}
+      <motion.section
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          ...ENTER_TRANSITION,
+          delay: 0.08,
+        }}
+        className="mt-7 flex flex-col justify-between gap-5 rounded-2xl border border-[#D7E0EB] bg-white p-6 shadow-sm sm:flex-row sm:items-center"
+      >
+        <div className="flex min-w-0 items-center gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#EDF3FA] text-[#193B66]">
+            <Package size={26} />
           </div>
 
-          <div className="self-start rounded-xl bg-[#FFF6DD] px-4 py-3 sm:self-center">
-            <p className="text-xs font-semibold text-[#8B6B1E]">
-              Forecast period
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-wide text-[#A77E1C]">
+              Evaluated product
             </p>
 
-            <p className="mt-1 text-sm font-bold text-[#25334A]">
-              {formatPeriod(period)}
+            <h2 className="mt-2 break-words text-lg font-bold text-[#25334A]">
+              {product.title || "Selected product"}
+            </h2>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          <div className="rounded-xl bg-[#F5F8FC] px-5 py-3">
+            <p className="text-xs text-[#61738B]">
+              Original price
             </p>
+            <p className="mt-1 text-lg font-bold text-[#25334A]">
+              {money(originalPrice)}
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-[#FFF6DD] px-5 py-3">
+            <p className="text-xs text-[#8B6B1E]">
+              Opportunity score
+            </p>
+            <p className="mt-1 text-lg font-bold text-[#25334A]">
+              {numberText(prediction.opportunity_score)}
+              /100
+            </p>
+          </div>
+        </div>
+      </motion.section>
+
+      {/* ====================================
+          KPI SUMMARY
+      ==================================== */}
+
+      <section className="mt-10">
+        <SectionHeading
+          eyebrow="Financial overview"
+          title="Estimated monthly performance"
+          description="Live calculations based on your scenario assumptions."
+        />
+
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <MetricCard
+            label="Estimated revenue"
+            value={
+              isValid
+                ? money(financials.revenue)
+                : "—"
+            }
+            description="Price multiplied by monthly unit sales"
+            icon={DollarSign}
+            variant="navy"
+            delay={0.1}
+          />
+
+          <MetricCard
+            label="Estimated profit"
+            value={
+              isValid
+                ? money(financials.profit)
+                : "—"
+            }
+            description="Revenue after estimated variable costs"
+            icon={Wallet}
+            variant="gold"
+            delay={0.18}
+          />
+
+          <MetricCard
+            label="Profit margin"
+            value={
+              isValid
+                ? percent(financials.margin)
+                : "—"
+            }
+            description="Profit as a percentage of revenue"
+            icon={TrendingUp}
+            variant="green"
+            delay={0.26}
+          />
+        </div>
+      </section>
+
+      {/* ====================================
+          SCENARIO CONTROLS
+      ==================================== */}
+
+      <section className="mt-10">
+        <SectionHeading
+          eyebrow="Scenario builder"
+          title="Adjust your assumptions"
+          description="Use the sliders or enter exact numbers. Financial results update immediately."
+          action={
+            <button
+              type="button"
+              onClick={resetAssumptions}
+              className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#D7E0EB] bg-white px-5 py-3 text-sm font-semibold text-[#193B66] transition hover:bg-[#F5F8FC]"
+            >
+              <RotateCcw size={17} />
+              Reset assumptions
+            </button>
+          }
+        />
+
+        <div className="mt-6 grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          {/* LEFT: INPUTS */}
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={ENTER_TRANSITION}
+            className="min-w-0 rounded-2xl border border-[#D7E0EB] bg-[#F5F8FC] p-5 shadow-sm sm:p-6"
+          >
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-white p-3 text-[#193B66] shadow-sm">
+                <SlidersHorizontal size={22} />
+              </div>
+
+              <div>
+                <h3 className="text-lg font-bold text-[#25334A]">
+                  Scenario inputs
+                </h3>
+
+                <p className="mt-1 text-sm text-[#61738B]">
+                  Pricing and monthly operating assumptions
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              <ScenarioControl
+                label="Selling price"
+                description="Price charged per product"
+                value={scenario.price}
+                onChange={(value) =>
+                  updateField("price", value)
+                }
+                min={0.01}
+                max={priceSliderMax}
+                step={0.01}
+                prefix="$"
+                icon={DollarSign}
+              />
+
+              <ScenarioControl
+                label="Monthly unit sales"
+                description="Assumed number of products sold monthly"
+                value={scenario.units}
+                onChange={(value) =>
+                  updateField("units", value)
+                }
+                min={0}
+                max={unitSliderMax}
+                step={1}
+                icon={Package}
+              />
+
+              <div className="pt-2">
+                <p className="text-xs font-bold uppercase tracking-wide text-[#61738B]">
+                  Variable costs per unit
+                </p>
+              </div>
+
+              {COST_FIELDS.map((field) => (
+                <ScenarioControl
+                  key={field.id}
+                  label={field.label}
+                  description={field.description}
+                  value={scenario[field.id]}
+                  onChange={(value) =>
+                    updateField(field.id, value)
+                  }
+                  min={0}
+                  max={costSliderMax(field.id)}
+                  step={0.01}
+                  prefix="$"
+                  icon={Calculator}
+                />
+              ))}
+            </div>
+
+            {!isValid && (
+              <div
+                role="alert"
+                className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+              >
+                Enter a valid selling price, nonnegative
+                costs, and a whole-number monthly unit
+                quantity.
+              </div>
+            )}
+          </motion.div>
+
+          {/* RIGHT: LIVE RESULTS */}
+
+          <div className="min-w-0 space-y-5">
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={ENTER_TRANSITION}
+              className="rounded-2xl border border-[#D7E0EB] bg-white p-5 shadow-sm sm:p-6"
+            >
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-[#EDF3FA] p-3 text-[#193B66]">
+                  <BarChart3 size={22} />
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-bold text-[#25334A]">
+                    Revenue vs. costs
+                  </h3>
+
+                  <p className="mt-1 text-sm text-[#61738B]">
+                    Monthly financial comparison
+                  </p>
+                </div>
+              </div>
+
+              {isValid ? (
+                <div className="mt-5">
+                  <RevenueCostChart
+                    financials={financials}
+                  />
+
+                  <div className="mt-3 rounded-xl bg-[#F5F8FC] p-4">
+                    <p className="text-xs text-[#61738B]">
+                      Estimated monthly profit / loss
+                    </p>
+
+                    <p
+                      className={`mt-2 text-2xl font-bold ${
+                        financials.profit < 0
+                          ? "text-red-700"
+                          : "text-[#13795B]"
+                      }`}
+                    >
+                      {money(financials.profit)}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-6 text-sm text-[#61738B]">
+                  Enter valid assumptions to view
+                  the financial chart.
+                </p>
+              )}
+            </motion.section>
+
+            <section className="rounded-2xl border border-[#D7E0EB] bg-white p-5 shadow-sm sm:p-6">
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-[#EAF6F0] p-3 text-[#13795B]">
+                  <Calculator size={22} />
+                </div>
+
+                <h3 className="text-lg font-bold text-[#25334A]">
+                  Financial details
+                </h3>
+              </div>
+
+              <div className="mt-5">
+                <DetailRow
+                  label="Revenue"
+                  value={
+                    isValid
+                      ? money(financials.revenue)
+                      : "—"
+                  }
+                />
+
+                <DetailRow
+                  label="Total variable costs"
+                  value={
+                    isValid
+                      ? money(financials.totalCosts)
+                      : "—"
+                  }
+                />
+
+                <DetailRow
+                  label="Estimated profit"
+                  value={
+                    isValid
+                      ? money(financials.profit)
+                      : "—"
+                  }
+                  highlight={
+                    isValid && financials.profit >= 0
+                  }
+                  negative={
+                    isValid && financials.profit < 0
+                  }
+                />
+
+                <DetailRow
+                  label="Profit margin"
+                  value={
+                    isValid
+                      ? percent(financials.margin)
+                      : "—"
+                  }
+                />
+
+                <DetailRow
+                  label="Return on investment"
+                  value={
+                    isValid
+                      ? financials.roi === null
+                        ? "N/A"
+                        : percent(financials.roi)
+                      : "—"
+                  }
+                />
+
+                <DetailRow
+                  label="Contribution per unit"
+                  value={
+                    isValid
+                      ? money(
+                          financials.contributionPerUnit
+                        )
+                      : "—"
+                  }
+                />
+
+                <DetailRow
+                  label="Break-even units"
+                  value={
+                    !isValid
+                      ? "—"
+                      : financials.contributionPerUnit > 0
+                        ? "0 (no fixed costs)"
+                        : "Not reachable"
+                  }
+                />
+              </div>
+
+              <p className="mt-5 text-xs leading-6 text-[#61738B]">
+                These are illustrative financial
+                calculations, not model-generated sales
+                forecasts. Fixed costs are excluded.
+              </p>
+            </section>
           </div>
         </div>
       </section>
 
-      {/* FORECAST SELECTOR */}
+      {/* ====================================
+          COST BREAKDOWN
+      ==================================== */}
 
-      <section className="mt-9">
-        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-          <SectionHeading
-            eyebrow="Forecast performance"
-            title="Prediction overview"
-            description={`Showing ${
-              activeTimeframe === "monthly"
-                ? "monthly"
-                : "yearly"
-            } estimates for ${formatPeriod(period)}.`}
+      {isValid && (
+        <div className="mt-6">
+          <CostBreakdown values={values} />
+        </div>
+      )}
+
+      {/* ====================================
+          BASELINE COMPARISON
+      ==================================== */}
+
+      <section className="mt-10">
+        <SectionHeading
+          eyebrow="Scenario comparison"
+          title="Original vs. adjusted price"
+          description="Compare financial results at the original product price and your proposed selling price."
+        />
+
+        <div className="mt-5 flex items-start gap-3 rounded-xl border border-[#D7E0EB] bg-white p-4">
+          <Info
+            size={18}
+            className="mt-0.5 shrink-0 text-[#193B66]"
           />
 
-          <div
-            role="group"
-            aria-label="Forecast timeframe"
-            className="inline-flex w-fit gap-1 rounded-xl border border-[#D7E0EB] bg-white p-1 shadow-sm"
-          >
-            <button
-              type="button"
-              disabled={!monthly}
-              onClick={() =>
-                setTimeframe("monthly")
-              }
-              aria-pressed={
-                activeTimeframe === "monthly"
-              }
-              className={`rounded-lg px-5 py-3 text-sm font-semibold disabled:opacity-40 ${
-                activeTimeframe === "monthly"
-                  ? "bg-[#FFD45A] text-[#25334A]"
-                  : "text-[#61738B] hover:bg-[#F5F8FC]"
-              }`}
-            >
-              Monthly
-            </button>
-
-            <button
-              type="button"
-              disabled={!yearly}
-              onClick={() =>
-                setTimeframe("yearly")
-              }
-              aria-pressed={
-                activeTimeframe === "yearly"
-              }
-              className={`rounded-lg px-5 py-3 text-sm font-semibold disabled:opacity-40 ${
-                activeTimeframe === "yearly"
-                  ? "bg-[#FFD45A] text-[#25334A]"
-                  : "text-[#61738B] hover:bg-[#F5F8FC]"
-              }`}
-            >
-              Yearly
-            </button>
-          </div>
+          <p className="text-xs leading-6 text-[#61738B]">
+            Both scenarios use the same current monthly
+            sales volume and per-unit cost assumptions.
+            Only the selling price differs. This isolates
+            the arithmetic effect of a price change;
+            it does not predict how demand responds.
+          </p>
         </div>
 
-        {/* PRIMARY KPIS */}
-
-        {predictions ? (
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {mainMetrics.map((item) => (
-              <HeroMetric
-                key={item.label}
-                {...item}
+        {isValid && baseline ? (
+          <>
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              <ComparisonCard
+                label="Monthly revenue"
+                original={baseline.revenue}
+                current={financials.revenue}
               />
-            ))}
-          </div>
+
+              <ComparisonCard
+                label="Monthly profit"
+                original={baseline.profit}
+                current={financials.profit}
+              />
+
+              <ComparisonCard
+                label="Profit margin"
+                original={baseline.margin}
+                current={financials.margin}
+                format={percent}
+              />
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-5 flex flex-col justify-between gap-4 rounded-2xl bg-gradient-to-r from-[#193B66] to-[#275788] p-6 text-white sm:flex-row sm:items-center"
+            >
+              <div>
+                <p className="text-sm text-[#DCE8F5]">
+                  Current selling price adjustment
+                </p>
+
+                <p className="mt-2 text-3xl font-bold">
+                  {signedPercent(priceDifference)}
+                </p>
+              </div>
+
+              <div className="text-left sm:text-right">
+                <p className="text-sm text-[#DCE8F5]">
+                  Original price
+                </p>
+
+                <p className="mt-1 text-lg font-bold">
+                  {money(originalPrice)}
+                </p>
+
+                <p className="mt-3 text-sm text-[#DCE8F5]">
+                  Proposed price
+                </p>
+
+                <p className="mt-1 text-lg font-bold text-[#FFD45A]">
+                  {money(values.price)}
+                </p>
+              </div>
+            </motion.div>
+          </>
         ) : (
-          <div className="mt-6 rounded-xl border border-[#D7E0EB] bg-white p-6 text-sm text-[#61738B]">
-            Forecast metrics unavailable.
+          <div className="mt-6 rounded-2xl border border-[#D7E0EB] bg-white p-6 text-sm text-[#61738B]">
+            Valid assumptions and an original product
+            price are required for comparison.
           </div>
         )}
       </section>
 
-      {/* FINANCIAL AND DEMAND CHARTS */}
+      {/* ====================================
+          AI PRICE SIMULATION
+      ==================================== */}
 
-      {predictions && (
-        <section className="mt-10">
-          <SectionHeading
-            eyebrow="Visual analytics"
-            title="Forecast breakdown"
-            description="Explore predicted financial and demand metrics."
-          />
-
-          <div className="mt-6 grid items-start gap-5 lg:grid-cols-2">
-            <ChartCard
-              title="Revenue vs. estimated costs"
-              description="Financial performance comparison."
-            >
-              <FinancialChart
-                predictions={predictions}
-              />
-            </ChartCard>
-
-            <ChartCard
-              title="Sales vs. demand"
-              description="Sales volume and estimated demand."
-            >
-              <DemandChart
-                predictions={predictions}
-              />
-            </ChartCard>
-          </div>
-        </section>
-      )}
-
-      {/* PROFITABILITY AND DEMAND FLIP PANELS */}
-
-      {predictions && (
-        <section className="mt-6 grid items-stretch gap-5 lg:grid-cols-2">
-          <ProfitabilityPanel
-            key={`profit-${productId}-${activeTimeframe}`}
-            predictions={predictions}
-          />
-
-          <DemandDirectionPanel
-            key={`demand-${productId}-${activeTimeframe}`}
-            timeframe={activeTimeframe}
-            selectedForecast={selectedForecast}
-            predictions={predictions}
-          />
-        </section>
-      )}
-
-      {/* SUPPORTING METRICS WITH FULL-PANEL FLIP */}
-
-      {predictions && (
-        <SupportingMetrics
-          key={`support-${productId}-${activeTimeframe}`}
-          predictions={predictions}
-          timeframe={activeTimeframe}
-        />
-      )}
-
-      {/* FORECAST DETAILS */}
-
-      {selectedForecast && (
-        <ForecastDetails
-          timeframe={activeTimeframe}
-          selectedForecast={selectedForecast}
-          period={period}
-        />
-      )}
-
-      {/* FLOATING ABOUT THIS FORECAST BUTTON */}
-
-      <AboutForecast
-        key={`about-${productId}-${activeTimeframe}`}
-        notes={selectedForecast?.notes}
+      <AIPriceSimulation
+        product={product}
+        prediction={prediction}
+        values={values}
+        isValid={isValid}
+        loading={loading}
+        error={error}
+        rescore={rescore}
+        simulations={simulations}
+        onRun={runSimulation}
       />
     </main>
   );
