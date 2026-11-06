@@ -3,11 +3,11 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { getPredictionReasons } from "../services/marketlensApi";
-
 import OpportunityGauge from "../components/OpportunityGauge";
-import NewIdeaTag from "../components/NewIdeaTag";
-import ScoreReasons from "../components/ScoreReasons";
-import ScoreSentence from "../components/ScoreSentence";
+
+// ----------------------------------------
+// FORMATTING
+// ----------------------------------------
 
 const currency = (value) =>
   new Intl.NumberFormat("en-US", {
@@ -40,68 +40,57 @@ function formatMetric(metric) {
 }
 
 // ----------------------------------------
-// FORECAST METRIC CARD
+// SCORING REASON CHIPS
 // ----------------------------------------
 
-function MetricCard({ label, metric }) {
-  const range = metric?.range;
+function ScoreChips({ reasons }) {
+  if (!reasons) return null;
 
-  const validRange =
-    Array.isArray(range) &&
-    range.length === 2 &&
-    range.every(
-      (value) =>
-        value != null &&
-        Number.isFinite(Number(value))
-    ) &&
-    metric?.value != null &&
-    Number(range[0]) <= Number(range[1]) &&
-    Number(range[0]) <= Number(metric.value) &&
-    Number(metric.value) <= Number(range[1]);
+  const positive = Array.isArray(
+    reasons.reasons_up
+  )
+    ? reasons.reasons_up.slice(0, 3)
+    : [];
+
+  const negative = Array.isArray(
+    reasons.reasons_down
+  )
+    ? reasons.reasons_down.slice(0, 3)
+    : [];
 
   return (
-    <div className="min-h-[120px] rounded-lg border border-[#D5DADF] bg-white p-5 transition-shadow hover:shadow-md">
-      <p className="text-sm font-semibold text-[#475569]">
-        {label}
-      </p>
+    <div className="mt-3 flex flex-wrap gap-2">
+      {positive.map((reason, index) => (
+        <span
+          key={`positive-${index}`}
+          className="rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-medium text-green-800"
+        >
+          + {reason.label || reason.feature}
+        </span>
+      ))}
 
-      <p className="mt-3 text-[27px] font-bold text-[#0F172A]">
-        {formatMetric(metric)}
-      </p>
-
-      {validRange && (
-        <p className="mt-2 text-xs text-[#61738B]">
-          Estimated range:{" "}
-          {formatMetric({
-            value: range[0],
-            unit: metric.unit,
-          })}
-          {" – "}
-          {formatMetric({
-            value: range[1],
-            unit: metric.unit,
-          })}
-        </p>
-      )}
-
-      {metric?.range && !validRange && (
-        <p className="mt-2 text-xs text-[#61738B]">
-          Estimated range unavailable.
-        </p>
-      )}
+      {negative.map((reason, index) => (
+        <span
+          key={`negative-${index}`}
+          className="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-medium text-red-800"
+        >
+          − {reason.label || reason.feature}
+        </span>
+      ))}
     </div>
   );
 }
 
 // ----------------------------------------
-// SCORE FACTOR CARD
+// FACTOR CARD
 // ----------------------------------------
 
 function FactorCard({ reason, positive }) {
   const impact = Number(reason.impact);
 
   const validImpact =
-    reason.impact != null && Number.isFinite(impact);
+    reason.impact != null &&
+    Number.isFinite(impact);
 
   return (
     <div className="rounded-lg border border-[#D7E0EB] bg-white p-4">
@@ -138,15 +127,68 @@ function FactorCard({ reason, positive }) {
 }
 
 // ----------------------------------------
-// COMPACT PRICE SCENARIO PREVIEW
+// FORECAST METRIC CARD
+// ----------------------------------------
+
+function MetricCard({ label, metric }) {
+  const range = metric?.range;
+
+  const validRange =
+    Array.isArray(range) &&
+    range.length === 2 &&
+    range.every(
+      (value) =>
+        value != null &&
+        Number.isFinite(Number(value))
+    ) &&
+    metric?.value != null &&
+    Number(range[0]) <= Number(range[1]) &&
+    Number(range[0]) <= Number(metric.value) &&
+    Number(metric.value) <= Number(range[1]);
+
+  return (
+    <div className="min-h-[120px] rounded-lg border border-[#D5DADF] bg-white p-5">
+      <p className="text-sm font-semibold text-[#475569]">
+        {label}
+      </p>
+
+      <p className="mt-3 text-[27px] font-bold text-[#0F172A]">
+        {formatMetric(metric)}
+      </p>
+
+      {validRange && (
+        <p className="mt-2 text-xs text-[#61738B]">
+          Estimated range:{" "}
+          {formatMetric({
+            value: range[0],
+            unit: metric.unit,
+          })}
+          {" – "}
+          {formatMetric({
+            value: range[1],
+            unit: metric.unit,
+          })}
+        </p>
+      )}
+
+      {range && !validRange && (
+        <p className="mt-2 text-xs text-[#61738B]">
+          Estimated range unavailable.
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ----------------------------------------
+// PRICE SCENARIO PREVIEW
 // ----------------------------------------
 
 function PriceScenarioPreview({ product }) {
   const originalPrice = Number(product.price);
 
-  const [selectedPrice, setSelectedPrice] = useState(
-    () => String(product.price)
-  );
+  const [selectedPrice, setSelectedPrice] =
+    useState(() => String(product.price));
 
   const minPrice = Math.max(
     0.01,
@@ -190,9 +232,10 @@ function PriceScenarioPreview({ product }) {
           </h2>
 
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61738B]">
-            Preview a different selling price, then
-            open the What-If simulator to calculate
-            opportunity scores and profitability.
+            Preview a different selling price,
+            then open the What-If simulator to
+            calculate opportunity scores and
+            profitability.
           </p>
         </div>
 
@@ -203,13 +246,13 @@ function PriceScenarioPreview({ product }) {
               ? numericPrice
               : originalPrice,
           }}
+          aria-disabled={!validPrice}
+          tabIndex={validPrice ? undefined : -1}
           className={`shrink-0 rounded-lg px-6 py-3 text-center text-sm font-semibold ${
             validPrice
               ? "bg-[#FFD45A] text-[#25334A] hover:bg-[#F5C842]"
               : "pointer-events-none bg-slate-200 text-slate-400"
           }`}
-          aria-disabled={!validPrice}
-          tabIndex={validPrice ? undefined : -1}
         >
           Explore Price Scenarios →
         </Link>
@@ -268,12 +311,17 @@ function PriceScenarioPreview({ product }) {
               validPrice
                 ? Math.max(
                     minPrice,
-                    Math.min(maxPrice, numericPrice)
+                    Math.min(
+                      maxPrice,
+                      numericPrice
+                    )
                   )
                 : originalPrice
             }
             onChange={(event) =>
-              setSelectedPrice(event.target.value)
+              setSelectedPrice(
+                event.target.value
+              )
             }
             disabled={minPrice >= maxPrice}
             aria-label="Preview selling price"
@@ -322,8 +370,8 @@ function PriceScenarioPreview({ product }) {
       </div>
 
       <p className="mt-5 text-xs leading-5 text-[#61738B]">
-        This preview does not calculate a new
-        opportunity score or modify the launch
+        This preview does not calculate a
+        new opportunity score or modify any
         forecast. The selected price will be
         carried into the What-If simulator.
       </p>
@@ -340,12 +388,6 @@ export default function Overview({
   prediction,
   forecast,
 }) {
-  const hasScore =
-    prediction?.opportunity_score != null &&
-    Number.isFinite(
-      Number(prediction.opportunity_score)
-    );
-
   const [showExplanations, setShowExplanations] =
     useState(false);
 
@@ -364,6 +406,12 @@ export default function Overview({
   const [launchTimeframe, setLaunchTimeframe] =
     useState("12m");
 
+  const hasScore =
+    prediction?.opportunity_score != null &&
+    Number.isFinite(
+      Number(prediction.opportunity_score)
+    );
+
   const launch =
     forecast?.type === "launch"
       ? forecast.launch
@@ -372,7 +420,8 @@ export default function Overview({
   const predictions = launch?.predictions;
 
   const hasProductResult =
-    hasScore || Boolean(launch);
+    Boolean(product) &&
+    (hasScore || Boolean(launch));
 
   const productName =
     product?.title ||
@@ -386,11 +435,8 @@ export default function Overview({
       : null;
 
   // ----------------------------------------
-  // SCORE EXPLANATIONS
+  // LOAD SCORE EXPLANATIONS
   // ----------------------------------------
-
-  // Loaded with the page: the chips under the score and the
-  // expandable breakdown both read this one result.
 
   useEffect(() => {
     if (
@@ -467,12 +513,12 @@ export default function Overview({
     ? reasons.reasons_down
     : [];
 
-  // ----------------------------------------
-  // LAUNCH FORECAST
-  // ----------------------------------------
-
   const isTwelveMonths =
     launchTimeframe === "12m";
+
+  // ----------------------------------------
+  // LAUNCH METRICS FOR OLDER SAVED RESULTS
+  // ----------------------------------------
 
   const launchMetrics = isTwelveMonths
     ? [
@@ -528,14 +574,6 @@ export default function Overview({
   // EMPTY STATE
   // ----------------------------------------
 
-  // Why no launch numbers are shown: a skipped forecast,
-  // or a request that ran and failed.
-  const noForecastMessage = forecast?.notCovered
-    ? "The launch forecast doesn't cover this category yet, so only the opportunity score is shown."
-    : forecast?.type === "launch"
-      ? "The launch forecast request failed, so no launch estimates are shown for this product."
-      : "Launch estimates are unavailable for this product.";
-
   if (!hasProductResult) {
     return (
       <main className="mx-auto max-w-[1440px] px-6 py-12 lg:px-24">
@@ -545,8 +583,8 @@ export default function Overview({
 
         <p className="mt-4 text-[#61738B]">
           No product evaluation is available.
-          Search using Product Details to generate
-          an opportunity score.
+          Search using Product Details to
+          generate an opportunity score.
         </p>
 
         <Link
@@ -576,8 +614,7 @@ export default function Overview({
           </h1>
 
           <p className="mt-2 text-base text-[#475569]">
-            Product opportunity analysis and
-            launch estimates.
+            Product opportunity analysis.
           </p>
 
           <p className="mt-2 text-sm font-semibold text-[#193B66]">
@@ -585,9 +622,6 @@ export default function Overview({
           </p>
         </div>
 
-        {/* Only the Discover navigation remains
-            in the header. Pricing navigation
-            lives in PriceScenarioPreview. */}
         <Link
           to="/discover"
           className="rounded-lg border border-[#D5DADF] bg-white px-6 py-3 text-sm font-semibold"
@@ -608,44 +642,30 @@ export default function Overview({
           />
 
           <div className="flex-1">
-            <div className="flex flex-wrap items-center gap-3">
-              <h2 className="text-xl font-semibold">
-                Opportunity score
-              </h2>
-
-              <NewIdeaTag prediction={prediction} />
-            </div>
+            <h2 className="text-xl font-semibold">
+              Opportunity score
+            </h2>
 
             {hasScore && (
-              <ScoreSentence
-                score={prediction.opportunity_score}
-                categoryName={product?.categoryName}
-              />
-            )}
-
-            <ScoreReasons reasons={reasons} />
-
-            {hasScore ? (
-              <>
-                <p className="mt-3 text-sm leading-6 text-[#61738B]">
-                  Explore the factors influencing
-                  this product's opportunity score.
-                  Expand the analysis to see positive
-                  and negative model factors.
-                </p>
-
-                <p className="mt-2 text-xs text-[#61738B]">
-                  Model factor impacts are not
-                  opportunity-score points.
-                </p>
-              </>
-            ) : (
-              <p className="mt-3 text-sm text-[#61738B]">
-                No opportunity score was returned.
-                Available launch estimates are
-                shown below.
+              <p className="mt-3 text-sm text-[#475569]">
+                Product scoring result:{" "}
+                <span className="font-semibold">
+                  {prediction.opportunity_score}/100
+                </span>
               </p>
             )}
+
+            <ScoreChips reasons={reasons} />
+
+            <p className="mt-3 text-sm leading-6 text-[#61738B]">
+              Explore the factors influencing this
+              product's opportunity score.
+            </p>
+
+            <p className="mt-2 text-xs text-[#61738B]">
+              Model factor impacts are not
+              opportunity-score points.
+            </p>
           </div>
 
           {hasScore && (
@@ -658,7 +678,7 @@ export default function Overview({
               }
               aria-expanded={showExplanations}
               aria-controls="score-explanations-panel"
-              className="rounded-lg bg-[#FFD45A] px-6 py-3 text-sm font-semibold text-[#25334A] transition hover:bg-[#F5C842]"
+              className="rounded-lg bg-[#FFD45A] px-6 py-3 text-sm font-semibold text-[#25334A]"
             >
               {showExplanations
                 ? "Hide explanations ↑"
@@ -667,7 +687,7 @@ export default function Overview({
           )}
         </div>
 
-        {/* EXPANDABLE SCORE EXPLANATIONS */}
+        {/* EXPANDABLE EXPLANATIONS */}
         {hasScore && showExplanations && (
           <div
             id="score-explanations-panel"
@@ -680,29 +700,26 @@ export default function Overview({
                 </h3>
 
                 <p className="mt-2 text-sm text-[#61738B]">
-                  Factors identified by the product
-                  opportunity model.
+                  Factors identified by the
+                  Product Scoring model.
                 </p>
               </div>
 
               <Link
                 to="/score-details"
-                className="rounded-lg border border-[#D5DADF] bg-white px-5 py-3 text-center text-sm font-semibold text-[#193B66] hover:bg-[#EEF2F6]"
+                className="rounded-lg border border-[#D5DADF] bg-white px-5 py-3 text-center text-sm font-semibold text-[#193B66]"
               >
                 View detailed explanations →
               </Link>
             </div>
 
             {loadingReasons && (
-              <div
+              <p
                 role="status"
-                className="mt-6 rounded-lg border border-[#D7E0EB] bg-white p-5"
+                className="mt-6 rounded-lg bg-white p-5 text-sm text-[#61738B]"
               >
-                <p className="text-sm text-[#61738B]">
-                  Analyzing factors influencing
-                  this product...
-                </p>
-              </div>
+                Loading score factors...
+              </p>
             )}
 
             {reasonsError && !loadingReasons && (
@@ -726,88 +743,54 @@ export default function Overview({
 
             {reasons && !loadingReasons && (
               <div className="mt-6 grid gap-6 md:grid-cols-2">
-                {/* POSITIVE FACTORS */}
                 <div>
-                  <div className="mb-4 flex items-center gap-3">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-100 font-bold text-green-700">
-                      +
-                    </span>
-
-                    <div>
-                      <h4 className="font-semibold text-[#25334A]">
-                        Positive factors
-                      </h4>
-
-                      <p className="text-xs text-[#61738B]">
-                        Factors supporting the score
-                      </p>
-                    </div>
-                  </div>
+                  <h4 className="mb-4 font-semibold text-green-700">
+                    Positive factors
+                  </h4>
 
                   <div className="space-y-3">
                     {positiveReasons.length > 0 ? (
                       positiveReasons.map(
                         (reason, index) => (
                           <FactorCard
-                            key={`positive-${reason.feature}-${index}`}
+                            key={`positive-${index}`}
                             reason={reason}
                             positive
                           />
                         )
                       )
                     ) : (
-                      <p className="rounded-lg border border-[#D7E0EB] bg-white p-4 text-sm text-[#61738B]">
+                      <p className="rounded-lg bg-white p-4 text-sm text-[#61738B]">
                         No positive factors returned.
                       </p>
                     )}
                   </div>
                 </div>
 
-                {/* NEGATIVE FACTORS */}
                 <div>
-                  <div className="mb-4 flex items-center gap-3">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-100 font-bold text-red-700">
-                      −
-                    </span>
-
-                    <div>
-                      <h4 className="font-semibold text-[#25334A]">
-                        Negative factors
-                      </h4>
-
-                      <p className="text-xs text-[#61738B]">
-                        Factors reducing the score
-                      </p>
-                    </div>
-                  </div>
+                  <h4 className="mb-4 font-semibold text-red-700">
+                    Negative factors
+                  </h4>
 
                   <div className="space-y-3">
                     {negativeReasons.length > 0 ? (
                       negativeReasons.map(
                         (reason, index) => (
                           <FactorCard
-                            key={`negative-${reason.feature}-${index}`}
+                            key={`negative-${index}`}
                             reason={reason}
                             positive={false}
                           />
                         )
                       )
                     ) : (
-                      <p className="rounded-lg border border-[#D7E0EB] bg-white p-4 text-sm text-[#61738B]">
+                      <p className="rounded-lg bg-white p-4 text-sm text-[#61738B]">
                         No negative factors returned.
                       </p>
                     )}
                   </div>
                 </div>
               </div>
-            )}
-
-            {reasons && (
-              <p className="mt-5 text-xs leading-5 text-[#61738B]">
-                Model explanation impacts are not
-                direct percentage changes or
-                guaranteed causal effects.
-              </p>
             )}
           </div>
         )}
@@ -867,21 +850,21 @@ export default function Overview({
           />
         )}
 
-      {/* INTERACTIVE LAUNCH FORECAST */}
-      <section className="mt-7">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <div>
-            <h2 className="text-xl font-semibold">
-              Product launch estimates
-            </h2>
+      {/* LEGACY LAUNCH RESULTS, IF AVAILABLE */}
+      {predictions && (
+        <section className="mt-7">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+            <div>
+              <h2 className="text-xl font-semibold">
+                Product launch estimates
+              </h2>
 
-            <p className="mt-2 text-sm text-[#61738B]">
-              Compare projected launch performance
-              over the first 12 or 24 months.
-            </p>
-          </div>
+              <p className="mt-2 text-sm text-[#61738B]">
+                Compare projected launch
+                performance over 12 or 24 months.
+              </p>
+            </div>
 
-          {predictions && (
             <div
               role="group"
               aria-label="Launch forecast timeframe"
@@ -893,10 +876,10 @@ export default function Overview({
                   setLaunchTimeframe("12m")
                 }
                 aria-pressed={isTwelveMonths}
-                className={`rounded-lg px-5 py-3 text-sm font-semibold transition ${
+                className={`rounded-lg px-5 py-3 text-sm font-semibold ${
                   isTwelveMonths
                     ? "bg-[#FFD45A] text-[#25334A]"
-                    : "border border-[#D5DADF] bg-white text-[#25334A] hover:bg-[#F3F6FA]"
+                    : "border border-[#D5DADF] bg-white text-[#25334A]"
                 }`}
               >
                 12 Months
@@ -908,65 +891,35 @@ export default function Overview({
                   setLaunchTimeframe("24m")
                 }
                 aria-pressed={!isTwelveMonths}
-                className={`rounded-lg px-5 py-3 text-sm font-semibold transition ${
+                className={`rounded-lg px-5 py-3 text-sm font-semibold ${
                   !isTwelveMonths
                     ? "bg-[#FFD45A] text-[#25334A]"
-                    : "border border-[#D5DADF] bg-white text-[#25334A] hover:bg-[#F3F6FA]"
+                    : "border border-[#D5DADF] bg-white text-[#25334A]"
                 }`}
               >
                 24 Months
               </button>
             </div>
-          )}
-        </div>
-
-        {predictions ? (
-          <>
-            <div
-              key={launchTimeframe}
-              className="mt-5 grid gap-4 md:grid-cols-3"
-            >
-              {launchMetrics.map(
-                ({ label, metric }) => (
-                  <MetricCard
-                    key={label}
-                    label={label}
-                    metric={metric}
-                  />
-                )
-              )}
-            </div>
-
-            <div className="mt-5 rounded-lg border border-[#D7E0EB] bg-white px-5 py-4">
-              <p className="text-sm font-semibold text-[#25334A]">
-                {isTwelveMonths
-                  ? "First-year launch forecast"
-                  : "Two-year launch forecast"}
-              </p>
-
-              <p className="mt-2 text-sm leading-6 text-[#61738B]">
-                {isTwelveMonths
-                  ? "These estimates cover the first 12 months after launch."
-                  : "These are cumulative estimates covering the first 24 months after launch, not just the second year."}
-              </p>
-            </div>
-
-            <p className="mt-4 text-xs leading-5 text-[#61738B]">
-              Launch forecasts are based partly on
-              simulated market data. Estimated ranges
-              reflect typical model errors rather
-              than guaranteed confidence intervals.
-              Switching timeframes displays different
-              model outputs without submitting another
-              prediction request.
-            </p>
-          </>
-        ) : (
-          <div className="mt-5 rounded-lg border border-[#D5DADF] bg-white p-6 text-sm text-[#61738B]">
-            {noForecastMessage}
           </div>
-        )}
-      </section>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-3">
+            {launchMetrics.map(
+              ({ label, metric }) => (
+                <MetricCard
+                  key={label}
+                  label={label}
+                  metric={metric}
+                />
+              )
+            )}
+          </div>
+
+          <p className="mt-4 text-xs leading-5 text-[#61738B]">
+            These are previously generated
+            estimates from the forecasting model.
+          </p>
+        </section>
+      )}
     </main>
   );
 }

@@ -1,7 +1,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { toForecastCategory } from "../constants/forecastCategoryMap";
+import { FORECAST_CATEGORIES } from "../constants/forecastCategoryMap";
 import { categoryUsesReviews } from "../constants/reviewCategories";
 import { getForecastProducts } from "../services/forecastingApi";
 
@@ -14,154 +14,143 @@ const inputStyle =
 const PAGE_SIZE = 500;
 const MAX_SEARCH_RESULTS = 12;
 
+const initialDetails = {
+  title: "",
+  category: "",
+  price: "",
+  list_price: "",
+  review_count: "0",
+  stars: "",
+};
+
+const initialLaunch = {
+  name: "",
+  category: "",
+  price: "",
+  list_price: "",
+  review_count: "0",
+  months_on_market: "0",
+};
+
 // ----------------------------------------
-// MODEL SELECTION CARD
+// SELECTION CARD
 // ----------------------------------------
 
-function ModelCard({
-  active,
+function SelectionCard({
+  selected,
   title,
-  subtitle,
-  eyebrow,
-  features,
+  description,
+  features = [],
   icon,
-  accent,
-  onSelect,
+  accent = "navy",
+  onClick,
 }) {
-  const isOpportunity = accent === "navy";
-
-  const activeBorder = isOpportunity
-    ? "border-[#193B66] ring-[#193B66]/10"
-    : "border-[#D4A529] ring-[#D4A529]/15";
-
-  const iconBackground = isOpportunity
-    ? "bg-[#EAF1FA] text-[#193B66]"
-    : "bg-[#FFF3CC] text-[#9B741A]";
+  const gold = accent === "gold";
 
   return (
     <button
       type="button"
-      onClick={onSelect}
-      aria-pressed={active}
-      className={`w-full rounded-xl border-2 bg-white p-5 text-left transition-all hover:shadow-md sm:p-6 ${
-        active
-          ? `${activeBorder} ring-2 shadow-sm`
+      onClick={onClick}
+      aria-pressed={selected}
+      className={`w-full rounded-xl border-2 bg-white p-5 text-left transition-all hover:shadow-md ${
+        selected
+          ? gold
+            ? "border-[#D4A529] bg-[#FFFCF4] ring-2 ring-amber-100"
+            : "border-[#193B66] bg-[#FBFDFF] ring-2 ring-blue-100"
           : "border-[#D7E0EB] hover:border-[#B7C6D6]"
       }`}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-4">
         <div
-          className={`flex h-12 w-12 items-center justify-center rounded-xl ${iconBackground}`}
+          className={`flex h-12 w-12 items-center justify-center rounded-xl text-2xl ${
+            gold
+              ? "bg-[#FFF3CC] text-[#9B741A]"
+              : "bg-[#EAF1FA] text-[#193B66]"
+          }`}
+          aria-hidden="true"
         >
-          {icon === "target" ? (
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-7 w-7"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="9" />
-              <circle cx="12" cy="12" r="5" />
-              <circle cx="12" cy="12" r="1" />
-            </svg>
-          ) : (
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-7 w-7"
-              aria-hidden="true"
-            >
-              <path d="M3 19V5" />
-              <path d="M3 19h18" />
-              <path d="m6 15 5-5 4 3 6-7" />
-              <path d="M16 6h5v5" />
-            </svg>
-          )}
+          {icon}
         </div>
 
         <span
-          className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${
-            active
-              ? isOpportunity
-                ? "border-[#193B66] bg-[#193B66]"
-                : "border-[#C99A22] bg-[#C99A22]"
+          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
+            selected
+              ? gold
+                ? "border-[#D4A529] bg-[#D4A529] text-white"
+                : "border-[#193B66] bg-[#193B66] text-white"
               : "border-[#BDC8D5]"
           }`}
           aria-hidden="true"
         >
-          {active && (
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-4 w-4"
-            >
-              <path d="m5 12 4 4L19 6" />
-            </svg>
-          )}
+          {selected ? "✓" : ""}
         </span>
       </div>
 
-      <div className="mt-5">
-        <p
-          className={`text-[11px] font-bold uppercase tracking-wider ${
-            isOpportunity
-              ? "text-[#193B66]"
-              : "text-[#9B741A]"
-          }`}
-        >
-          {eyebrow}
-        </p>
+      <h3 className="mt-5 text-xl font-bold text-[#25334A]">
+        {title}
+      </h3>
 
-        <h3 className="mt-2 text-xl font-bold text-[#25334A]">
-          {title}
-        </h3>
+      <p className="mt-2 text-sm leading-6 text-[#61738B]">
+        {description}
+      </p>
 
-        <p className="mt-2 text-sm leading-6 text-[#61738B]">
-          {subtitle}
-        </p>
-      </div>
-
-      <div className="mt-5 border-t border-[#E7ECF3] pt-4">
-        <p className="mb-3 text-xs font-semibold text-[#475569]">
-          What you'll get
-        </p>
-
-        <div className="space-y-2">
+      {features.length > 0 && (
+        <div className="mt-5 space-y-2 border-t border-[#E7ECF3] pt-4">
           {features.map((feature) => (
             <div
               key={feature}
-              className="flex items-start gap-2"
+              className="flex items-start gap-2 text-sm text-[#475569]"
             >
               <span
-                className={`mt-0.5 text-sm font-bold ${
-                  isOpportunity
-                    ? "text-[#193B66]"
-                    : "text-[#B58922]"
-                }`}
+                className={
+                  gold
+                    ? "font-bold text-[#B58922]"
+                    : "font-bold text-[#193B66]"
+                }
               >
                 ✓
               </span>
 
-              <span className="text-xs leading-5 text-[#61738B]">
-                {feature}
-              </span>
+              <span>{feature}</span>
             </div>
           ))}
         </div>
-      </div>
+      )}
     </button>
+  );
+}
+
+// ----------------------------------------
+// SHARED FIELD
+// ----------------------------------------
+
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  min,
+  max,
+  step,
+  disabled,
+}) {
+  return (
+    <label className="block text-sm font-medium text-[#25334A]">
+      {label}
+
+      <input
+        className={inputStyle}
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        min={min}
+        max={max}
+        step={step}
+        disabled={disabled}
+      />
+    </label>
   );
 }
 
@@ -174,44 +163,47 @@ export default function ProductSearch({
   loading = false,
   onAnalyze,
 }) {
-  // The selected model determines which
-  // input form and submit action are shown.
-  const [method, setMethod] = useState("details");
+  // Main model: opportunity or sales.
+  const [model, setModel] = useState("opportunity");
 
-  // Product details for scoring and
-  // launch forecasting.
-  const [details, setDetails] = useState({
-    title: "",
-    category: "",
-    price: "",
-    list_price: "",
-    review_count: "0",
-    stars: "",
-    months_on_market: "0",
-  });
+  // Sales sub-workflow: launch or existing.
+  const [forecastWorkflow, setForecastWorkflow] =
+    useState("existing");
 
-  // Existing-product catalogue search.
+  // Preserve each form's values when switching.
+  const [details, setDetails] = useState(initialDetails);
+  const [launch, setLaunch] = useState(initialLaunch);
+
+  // Existing-product catalogue.
   const [products, setProducts] = useState([]);
   const [productQuery, setProductQuery] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [loadingProducts, setLoadingProducts] = useState(false);
-  const [productsError, setProductsError] = useState("");
-
-  // The ID may be selected from the catalogue
-  // or entered manually.
+  const [selectedProduct, setSelectedProduct] =
+    useState(null);
   const [productId, setProductId] = useState("");
+
+  const [showDropdown, setShowDropdown] =
+    useState(false);
+  const [loadingProducts, setLoadingProducts] =
+    useState(false);
+  const [productsError, setProductsError] =
+    useState("");
+  const [catalogueAttempt, setCatalogueAttempt] =
+    useState(0);
 
   const [error, setError] = useState("");
 
+  const isOpportunity = model === "opportunity";
+  const isLaunch =
+    model === "sales" && forecastWorkflow === "launch";
+  const isExisting =
+    model === "sales" && forecastWorkflow === "existing";
+
   // ----------------------------------------
-  // LOAD FORECASTING CATALOGUE
+  // LOAD EXISTING-PRODUCT CATALOGUE
   // ----------------------------------------
 
-  // Load the catalogue when the user selects
-  // Sales Forecasting.
   useEffect(() => {
-    if (method !== "id" || products.length > 0) {
+    if (!isExisting || products.length > 0) {
       return;
     }
 
@@ -226,8 +218,6 @@ export default function ProductSearch({
         let offset = 0;
         let total = Infinity;
 
-        // The API allows up to 500 products
-        // per request, so retrieve each page.
         while (offset < total) {
           const response = await getForecastProducts(
             offset,
@@ -244,7 +234,6 @@ export default function ProductSearch({
           allProducts.push(...items);
 
           const reportedTotal = Number(response.total);
-
           total = Number.isFinite(reportedTotal)
             ? reportedTotal
             : Infinity;
@@ -261,8 +250,7 @@ export default function ProductSearch({
 
         if (!active) return;
 
-        // Remove invalid and duplicate records.
-        const uniqueProducts = new Map();
+        const unique = new Map();
 
         for (const product of allProducts) {
           const id = String(
@@ -273,8 +261,8 @@ export default function ProductSearch({
             product.product_name ?? ""
           ).trim();
 
-          if (id && name && !uniqueProducts.has(id)) {
-            uniqueProducts.set(id, {
+          if (id && name && !unique.has(id)) {
+            unique.set(id, {
               ...product,
               product_id: id,
               product_name: name,
@@ -282,13 +270,11 @@ export default function ProductSearch({
           }
         }
 
-        const sortedProducts = Array.from(
-          uniqueProducts.values()
-        ).sort((a, b) =>
-          a.product_name.localeCompare(b.product_name)
+        setProducts(
+          Array.from(unique.values()).sort((a, b) =>
+            a.product_name.localeCompare(b.product_name)
+          )
         );
-
-        setProducts(sortedProducts);
       } catch (err) {
         if (active) {
           setProductsError(
@@ -308,11 +294,7 @@ export default function ProductSearch({
     return () => {
       active = false;
     };
-  }, [method, products.length]);
-
-  // ----------------------------------------
-  // FILTER CATALOGUE
-  // ----------------------------------------
+  }, [isExisting, products.length, catalogueAttempt]);
 
   const filteredProducts = useMemo(() => {
     const query = productQuery.trim().toLowerCase();
@@ -320,31 +302,36 @@ export default function ProductSearch({
     if (!query) return [];
 
     return products
-      .filter((product) => {
-        const name =
-          product.product_name.toLowerCase();
-
-        const id =
-          product.product_id.toLowerCase();
-
-        return (
-          name.includes(query) ||
-          id.includes(query)
-        );
-      })
+      .filter(
+        (product) =>
+          product.product_name
+            .toLowerCase()
+            .includes(query) ||
+          product.product_id
+            .toLowerCase()
+            .includes(query)
+      )
       .slice(0, MAX_SEARCH_RESULTS);
   }, [products, productQuery]);
 
   // ----------------------------------------
-  // UPDATE FORM DATA
+  // STATE HELPERS
   // ----------------------------------------
 
-  function selectMethod(value) {
+  function selectModel(value) {
     if (loading) return;
 
-    setMethod(value);
-    setError("");
+    setModel(value);
     setShowDropdown(false);
+    setError("");
+  }
+
+  function selectWorkflow(value) {
+    if (loading) return;
+
+    setForecastWorkflow(value);
+    setShowDropdown(false);
+    setError("");
   }
 
   function updateDetails(field, value) {
@@ -356,8 +343,16 @@ export default function ProductSearch({
     setError("");
   }
 
-  // A rating doesn't carry over into a category that can't use it.
-  function selectCategory(value) {
+  function updateLaunch(field, value) {
+    setLaunch((previous) => ({
+      ...previous,
+      [field]: value,
+    }));
+
+    setError("");
+  }
+
+  function selectScoringCategory(value) {
     const category = categories.find(
       (item) => String(item.id) === String(value)
     );
@@ -400,124 +395,177 @@ export default function ProductSearch({
   }
 
   // ----------------------------------------
-  // VALIDATION AND SUBMISSION
+  // VALIDATION
+  // ----------------------------------------
+
+  function validatePrice(priceString) {
+    const price = Number(priceString);
+
+    return (
+      priceString !== "" &&
+      Number.isFinite(price) &&
+      price > 0 &&
+      price <= 100000
+    );
+  }
+
+  function validateListPrice(listPriceString, price) {
+    if (listPriceString === "") return true;
+
+    const listPrice = Number(listPriceString);
+
+    return (
+      Number.isFinite(listPrice) &&
+      listPrice >= price &&
+      listPrice <= 100000
+    );
+  }
+
+  // ----------------------------------------
+  // SUBMIT SELECTED WORKFLOW
   // ----------------------------------------
 
   function handleSubmit(event) {
     event.preventDefault();
-    setError("");
 
     if (loading) return;
 
-    // SALES FORECASTING
-    if (method === "id") {
-      const id = productId.trim();
+    setError("");
 
-      if (!id || id.length > 100) {
-        setError("Enter or select a valid Product ID.");
+    // ======================================
+    // OPPORTUNITY ANALYSIS
+    // ======================================
+
+    if (isOpportunity) {
+      const category = categories.find(
+        (item) =>
+          String(item.id) ===
+          String(details.category)
+      );
+
+      const price = Number(details.price);
+      const reviews = Number(details.review_count);
+
+      const stars =
+        details.stars === ""
+          ? null
+          : Number(details.stars);
+
+      if (
+        !details.title.trim() ||
+        details.title.trim().length > 500 ||
+        !category ||
+        !validatePrice(details.price) ||
+        !validateListPrice(
+          details.list_price,
+          price
+        ) ||
+        details.review_count === "" ||
+        !Number.isSafeInteger(reviews) ||
+        reviews < 0 ||
+        (stars !== null &&
+          (!Number.isFinite(stars) ||
+            stars < 1 ||
+            stars > 5))
+      ) {
+        setError(
+          "Complete the product details with valid values."
+        );
         return;
       }
 
-      // Discover.jsx continues handling both
-      // monthly and yearly POST requests.
       onAnalyze({
-        method: "id",
-        productId: id,
+        method: "details",
+        scoringProduct: {
+          title: details.title.trim(),
+          category: category.id,
+          categoryName: category.name,
+          price,
+          originalPrice:
+            details.list_price === ""
+              ? ""
+              : Number(details.list_price),
+          reviews,
+          stars,
+        },
       });
 
       return;
     }
 
-    // OPPORTUNITY ANALYSIS
-    const price = Number(details.price);
-    const reviews = Number(details.review_count);
-    const months = Number(details.months_on_market);
+    // ======================================
+    // NEW PRODUCT LAUNCH
+    // ======================================
 
-    // Optional, so empty stays null instead of becoming 0.
-    const stars =
-      details.stars === ""
-        ? null
-        : Number(details.stars);
-
-    const category = categories.find(
-      (item) =>
-        String(item.id) === String(details.category)
-    );
-
-    if (
-      !details.title.trim() ||
-      details.title.trim().length > 500 ||
-      !category ||
-      details.price === "" ||
-      !Number.isFinite(price) ||
-      price <= 0 ||
-      price > 100000 ||
-      details.review_count === "" ||
-      !Number.isSafeInteger(reviews) ||
-      reviews < 0 ||
-      (stars !== null &&
-        (!Number.isFinite(stars) ||
-          stars < 1 ||
-          stars > 5)) ||
-      details.months_on_market === "" ||
-      !Number.isSafeInteger(months) ||
-      months < 0
-    ) {
-      setError(
-        "Complete all product details with valid values."
+    if (isLaunch) {
+      const price = Number(launch.price);
+      const reviews = Number(launch.review_count);
+      const months = Number(
+        launch.months_on_market
       );
+
+      if (
+        !launch.name.trim() ||
+        launch.name.trim().length > 500 ||
+        !FORECAST_CATEGORIES.includes(
+          launch.category
+        ) ||
+        !validatePrice(launch.price) ||
+        !validateListPrice(
+          launch.list_price,
+          price
+        ) ||
+        launch.review_count === "" ||
+        !Number.isSafeInteger(reviews) ||
+        reviews < 0 ||
+        launch.months_on_market === "" ||
+        !Number.isSafeInteger(months) ||
+        months < 0
+      ) {
+        setError(
+          "Complete the launch details with valid values."
+        );
+        return;
+      }
+
+      onAnalyze({
+        method: "launch",
+        forecastingProduct: {
+          name: launch.name.trim(),
+          category: launch.category,
+          price,
+          ...(launch.list_price !== "" && {
+            list_price: Number(
+              launch.list_price
+            ),
+          }),
+          review_count: reviews,
+          months_on_market: months,
+        },
+      });
+
       return;
     }
 
-    // Optional, and never below what the product actually sells for.
-    const listPrice =
-      details.list_price === ""
-        ? null
-        : Number(details.list_price);
+    // ======================================
+    // EXISTING PRODUCT
+    // ======================================
 
-    if (
-      listPrice !== null &&
-      (!Number.isFinite(listPrice) ||
-        listPrice < price)
-    ) {
-      setError(
-        "List price can't be lower than the selling price."
-      );
-      return;
+    if (isExisting) {
+      const id = productId.trim();
+
+      if (!id || id.length > 100) {
+        setError(
+          "Enter or select a valid Product ID."
+        );
+        return;
+      }
+
+      onAnalyze({
+        method: "id",
+        productId: id,
+      });
     }
-
-    const forecastCategory = toForecastCategory(
-      category.name
-    );
-
-    // Preserve the existing payload contract.
-    onAnalyze({
-      method: "details",
-
-      scoringProduct: {
-        title: details.title.trim(),
-        category: category.id,
-        categoryName: category.name,
-        price,
-        originalPrice: listPrice ?? "",
-        reviews,
-        stars,
-      },
-
-      // Null when the forecast doesn't cover this category.
-      forecastingProduct: forecastCategory
-        ? {
-            name: details.title.trim(),
-            category: forecastCategory,
-            price,
-            ...(listPrice !== null && {
-              list_price: listPrice,
-            }),
-            review_count: reviews,
-            months_on_market: months,
-          }
-        : null,
-    });
   }
 
   // ----------------------------------------
@@ -526,28 +574,33 @@ export default function ProductSearch({
 
   const selectedCategory = categories.find(
     (item) =>
-      String(item.id) === String(details.category)
+      String(item.id) ===
+      String(details.category)
   );
 
   const reviewsUnused =
     selectedCategory &&
-    !categoryUsesReviews(selectedCategory.id);
+    !categoryUsesReviews(
+      selectedCategory.id
+    );
 
-  const isOpportunity = method === "details";
+  // ----------------------------------------
+  // RENDER
+  // ----------------------------------------
 
   return (
     <form
       onSubmit={handleSubmit}
       className="space-y-6"
     >
-      {/* MODEL SELECTION */}
-      <div>
+      {/* MAIN MODEL SELECTOR */}
+      <section>
         <h2 className="text-xl font-bold text-[#25334A]">
           Choose your analysis
         </h2>
 
         <p className="mt-2 text-sm text-[#61738B]">
-          Select the analysis that matches your
+          Select the model that matches your
           product research goal.
         </p>
 
@@ -556,285 +609,364 @@ export default function ProductSearch({
           role="group"
           aria-label="Analysis model"
         >
-          <ModelCard
-            active={isOpportunity}
+          <SelectionCard
+            selected={isOpportunity}
             title="Opportunity Analysis"
-            eyebrow="Product intelligence"
-            subtitle="Evaluate a product idea or listing using its characteristics."
+            description="Evaluate a product idea or listing using its characteristics."
+            icon="◎"
+            accent="navy"
             features={[
               "Product opportunity score",
               "Positive and negative score factors",
-              "12- and 24-month launch estimates",
+              "What-If pricing scenarios",
             ]}
-            icon="target"
-            accent="navy"
-            onSelect={() => selectMethod("details")}
+            onClick={() =>
+              selectModel("opportunity")
+            }
           />
 
-          <ModelCard
-            active={!isOpportunity}
+          <SelectionCard
+            selected={model === "sales"}
             title="Sales Forecasting"
-            eyebrow="Sales intelligence"
-            subtitle="Predict sales and financial performance for an existing catalogue product."
-            features={[
-              "Next-month sales forecast",
-              "Yearly revenue and profitability",
-              "Demand analysis and trends",
-            ]}
-            icon="chart"
+            description="Predict demand and financial performance independently of the opportunity model."
+            icon="↗"
             accent="gold"
-            onSelect={() => selectMethod("id")}
+            features={[
+              "New product launch forecasts",
+              "Existing product forecasts",
+              "Monthly and yearly predictions",
+            ]}
+            onClick={() =>
+              selectModel("sales")
+            }
           />
         </div>
-      </div>
+      </section>
 
-      {/* SELECTED MODEL'S FORM */}
-      <section
-        className={`rounded-xl border bg-white p-6 shadow-sm ${
-          isOpportunity
-            ? "border-[#C6D5E6]"
-            : "border-[#E4D3A3]"
-        }`}
-      >
-        <div className="flex items-start gap-3 border-b border-[#E7ECF3] pb-5">
+      {/* SALES WORKFLOW SELECTOR */}
+      {model === "sales" && (
+        <section className="rounded-xl border border-[#E4D3A3] bg-white p-6 shadow-sm">
+          <h2 className="text-xl font-bold text-[#25334A]">
+            Choose your forecasting workflow
+          </h2>
+
+          <p className="mt-2 text-sm text-[#61738B]">
+            Are you forecasting a new product
+            launch or an existing product?
+          </p>
+
           <div
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-              isOpportunity
-                ? "bg-[#EAF1FA] text-[#193B66]"
-                : "bg-[#FFF3CC] text-[#9B741A]"
-            }`}
+            className="mt-5 grid gap-4 md:grid-cols-2"
+            role="group"
+            aria-label="Forecasting workflow"
           >
-            <span className="text-xl font-bold">
-              {isOpportunity ? "◎" : "↗"}
-            </span>
-          </div>
+            <SelectionCard
+              selected={isLaunch}
+              title="New Product Launch"
+              description="Estimate performance during the first 12 and 24 months after launch."
+              icon="↗"
+              accent="gold"
+              onClick={() =>
+                selectWorkflow("launch")
+              }
+            />
 
-          <div>
-            <h3 className="text-xl font-semibold text-[#25334A]">
-              {isOpportunity
-                ? "Opportunity Analysis"
-                : "Sales Forecasting"}
-            </h3>
-
-            <p className="mt-1 text-sm text-[#61738B]">
-              {isOpportunity
-                ? "Enter the product's details to evaluate its market opportunity."
-                : "Search an existing product to generate its monthly and yearly forecasts."}
-            </p>
+            <SelectionCard
+              selected={isExisting}
+              title="Existing Product"
+              description="Forecast next-month and yearly performance using a catalogue Product ID."
+              icon="▣"
+              accent="gold"
+              onClick={() =>
+                selectWorkflow("existing")
+              }
+            />
           </div>
+        </section>
+      )}
+
+      {/* SELECTED FORM */}
+      <section className="rounded-xl border border-[#D7E0EB] bg-white p-6 shadow-sm">
+        <div className="border-b border-[#E7ECF3] pb-5">
+          <h2 className="text-xl font-bold text-[#25334A]">
+            {isOpportunity
+              ? "Opportunity Analysis"
+              : isLaunch
+                ? "New Product Launch"
+                : "Existing Product Forecast"}
+          </h2>
+
+          <p className="mt-2 text-sm text-[#61738B]">
+            {isOpportunity
+              ? "Enter the product details to calculate an opportunity score."
+              : isLaunch
+                ? "Enter product attributes to forecast launch performance."
+                : "Find a catalogue product to generate monthly and yearly forecasts."}
+          </p>
         </div>
 
-        {/* ----------------------------------------
-            OPPORTUNITY ANALYSIS INPUTS
-            ---------------------------------------- */}
-        {isOpportunity ? (
+        {/* OPPORTUNITY ANALYSIS FORM */}
+        {isOpportunity && (
           <>
             <div className="mt-6 grid gap-5 sm:grid-cols-2">
-              <label className="text-sm font-medium text-[#25334A]">
-                Product name
-                <input
+              <Field
+                label="Product name"
+                placeholder="Wireless Bluetooth Mouse"
+                value={details.title}
+                onChange={(value) =>
+                  updateDetails("title", value)
+                }
+                disabled={loading}
+              />
+
+              <label className="block text-sm font-medium text-[#25334A]">
+                Category
+
+                <select
                   className={inputStyle}
-                  placeholder="Wireless Bluetooth Mouse"
-                  maxLength={500}
-                  value={details.title}
+                  value={details.category}
                   disabled={loading}
                   onChange={(event) =>
-                    updateDetails(
-                      "title",
+                    selectScoringCategory(
                       event.target.value
                     )
                   }
-                />
-              </label>
+                >
+                  <option value="">
+                    Select category
+                  </option>
 
-              <div>
-                <label className="block text-sm font-medium text-[#25334A]">
-                  Category
-                  <select
-                    className={inputStyle}
-                    value={details.category}
-                    disabled={loading}
-                    aria-describedby={
-                      selectedCategory
-                        ? "forecast-category-hint"
-                        : undefined
-                    }
-                    onChange={(event) =>
-                      selectCategory(event.target.value)
-                    }
-                  >
-                    <option value="">
-                      Select category
+                  {categories.map((category) => (
+                    <option
+                      key={category.id}
+                      value={category.id}
+                    >
+                      {category.name}
                     </option>
-
-                    {categories.map((category) => (
-                      <option
-                        key={category.id}
-                        value={category.id}
-                      >
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                {selectedCategory && (
-                  <p
-                    id="forecast-category-hint"
-                    className="mt-2 text-xs text-[#61738B]"
-                  >
-                    Launch forecast category:{" "}
-                    {toForecastCategory(
-                      selectedCategory.name
-                    ) ??
-                      "not available for this category"}
-                  </p>
-                )}
-              </div>
-
-              <label className="text-sm font-medium text-[#25334A]">
-                Selling price (USD)
-                <input
-                  className={inputStyle}
-                  type="number"
-                  min="0.01"
-                  max="100000"
-                  step="0.01"
-                  placeholder="24.99"
-                  value={details.price}
-                  disabled={loading}
-                  onChange={(event) =>
-                    updateDetails(
-                      "price",
-                      event.target.value
-                    )
-                  }
-                />
+                  ))}
+                </select>
               </label>
 
-              <label className="text-sm font-medium text-[#25334A]">
-                List price (before discount)
-                <input
-                  className={inputStyle}
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  placeholder="Optional"
-                  value={details.list_price}
-                  disabled={loading}
-                  onChange={(event) =>
-                    updateDetails(
-                      "list_price",
-                      event.target.value
-                    )
-                  }
-                />
-              </label>
+              <Field
+                label="Selling price (USD)"
+                type="number"
+                min="0.01"
+                max="100000"
+                step="0.01"
+                placeholder="24.99"
+                value={details.price}
+                onChange={(value) =>
+                  updateDetails("price", value)
+                }
+                disabled={loading}
+              />
 
-              <label className="text-sm font-medium text-[#25334A]">
-                Review count
-                <input
-                  className={inputStyle}
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={details.review_count}
-                  disabled={loading}
-                  onChange={(event) =>
-                    updateDetails(
-                      "review_count",
-                      event.target.value
-                    )
-                  }
-                />
-              </label>
+              <Field
+                label="List price (before discount)"
+                type="number"
+                min="0.01"
+                max="100000"
+                step="0.01"
+                placeholder="Optional"
+                value={details.list_price}
+                onChange={(value) =>
+                  updateDetails(
+                    "list_price",
+                    value
+                  )
+                }
+                disabled={loading}
+              />
 
-              <label className="text-sm font-medium text-[#25334A]">
-                Star rating (optional)
-                <input
-                  className={inputStyle}
-                  type="number"
-                  min="1"
-                  max="5"
-                  step="0.1"
-                  placeholder={
-                    reviewsUnused ? "" : "4.5"
-                  }
-                  disabled={loading || reviewsUnused}
-                  value={details.stars}
-                  onChange={(event) =>
-                    updateDetails(
-                      "stars",
-                      event.target.value
-                    )
-                  }
-                />
-              </label>
+              <Field
+                label="Review count"
+                type="number"
+                min="0"
+                step="1"
+                value={details.review_count}
+                onChange={(value) =>
+                  updateDetails(
+                    "review_count",
+                    value
+                  )
+                }
+                disabled={loading}
+              />
 
-              <label className="text-sm font-medium text-[#25334A]">
-                Months on market
-                <input
-                  className={inputStyle}
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={details.months_on_market}
-                  disabled={loading}
-                  onChange={(event) =>
-                    updateDetails(
-                      "months_on_market",
-                      event.target.value
-                    )
-                  }
-                />
-              </label>
+              <Field
+                label="Star rating (optional)"
+                type="number"
+                min="1"
+                max="5"
+                step="0.1"
+                placeholder="4.5"
+                value={details.stars}
+                onChange={(value) =>
+                  updateDetails("stars", value)
+                }
+                disabled={
+                  loading || reviewsUnused
+                }
+              />
             </div>
 
             {reviewsUnused ? (
-              <p className="mt-6 text-xs text-[#61738B]">
-                Star rating and reviews aren't used
-                for this category's opportunity score.
-                {toForecastCategory(
-                  selectedCategory.name
-                ) &&
-                  " The review count still feeds the launch forecast."}
+              <p className="mt-5 text-xs text-[#61738B]">
+                Star rating and reviews are not
+                used for this category's
+                opportunity score.
               </p>
             ) : (
               Number(details.review_count) > 0 &&
               details.stars === "" && (
-                <p className="mt-6 text-xs text-[#61738B]">
-                  Add a star rating to use your review
-                  count in the score. Scored as a new
-                  idea for now.
+                <p className="mt-5 text-xs text-[#61738B]">
+                  Add a star rating to use your
+                  review count in the score.
+                  Otherwise, the product is
+                  evaluated as a new idea.
                 </p>
               )
             )}
 
             <p className="mt-6 text-xs text-[#61738B]">
-              This analysis uses the Product Scoring
-              API and, where supported, the launch
-              forecasting model.
+              This analysis uses the Product
+              Scoring model only.
             </p>
           </>
-        ) : (
-          <>
-            {/* ----------------------------------------
-                SALES FORECASTING INPUTS
-                ---------------------------------------- */}
+        )}
 
+        {/* NEW PRODUCT LAUNCH FORM */}
+        {isLaunch && (
+          <>
+            <div className="mt-6 grid gap-5 sm:grid-cols-2">
+              <Field
+                label="Product name"
+                placeholder="Wireless Bluetooth Mouse"
+                value={launch.name}
+                onChange={(value) =>
+                  updateLaunch("name", value)
+                }
+                disabled={loading}
+              />
+
+              <label className="block text-sm font-medium text-[#25334A]">
+                Forecast category
+
+                <select
+                  className={inputStyle}
+                  value={launch.category}
+                  disabled={loading}
+                  onChange={(event) =>
+                    updateLaunch(
+                      "category",
+                      event.target.value
+                    )
+                  }
+                >
+                  <option value="">
+                    Select category
+                  </option>
+
+                  {FORECAST_CATEGORIES.map(
+                    (category) => (
+                      <option
+                        key={category}
+                        value={category}
+                      >
+                        {category}
+                      </option>
+                    )
+                  )}
+                </select>
+              </label>
+
+              <Field
+                label="Expected selling price (USD)"
+                type="number"
+                min="0.01"
+                max="100000"
+                step="0.01"
+                placeholder="24.99"
+                value={launch.price}
+                onChange={(value) =>
+                  updateLaunch("price", value)
+                }
+                disabled={loading}
+              />
+
+              <Field
+                label="List price (before discount)"
+                type="number"
+                min="0.01"
+                max="100000"
+                step="0.01"
+                placeholder="Optional"
+                value={launch.list_price}
+                onChange={(value) =>
+                  updateLaunch(
+                    "list_price",
+                    value
+                  )
+                }
+                disabled={loading}
+              />
+
+              <Field
+                label="Review count"
+                type="number"
+                min="0"
+                step="1"
+                value={launch.review_count}
+                onChange={(value) =>
+                  updateLaunch(
+                    "review_count",
+                    value
+                  )
+                }
+                disabled={loading}
+              />
+
+              <Field
+                label="Months on market"
+                type="number"
+                min="0"
+                step="1"
+                value={launch.months_on_market}
+                onChange={(value) =>
+                  updateLaunch(
+                    "months_on_market",
+                    value
+                  )
+                }
+                disabled={loading}
+              />
+            </div>
+
+            <p className="mt-6 text-xs leading-5 text-[#61738B]">
+              This workflow uses the Sales
+              Forecasting Launch API only.
+              Predictions are model-generated
+              estimates, not guaranteed results.
+            </p>
+          </>
+        )}
+
+        {/* EXISTING PRODUCT FORM */}
+        {isExisting && (
+          <>
             <div className="relative mt-6">
               <label
                 htmlFor="forecast-product-search"
                 className="block text-sm font-medium text-[#25334A]"
               >
-                Search product by name
+                Search for a product
               </label>
 
               <input
                 id="forecast-product-search"
-                type="search"
                 className={inputStyle}
-                placeholder="Start typing a product name..."
+                type="search"
+                placeholder="Search by product name or ID"
                 value={productQuery}
                 autoComplete="off"
                 disabled={loading}
@@ -844,7 +976,9 @@ export default function ProductSearch({
                   }
                 }}
                 onChange={(event) =>
-                  handleProductSearch(event.target.value)
+                  handleProductSearch(
+                    event.target.value
+                  )
                 }
                 onKeyDown={(event) => {
                   if (event.key === "Escape") {
@@ -855,9 +989,9 @@ export default function ProductSearch({
                 aria-autocomplete="list"
                 aria-expanded={Boolean(
                   showDropdown &&
-                  productQuery.trim() &&
-                  !selectedProduct &&
-                  filteredProducts.length > 0
+                    productQuery.trim() &&
+                    !selectedProduct &&
+                    filteredProducts.length > 0
                 )}
                 aria-controls="forecast-product-results"
               />
@@ -872,25 +1006,36 @@ export default function ProductSearch({
               )}
 
               {productsError && (
-                <p
+                <div
                   role="alert"
-                  className="mt-2 text-xs text-red-600"
+                  className="mt-3 text-sm text-red-700"
                 >
-                  {productsError}
-                  {" You can still enter the Product ID manually."}
-                </p>
+                  <p>{productsError}</p>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCatalogueAttempt(
+                        (previous) =>
+                          previous + 1
+                      )
+                    }
+                    className="mt-2 font-semibold underline"
+                  >
+                    Retry loading catalogue
+                  </button>
+                </div>
               )}
 
               {!loadingProducts &&
                 !productsError &&
                 products.length > 0 && (
                   <p className="mt-2 text-xs text-[#61738B]">
-                    {products.length} products available
-                    to search.
+                    {products.length} products
+                    available to search.
                   </p>
                 )}
 
-              {/* MATCHING PRODUCT RESULTS */}
               {showDropdown &&
                 productQuery.trim() &&
                 !selectedProduct &&
@@ -910,9 +1055,11 @@ export default function ProductSearch({
                         >
                           <button
                             type="button"
-                            className="w-full border-b border-[#EEF2F6] px-4 py-3 text-left hover:bg-[#F3F6FA] focus:bg-[#F3F6FA]"
+                            className="w-full border-b border-[#EEF2F6] px-4 py-3 text-left hover:bg-[#F3F6FA]"
                             onClick={() =>
-                              handleSelectProduct(product)
+                              handleSelectProduct(
+                                product
+                              )
                             }
                           >
                             <span className="block text-sm font-semibold text-[#25334A]">
@@ -935,92 +1082,83 @@ export default function ProductSearch({
                   </ul>
                 )}
 
-              {/* NO MATCHES */}
               {!loadingProducts &&
                 !productsError &&
+                products.length > 0 &&
                 showDropdown &&
                 productQuery.trim() &&
                 filteredProducts.length === 0 &&
                 !selectedProduct && (
-                  <p
-                    role="status"
-                    className="mt-2 text-xs text-[#61738B]"
-                  >
+                  <p className="mt-2 text-xs text-[#61738B]">
                     No matching products found.
-                    Try another name or enter the
-                    Product ID below.
+                    Try another name or enter
+                    the Product ID manually.
                   </p>
                 )}
             </div>
 
-            {/* SELECTED PRODUCT */}
             {selectedProduct && (
-              <div className="mt-4 rounded-lg border border-[#D6E6F5] bg-[#F1F7FD] p-4">
-                <p className="text-xs font-semibold text-[#193B66]">
-                  Selected product
-                </p>
+              <div className="mt-4 flex items-start justify-between gap-4 rounded-lg border border-[#E4D3A3] bg-[#FFFAEC] p-4">
+                <div>
+                  <p className="text-xs font-semibold text-[#9B741A]">
+                    Selected product
+                  </p>
 
-                <p className="mt-2 text-sm font-medium text-[#25334A]">
-                  {selectedProduct.product_name}
-                </p>
+                  <p className="mt-2 text-sm font-semibold text-[#25334A]">
+                    {selectedProduct.product_name}
+                  </p>
 
-                <p className="mt-1 text-xs text-[#61738B]">
-                  Product ID:{" "}
-                  {selectedProduct.product_id}
-                </p>
+                  <p className="mt-1 text-xs text-[#61738B]">
+                    Product ID:{" "}
+                    {selectedProduct.product_id}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleManualProductId("")
+                  }
+                  aria-label="Remove selected product"
+                  className="text-xl text-[#61738B] hover:text-[#25334A]"
+                >
+                  ×
+                </button>
               </div>
             )}
 
-            {/* MANUAL PRODUCT ID */}
-            <div className="mt-6">
-              <div className="flex items-center gap-3">
-                <div className="h-px flex-1 bg-[#D7E0EB]" />
-
-                <span className="text-xs text-[#61738B]">
-                  OR
-                </span>
-
-                <div className="h-px flex-1 bg-[#D7E0EB]" />
-              </div>
-
-              <label
-                htmlFor="forecast-product-id"
-                className="mt-5 block text-sm font-medium text-[#25334A]"
-              >
-                Product ID
-              </label>
-
-              <input
-                id="forecast-product-id"
-                className={inputStyle}
-                placeholder="e.g. B07JW9H4J1"
-                maxLength={100}
-                value={productId}
-                disabled={loading}
-                onChange={(event) =>
-                  handleManualProductId(
-                    event.target.value
-                  )
-                }
-              />
-
-              <p className="mt-2 text-xs text-[#61738B]">
-                Selecting a product automatically
-                fills this field. You may also
-                enter an ID directly.
-              </p>
+            <div className="my-6 flex items-center gap-4">
+              <div className="h-px flex-1 bg-[#D7E0EB]" />
+              <span className="text-xs text-[#61738B]">
+                OR
+              </span>
+              <div className="h-px flex-1 bg-[#D7E0EB]" />
             </div>
 
-            <p className="mt-6 text-xs text-[#61738B]">
-              Existing products use the forecasting
-              API. This analysis does not generate
-              an opportunity score.
+            <Field
+              label="Enter Product ID manually"
+              placeholder="e.g. B07JW9H4J1"
+              value={productId}
+              onChange={handleManualProductId}
+              disabled={loading}
+            />
+
+            <p className="mt-2 text-xs text-[#61738B]">
+              Selecting a catalogue product
+              automatically fills the Product ID.
+              You may also enter one directly.
+            </p>
+
+            <p className="mt-6 text-xs leading-5 text-[#61738B]">
+              This workflow uses the Sales
+              Forecasting Monthly and Yearly APIs.
+              No opportunity score is generated.
             </p>
           </>
         )}
       </section>
 
-      {/* VALIDATION ERRORS */}
+      {/* VALIDATION ERROR */}
       {error && (
         <p
           role="alert"
@@ -1030,7 +1168,7 @@ export default function ProductSearch({
         </p>
       )}
 
-      {/* MODEL-SPECIFIC SUBMIT BUTTON */}
+      {/* SUBMIT BUTTON */}
       <button
         type="submit"
         disabled={loading}
@@ -1042,7 +1180,9 @@ export default function ProductSearch({
             : "Generating Sales Forecast..."
           : isOpportunity
             ? "Analyze Opportunity →"
-            : "Generate Sales Forecast →"}
+            : isLaunch
+              ? "Generate Launch Forecast →"
+              : "Generate Sales Forecast →"}
       </button>
     </form>
   );
