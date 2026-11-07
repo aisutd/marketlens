@@ -25,6 +25,7 @@ import Overview from "./pages/Overview";
 import SalesForecastOverview from "./pages/SalesForecastOverview";
 import ScoreDetails from "./pages/ScoreDetails";
 import LaunchFeasibility from "./pages/LaunchFeasibility";
+import LaunchForecastOverview from "./pages/LaunchForecastOverview";
 
 // ========================================
 // LOCAL STORAGE
@@ -40,6 +41,10 @@ const EMPTY_ANALYSIS = {
   prediction: null,
   scoredProduct: null,
   forecast: null,
+  // New Product Launch results live in their own slot so
+  // they never replace an opportunity score or an
+  // existing-product forecast (and vice versa).
+  launchForecast: null,
 };
 
 // ========================================
@@ -79,7 +84,8 @@ function loadStoredAnalysis() {
       !isObjectOrNull(saved.product) ||
       !isObjectOrNull(saved.prediction) ||
       !isObjectOrNull(saved.scoredProduct) ||
-      !isObjectOrNull(saved.forecast)
+      !isObjectOrNull(saved.forecast) ||
+      !isObjectOrNull(saved.launchForecast)
     ) {
       return { ...EMPTY_ANALYSIS };
     }
@@ -92,11 +98,22 @@ function loadStoredAnalysis() {
       return { ...EMPTY_ANALYSIS };
     }
 
+    // Older saves have no launchForecast field; that is
+    // fine. A malformed one is dropped on its own so the
+    // other results are still restored.
+    const launchForecast =
+      saved.launchForecast?.type === "launch" &&
+      saved.launchForecast.predictions &&
+      typeof saved.launchForecast.predictions === "object"
+        ? saved.launchForecast
+        : null;
+
     return {
       product: saved.product ?? null,
       prediction: saved.prediction ?? null,
       scoredProduct: saved.scoredProduct ?? null,
       forecast: saved.forecast ?? null,
+      launchForecast,
     };
   } catch (error) {
     console.warn(
@@ -118,7 +135,8 @@ function saveStoredAnalysis(analysis) {
       analysis.product ||
         analysis.prediction ||
         analysis.scoredProduct ||
-        analysis.forecast
+        analysis.forecast ||
+        analysis.launchForecast
     );
 
     if (!hasResult) {
@@ -150,6 +168,7 @@ function saveStoredAnalysis(analysis) {
 function AppHeader({
   hasOpportunityResult,
   hasSalesForecast,
+  hasLaunchForecast,
 }) {
   const location = useLocation();
 
@@ -165,6 +184,7 @@ function AppHeader({
     <Header
       hasOpportunityResult={hasOpportunityResult}
       hasSalesForecast={hasSalesForecast}
+      hasLaunchForecast={hasLaunchForecast}
     />
   );
 }
@@ -204,6 +224,7 @@ export default function App() {
     prediction,
     scoredProduct,
     forecast,
+    launchForecast,
   } = analysis;
 
   // ========================================
@@ -240,6 +261,9 @@ export default function App() {
   const setForecast = (value) =>
     updateAnalysisField("forecast", value);
 
+  const setLaunchForecast = (value) =>
+    updateAnalysisField("launchForecast", value);
+
   // ========================================
   // OVERVIEW ROUTING
   // ========================================
@@ -264,6 +288,10 @@ export default function App() {
     forecast?.type === "existing" &&
     Boolean(forecast.monthly || forecast.yearly);
 
+  const hasLaunchForecast = Boolean(
+    launchForecast?.predictions
+  );
+
   // ========================================
   // APPLICATION LAYOUT
   // ========================================
@@ -276,6 +304,7 @@ export default function App() {
         <AppHeader
           hasOpportunityResult={hasOpportunityResult}
           hasSalesForecast={hasSalesForecast}
+          hasLaunchForecast={hasLaunchForecast}
         />
 
         {/* PAGE CONTENT */}
@@ -303,6 +332,7 @@ export default function App() {
                   setPrediction={setPrediction}
                   setScoredProduct={setScoredProduct}
                   setForecast={setForecast}
+                  setLaunchForecast={setLaunchForecast}
                 />
               }
             />
@@ -331,6 +361,19 @@ export default function App() {
               element={
                 <SalesForecastOverview
                   forecast={forecast}
+                />
+              }
+            />
+
+            {/* ========================================
+                NEW PRODUCT LAUNCH FORECAST
+            ======================================== */}
+
+            <Route
+              path="/launch-forecast"
+              element={
+                <LaunchForecastOverview
+                  launchForecast={launchForecast}
                 />
               }
             />

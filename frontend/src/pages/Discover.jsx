@@ -10,6 +10,7 @@ import {
 } from "../services/marketlensApi";
 
 import {
+  predictLaunch,
   predictMonthly,
   predictYearly,
 } from "../services/forecastingApi";
@@ -19,6 +20,7 @@ export default function Discover({
   setPrediction,
   setScoredProduct,
   setForecast,
+  setLaunchForecast,
 }) {
   const navigate = useNavigate();
 
@@ -164,13 +166,42 @@ export default function Discover({
         navigate("/sales-forecast-overview");
       }
 
-      // Step 2 includes a launch form,
-      // but standalone launch routing is
-      // intentionally not implemented yet.
+      // ========================================
+      // MODEL 3: NEW PRODUCT LAUNCH FORECASTING
+      // ========================================
+
       else if (search.method === "launch") {
-        throw new Error(
-          "New Product Launch is not connected yet."
-        );
+        const launchInput = search.forecastingProduct;
+
+        if (!launchInput) {
+          throw new Error(
+            "Valid launch details are required."
+          );
+        }
+
+        const result = await predictLaunch(launchInput);
+
+        if (
+          !result?.predictions ||
+          typeof result.predictions !== "object"
+        ) {
+          throw new Error(
+            "No launch forecast was returned for this product."
+          );
+        }
+
+        // Stored in its own slot, so the opportunity
+        // analysis and existing-product forecast are kept.
+        setLaunchForecast({
+          ...result,
+          type: "launch",
+          input: {
+            ...launchInput,
+            ...(result.input || {}),
+          },
+        });
+
+        navigate("/launch-forecast");
       } else {
         throw new Error(
           "Unknown analysis method."

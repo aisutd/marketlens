@@ -1274,7 +1274,9 @@ export default function ProductSearch({
         {loading
           ? isOpportunity
             ? "Analyzing Opportunity..."
-            : "Generating Sales Forecast..."
+            : isLaunch
+              ? "Generating Launch Forecast..."
+              : "Generating Sales Forecast..."
           : isOpportunity
             ? "Analyze Opportunity →"
             : isLaunch
