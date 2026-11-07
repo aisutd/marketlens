@@ -31,7 +31,71 @@ const initialLaunch = {
   review_count: "0",
   months_on_market: "0",
 };
+// ----------------------------------------
+// SEARCH HELPERS
+// ----------------------------------------
 
+// Splits "boAt Bassheads 100 ... Mic(Furious Red)" into
+// base: "boAt Bassheads 100 ... Mic" and variant: "Furious Red"
+function splitVariant(name) {
+  const match = name.match(/^(.*\S)\s*\(([^()]+)\)\s*$/);
+  if (!match) return { base: name, variant: null };
+  return { base: match[1].trim(), variant: match[2].trim() };
+}
+
+function escapeRegExp(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Higher score = better match. 0 = not a match.
+function matchScore(product, query) {
+  const name = product.product_name.toLowerCase();
+  const id = product.product_id.toLowerCase();
+
+  if (id === query) return 100;
+
+  const words = query.split(/\s+/).filter(Boolean);
+  const allWordsFound = words.every(
+    (word) => name.includes(word) || id.includes(word)
+  );
+  if (!allWordsFound) return 0;
+
+  let score = 10;
+  if (name.startsWith(query)) score += 50;
+
+  // Bonus when a word matches the START of a word in the name
+  // ("head" -> "Headphones" beats "Bassheads")
+  for (const word of words) {
+    if (new RegExp(`\\b${escapeRegExp(word)}`).test(name)) {
+      score += 10;
+    }
+  }
+
+  return score;
+}
+
+// Bolds the part of the text that matches what the user typed
+function Highlight({ text, query }) {
+  const words = query
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(escapeRegExp);
+
+  if (words.length === 0) return text;
+
+  const parts = text.split(new RegExp(`(${words.join("|")})`, "gi"));
+
+  return parts.map((part, i) =>
+    i % 2 === 1 ? (
+      <mark key={i} className="rounded bg-[#FFF3CC] text-inherit">
+        {part}
+      </mark>
+    ) : (
+      <span key={i}>{part}</span>
+    )
+  );
+}
 // ----------------------------------------
 // SELECTION CARD
 // ----------------------------------------
@@ -296,21 +360,38 @@ export default function ProductSearch({
     };
   }, [isExisting, products.length, catalogueAttempt]);
 
+    // Groups color/size variants together and ranks best matches first
   const filteredProducts = useMemo(() => {
     const query = productQuery.trim().toLowerCase();
 
     if (!query) return [];
 
-    return products
-      .filter(
-        (product) =>
-          product.product_name
-            .toLowerCase()
-            .includes(query) ||
-          product.product_id
-            .toLowerCase()
-            .includes(query)
-      )
+    const groups = new Map();
+
+    for (const product of products) {
+      const score = matchScore(product, query);
+      if (score === 0) continue;
+
+      const { base, variant } = splitVariant(product.product_name);
+      const key = base.toLowerCase();
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          base,
+          score,
+          category: product.us_category,
+          variants: [],
+        });
+      }
+
+      const group = groups.get(key);
+      group.score = Math.max(group.score, score);
+      group.variants.push({ ...product, variant });
+    }
+
+    return Array.from(groups.values())
+      .sort((a, b) => b.score - a.score || a.base.localeCompare(b.base))
       .slice(0, MAX_SEARCH_RESULTS);
   }, [products, productQuery]);
 
@@ -1046,39 +1127,52 @@ export default function ProductSearch({
                     aria-label="Matching products"
                     className="absolute z-20 mt-2 max-h-72 w-full overflow-y-auto rounded-lg border border-[#D7E0EB] bg-white shadow-lg"
                   >
-                    {filteredProducts.map(
-                      (product) => (
+                                        {filteredProducts.map((group) => {
+                      const first = group.variants[0];
+                      const hasVariants = group.variants.length > 1;
+
+                      return (
                         <li
-                          key={product.product_id}
+                          key={group.key}
                           role="option"
                           aria-selected={false}
+                          className="border-b border-[#EEF2F6] px-4 py-3"
                         >
                           <button
                             type="button"
-                            className="w-full border-b border-[#EEF2F6] px-4 py-3 text-left hover:bg-[#F3F6FA]"
-                            onClick={() =>
-                              handleSelectProduct(
-                                product
-                              )
-                            }
+                            className="w-full rounded text-left hover:bg-[#F3F6FA]"
+                            onClick={() => handleSelectProduct(first)}
                           >
                             <span className="block text-sm font-semibold text-[#25334A]">
-                              {product.product_name}
+                              <Highlight text={group.base} query={productQuery} />
                             </span>
 
                             <span className="mt-1 block text-xs text-[#61738B]">
-                              ID: {product.product_id}
+                              {hasVariants
+                                ? `${group.variants.length} variants`
+                                : `ID: ${first.product_id}`}
+                              {group.category && ` · ${group.category}`}
                             </span>
-
-                            {product.us_category && (
-                              <span className="mt-1 block text-xs text-[#61738B]">
-                                {product.us_category}
-                              </span>
-                            )}
                           </button>
+
+                          {hasVariants && (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {group.variants.map((v) => (
+                                <button
+                                  key={v.product_id}
+                                  type="button"
+                                  title={`ID: ${v.product_id}`}
+                                  onClick={() => handleSelectProduct(v)}
+                                  className="rounded-full border border-[#D7E0EB] px-3 py-1 text-xs text-[#25334A] hover:border-[#D4A529] hover:bg-[#FFFAEC]"
+                                >
+                                  {v.variant || "Default"}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </li>
-                      )
-                    )}
+                      );
+                    })}
                   </ul>
                 )}
 
