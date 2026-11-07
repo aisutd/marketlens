@@ -1,0 +1,5 @@
+# Cloud Build uploads the working copy; a CRLF Dockerfile breaks its shell CMD (core.autocrlf is on here)
+Dockerfile text eol=lf
+# Shell scripts and pip requirements are read on Linux (Cloud Build, containers): keep them LF on every checkout
+*.sh text eol=lf
+requirements*.txt text eol=lf

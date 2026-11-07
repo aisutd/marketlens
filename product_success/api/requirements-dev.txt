@@ -1,0 +1,3 @@
+# Tests (api/tests) only; not installed in the image
+pytest==9.2.0
+httpx==0.28.1
