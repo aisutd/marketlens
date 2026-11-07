@@ -23,6 +23,7 @@ import {
 import { getPredictionReasons } from "../services/marketlensApi";
 import { getScoreBand } from "../constants/scoreBands";
 import OpportunityGauge from "../components/OpportunityGauge";
+import useDialogFocus from "../hooks/useDialogFocus";
 
 // ========================================
 // THEME AND FORMATTING
@@ -1230,6 +1231,7 @@ function MetricCard({ label, metric }) {
 
 function AboutScore({ prediction }) {
   const [open, setOpen] = useState(false);
+  const dialogRef = useDialogFocus(open, () => setOpen(false));
   const score = numberOrNull(prediction?.opportunity_score);
   const band = getScoreBand(score);
 
@@ -1246,22 +1248,15 @@ function AboutScore({ prediction }) {
       </button>
 
       {open && (
-        <div
-          className="fixed inset-0 z-50"
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              setOpen(false);
-            }
-          }}
-        >
-          <button
-            type="button"
-            aria-label="Close score information"
+        <div className="fixed inset-0 z-50">
+          <div
+            aria-hidden="true"
             onClick={() => setOpen(false)}
-            className="absolute inset-0 h-full w-full cursor-default bg-[#0F172A]/40 backdrop-blur-[2px]"
+            className="absolute inset-0 h-full w-full bg-[#0F172A]/40 backdrop-blur-[2px]"
           />
 
           <section
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="about-score-title"
@@ -1540,9 +1535,9 @@ export default function Overview({
         </h1>
 
         <p className="mt-4 text-[#61738B]">
-          No product evaluation is available.
-          Search using Product Details to generate
-          an opportunity score.
+          No product evaluation is available yet.
+          Run an Opportunity Analysis on the Discover
+          page to generate an opportunity score.
         </p>
 
         <Link

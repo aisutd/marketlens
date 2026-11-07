@@ -98,9 +98,16 @@ export default function Discover({
         setScoredProduct(product);
         setPrediction(score);
 
-        // Remove previous forecast data
-        // from the current analysis.
-        setForecast(null);
+        // Opportunity results and existing-product
+        // forecasts are kept in separate slots, so a
+        // new score must not erase a saved forecast.
+        // Only a legacy launch forecast belongs to the
+        // previous product, so drop that one.
+        setForecast((previous) =>
+          previous?.type === "launch"
+            ? null
+            : previous
+        );
 
         navigate("/product-overview");
       }
@@ -142,10 +149,9 @@ export default function Discover({
           );
         }
 
-        setProduct(null);
-        setScoredProduct(null);
-        setPrediction(null);
-
+        // Keep the current opportunity analysis
+        // (product, scoredProduct, prediction) so
+        // users can still return to it.
         setForecast({
           type: "existing",
           productId,
@@ -219,6 +225,7 @@ export default function Discover({
         categories={categories}
         loading={loading}
         onAnalyze={handleAnalyze}
+        onSelectionChange={() => setError("")}
       />
     </main>
   );

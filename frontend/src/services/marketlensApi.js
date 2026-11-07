@@ -3,6 +3,9 @@ import { categoryUsesReviews } from "../constants/reviewCategories";
 
 const API_BASE_URL = "/api";
 
+const SERVICE_UNAVAILABLE =
+  "MarketLens is temporarily unavailable. Please try again in a moment.";
+
 function buildProductPayload(product) {
   const payload = {
     title: product.title.trim(),
@@ -62,7 +65,19 @@ async function apiRequest(endpoint, options = {}) {
     throw new Error(message);
   }
 
-  return response.json();
+  // A misconfigured proxy or server can answer with an HTML
+  // page instead of JSON. Never show the raw parse error.
+  const contentType = response.headers.get("content-type") || "";
+
+  if (!contentType.includes("application/json")) {
+    throw new Error(SERVICE_UNAVAILABLE);
+  }
+
+  try {
+    return await response.json();
+  } catch {
+    throw new Error(SERVICE_UNAVAILABLE);
+  }
 }
 
 function jsonOptions(payload) {

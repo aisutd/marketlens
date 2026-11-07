@@ -12,6 +12,8 @@ import {
   Tooltip,
 } from "recharts";
 
+import useDialogFocus from "../hooks/useDialogFocus";
+
 // ========================================
 // THEME
 // ========================================
@@ -1796,6 +1798,7 @@ function ForecastDetails({
 
 function AboutForecast({ notes }) {
   const [open, setOpen] = useState(false);
+  const dialogRef = useDialogFocus(open, () => setOpen(false));
 
   return (
     <>
@@ -1827,22 +1830,15 @@ function AboutForecast({ notes }) {
       {/* INFORMATION DIALOG */}
 
       {open && (
-        <div
-          className="fixed inset-0 z-50"
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              setOpen(false);
-            }
-          }}
-        >
-          <button
-            type="button"
-            aria-label="Close forecast information"
+        <div className="fixed inset-0 z-50">
+          <div
+            aria-hidden="true"
             onClick={() => setOpen(false)}
-            className="absolute inset-0 h-full w-full cursor-default bg-[#0F172A]/40 backdrop-blur-[2px]"
+            className="absolute inset-0 h-full w-full bg-[#0F172A]/40 backdrop-blur-[2px]"
           />
 
           <section
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="forecast-info-title"

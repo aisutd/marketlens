@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 import MarketLensLogo from "./MarketLensLogo";
@@ -8,7 +8,42 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [notice, setNotice] = useState("");
 
+  const menuContainerRef = useRef(null);
+  const toggleButtonRef = useRef(null);
+
   const location = useLocation();
+
+  // Close the menu on Escape (returning focus to the
+  // toggle) or when the user clicks/taps outside it.
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        setNotice("");
+        toggleButtonRef.current?.focus();
+      }
+    }
+
+    function handlePointerDown(event) {
+      if (
+        menuContainerRef.current &&
+        !menuContainerRef.current.contains(event.target)
+      ) {
+        setMenuOpen(false);
+        setNotice("");
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [menuOpen]);
 
   const isDiscover = location.pathname === "/discover";
 
@@ -44,8 +79,9 @@ export default function Header() {
         />
 
         {/* NAVIGATION MENU */}
-        <div className="relative">
+        <div className="relative" ref={menuContainerRef}>
           <button
+            ref={toggleButtonRef}
             type="button"
             onClick={toggleMenu}
             aria-expanded={menuOpen}
