@@ -11,10 +11,6 @@ const inputStyle =
   "focus:border-[#193B66] focus:ring-2 focus:ring-blue-100 " +
   "disabled:cursor-not-allowed disabled:bg-[#EEF2F6]";
 
-// The launch workflow is not connected to the backend yet
-// (see Discover.jsx). Flip to true once it is.
-const LAUNCH_FORECAST_AVAILABLE = false;
-
 const PAGE_SIZE = 500;
 const MAX_SEARCH_RESULTS = 12;
 
@@ -111,7 +107,6 @@ function SelectionCard({
   features = [],
   icon,
   accent = "navy",
-  comingSoon = false,
   onClick,
 }) {
   const gold = accent === "gold";
@@ -120,16 +115,13 @@ function SelectionCard({
     <button
       type="button"
       onClick={onClick}
-      disabled={comingSoon}
-      aria-pressed={comingSoon ? undefined : selected}
-      className={`w-full rounded-xl border-2 bg-white p-5 text-left transition-all ${
-        comingSoon
-          ? "cursor-not-allowed border-dashed border-[#D7E0EB] opacity-70"
-          : selected
-            ? gold
-              ? "border-[#D4A529] bg-[#FFFCF4] ring-2 ring-amber-100 hover:shadow-md"
-              : "border-[#193B66] bg-[#FBFDFF] ring-2 ring-blue-100 hover:shadow-md"
-            : "border-[#D7E0EB] hover:border-[#B7C6D6] hover:shadow-md"
+      aria-pressed={selected}
+      className={`w-full rounded-xl border-2 bg-white p-5 text-left transition-all hover:shadow-md ${
+        selected
+          ? gold
+            ? "border-[#D4A529] bg-[#FFFCF4] ring-2 ring-amber-100"
+            : "border-[#193B66] bg-[#FBFDFF] ring-2 ring-blue-100"
+          : "border-[#D7E0EB] hover:border-[#B7C6D6]"
       }`}
     >
       <div className="flex items-start justify-between gap-4">
@@ -144,11 +136,6 @@ function SelectionCard({
           {icon}
         </div>
 
-        {comingSoon ? (
-          <span className="shrink-0 rounded-full bg-[#EEF2F6] px-3 py-1 text-xs font-semibold text-[#475569]">
-            Coming soon
-          </span>
-        ) : (
         <span
           className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
             selected
@@ -161,7 +148,6 @@ function SelectionCard({
         >
           {selected ? "✓" : ""}
         </span>
-        )}
       </div>
 
       <h3 className="mt-5 text-xl font-bold text-[#25334A]">
@@ -425,7 +411,6 @@ export default function ProductSearch({
 
   function selectWorkflow(value) {
     if (loading) return;
-    if (value === "launch" && !LAUNCH_FORECAST_AVAILABLE) return;
 
     setForecastWorkflow(value);
     setShowDropdown(false);
@@ -731,9 +716,7 @@ export default function ProductSearch({
             icon="↗"
             accent="gold"
             features={[
-              LAUNCH_FORECAST_AVAILABLE
-                ? "New product launch forecasts"
-                : "New product launch forecasts (coming soon)",
+              "New product launch forecasts",
               "Existing product forecasts",
               "Monthly and yearly predictions",
             ]}
@@ -764,10 +747,9 @@ export default function ProductSearch({
             <SelectionCard
               selected={isLaunch}
               title="New Product Launch"
-              description="Estimate performance during the first 12 and 24 months after launch. This forecast isn't available yet."
+              description="Estimate performance during the first 12 and 24 months after launch."
               icon="↗"
               accent="gold"
-              comingSoon={!LAUNCH_FORECAST_AVAILABLE}
               onClick={() =>
                 selectWorkflow("launch")
               }

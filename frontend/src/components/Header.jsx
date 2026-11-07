@@ -4,7 +4,10 @@ import { Link, useLocation } from "react-router-dom";
 
 import MarketLensLogo from "./MarketLensLogo";
 
-export default function Header() {
+export default function Header({
+  hasOpportunityResult = false,
+  hasSalesForecast = false,
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [notice, setNotice] = useState("");
 
@@ -46,6 +49,24 @@ export default function Header() {
   }, [menuOpen]);
 
   const isDiscover = location.pathname === "/discover";
+
+  // The opportunity "family" includes its detail pages.
+  const isOpportunity = [
+    "/product-overview",
+    "/score-details",
+    "/launch-feasibility",
+  ].includes(location.pathname);
+
+  const isSalesForecast =
+    location.pathname === "/sales-forecast-overview";
+
+  function menuLinkStyle(active) {
+    return `${menuItemStyle} ${
+      active
+        ? "bg-[#FFFAE9] font-semibold text-[#0F172A]"
+        : "text-[#475569] hover:bg-[#F3F6FA]"
+    }`;
+  }
 
   // Placeholder actions until these features
   // are implemented.
@@ -157,6 +178,68 @@ export default function Header() {
 
                   <span>Discover Products</span>
                 </Link>
+
+                {/* OPPORTUNITY RESULTS (only once one exists) */}
+                {hasOpportunityResult && (
+                  <Link
+                    to="/product-overview"
+                    onClick={closeMenu}
+                    aria-current={
+                      location.pathname === "/product-overview"
+                        ? "page"
+                        : undefined
+                    }
+                    className={menuLinkStyle(isOpportunity)}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="19"
+                      height="19"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <circle cx="12" cy="12" r="9" />
+                      <circle cx="12" cy="12" r="4" />
+                    </svg>
+
+                    <span>Opportunity results</span>
+                  </Link>
+                )}
+
+                {/* SALES FORECAST (only once one exists) */}
+                {hasSalesForecast && (
+                  <Link
+                    to="/sales-forecast-overview"
+                    onClick={closeMenu}
+                    aria-current={
+                      isSalesForecast ? "page" : undefined
+                    }
+                    className={menuLinkStyle(isSalesForecast)}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="19"
+                      height="19"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="m3 17 6-6 4 4 8-8" />
+                      <path d="M15 7h6v6" />
+                    </svg>
+
+                    <span>Sales forecast</span>
+                  </Link>
+                )}
 
                 {/* SAVED PRODUCTS */}
                 <button

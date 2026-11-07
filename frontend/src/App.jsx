@@ -147,7 +147,10 @@ function saveStoredAnalysis(analysis) {
 // CONDITIONAL APPLICATION HEADER
 // ========================================
 
-function AppHeader() {
+function AppHeader({
+  hasOpportunityResult,
+  hasSalesForecast,
+}) {
   const location = useLocation();
 
   // LandingPage has its own navigation.
@@ -158,7 +161,12 @@ function AppHeader() {
     return null;
   }
 
-  return <Header />;
+  return (
+    <Header
+      hasOpportunityResult={hasOpportunityResult}
+      hasSalesForecast={hasSalesForecast}
+    />
+  );
 }
 
 // ========================================
@@ -241,6 +249,21 @@ export default function App() {
       ? "/sales-forecast-overview"
       : "/product-overview";
 
+  // Show menu shortcuts only for results that exist,
+  // using the same checks as the result pages.
+  const opportunityScore = Number(
+    prediction?.opportunity_score
+  );
+
+  const hasOpportunityResult =
+    Boolean(scoredProduct) &&
+    prediction?.opportunity_score != null &&
+    Number.isFinite(opportunityScore);
+
+  const hasSalesForecast =
+    forecast?.type === "existing" &&
+    Boolean(forecast.monthly || forecast.yearly);
+
   // ========================================
   // APPLICATION LAYOUT
   // ========================================
@@ -250,7 +273,10 @@ export default function App() {
       <div className="flex min-h-screen flex-col bg-gradient-to-b from-[#F8FAFC] to-[#DCE3EA]">
 
         {/* CONDITIONAL NAVIGATION */}
-        <AppHeader />
+        <AppHeader
+          hasOpportunityResult={hasOpportunityResult}
+          hasSalesForecast={hasSalesForecast}
+        />
 
         {/* PAGE CONTENT */}
         <div className="w-full flex-1">
