@@ -23,6 +23,7 @@ import LandingPage from "./pages/LandingPage";
 import Discover from "./pages/Discover";
 import Overview from "./pages/Overview";
 import SalesForecastOverview from "./pages/SalesForecastOverview";
+import LaunchForecastOverview from "./pages/LaunchForecastOverview";
 import ScoreDetails from "./pages/ScoreDetails";
 import LaunchFeasibility from "./pages/LaunchFeasibility";
 
@@ -150,10 +151,7 @@ function saveStoredAnalysis(analysis) {
 function AppHeader() {
   const location = useLocation();
 
-  // LandingPage has its own navigation.
-  // Do not display the dashboard header
-  // on the landing page.
-
+  // Landing page has its own navigation.
   if (location.pathname === "/") {
     return null;
   }
@@ -236,10 +234,15 @@ export default function App() {
   // OVERVIEW ROUTING
   // ========================================
 
-  const overviewDestination =
-    forecast?.type === "existing"
-      ? "/sales-forecast-overview"
-      : "/product-overview";
+  let overviewDestination = "/product-overview";
+
+  if (forecast?.type === "existing") {
+    overviewDestination =
+      "/sales-forecast-overview";
+  } else if (forecast?.type === "launch") {
+    overviewDestination =
+      "/launch-forecast-overview";
+  }
 
   // ========================================
   // APPLICATION LAYOUT
@@ -249,26 +252,19 @@ export default function App() {
     <BrowserRouter>
       <div className="flex min-h-screen flex-col bg-gradient-to-b from-[#F8FAFC] to-[#DCE3EA]">
 
-        {/* CONDITIONAL NAVIGATION */}
+        {/* NAVIGATION */}
         <AppHeader />
 
-        {/* PAGE CONTENT */}
         <div className="w-full flex-1">
           <Routes>
 
-            {/* ========================================
-                LANDING PAGE
-            ======================================== */}
-
+            {/* LANDING PAGE */}
             <Route
               path="/"
               element={<LandingPage />}
             />
 
-            {/* ========================================
-                DISCOVER PRODUCTS
-            ======================================== */}
-
+            {/* DISCOVER PRODUCTS */}
             <Route
               path="/discover"
               element={
@@ -281,10 +277,7 @@ export default function App() {
               }
             />
 
-            {/* ========================================
-                PRODUCT OPPORTUNITY ANALYSIS
-            ======================================== */}
-
+            {/* OPPORTUNITY ANALYSIS */}
             <Route
               path="/product-overview"
               element={
@@ -296,10 +289,7 @@ export default function App() {
               }
             />
 
-            {/* ========================================
-                EXISTING PRODUCT SALES FORECASTING
-            ======================================== */}
-
+            {/* EXISTING PRODUCT FORECAST */}
             <Route
               path="/sales-forecast-overview"
               element={
@@ -309,10 +299,17 @@ export default function App() {
               }
             />
 
-            {/* ========================================
-                LEGACY OVERVIEW REDIRECT
-            ======================================== */}
+            {/* NEW PRODUCT LAUNCH FORECAST */}
+            <Route
+              path="/launch-forecast-overview"
+              element={
+                <LaunchForecastOverview
+                  forecast={forecast}
+                />
+              }
+            />
 
+            {/* LEGACY OVERVIEW REDIRECT */}
             <Route
               path="/overview"
               element={
@@ -323,10 +320,7 @@ export default function App() {
               }
             />
 
-            {/* ========================================
-                SCORE EXPLANATIONS
-            ======================================== */}
-
+            {/* OPPORTUNITY SCORE DETAILS */}
             <Route
               path="/score-details"
               element={
@@ -337,10 +331,7 @@ export default function App() {
               }
             />
 
-            {/* ========================================
-                WHAT-IF PRICE SIMULATOR
-            ======================================== */}
-
+            {/* OPPORTUNITY WHAT-IF SIMULATOR */}
             <Route
               path="/launch-feasibility"
               element={
@@ -356,10 +347,7 @@ export default function App() {
               }
             />
 
-            {/* ========================================
-                FALLBACK ROUTE
-            ======================================== */}
-
+            {/* FALLBACK */}
             <Route
               path="*"
               element={
@@ -373,9 +361,7 @@ export default function App() {
           </Routes>
         </div>
 
-        {/* GLOBAL COPYRIGHT FOOTER */}
         <Footer />
-
       </div>
     </BrowserRouter>
   );
