@@ -119,7 +119,7 @@ function SectionHeading({ eyebrow, title, description }) {
   return (
     <div>
       {eyebrow && (
-        <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
+        <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#8A6614]">
           {eyebrow}
         </p>
       )}
@@ -825,7 +825,7 @@ function StrengthsAndWatchouts({ reasons }) {
             {strengths}
           </p>
 
-          <p className="mt-1 text-xs text-[#61738B]">
+          <p className="mt-1 text-xs text-[#56677E]">
             Positive product signals
           </p>
         </button>
@@ -860,7 +860,7 @@ function StrengthsAndWatchouts({ reasons }) {
             {watchouts}
           </p>
 
-          <p className="mt-1 text-xs text-[#61738B]">
+          <p className="mt-1 text-xs text-[#56677E]">
             Potential concerns
           </p>
         </button>
@@ -943,7 +943,7 @@ function ProductInformation({ product }) {
       label: "Selling price",
       value: currency(product.price),
       symbol: "$",
-      color: "#A77E1C",
+      color: "#8A6614",
       background: "#FFF6DD",
     },
     {
@@ -1039,7 +1039,7 @@ function PriceScenarioPreview({ product }) {
     <section className="mt-10 overflow-hidden rounded-2xl border border-[#D7E0EB] bg-white p-6 shadow-sm sm:p-7">
       <div className="flex flex-col justify-between gap-5 md:flex-row md:items-start">
         <div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#8A6614]">
             Pricing strategy
           </p>
 
@@ -1564,7 +1564,7 @@ export default function Overview({
 
       <div className="mt-6 flex flex-col justify-between gap-5 md:flex-row md:items-start">
         <div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#8A6614]">
             MarketLens / Product Intelligence
           </p>
 
@@ -1589,7 +1589,7 @@ export default function Overview({
       {/* PRODUCT */}
 
       <section className="mt-7 rounded-2xl border border-[#D7E0EB] bg-white p-6 shadow-sm">
-        <p className="text-xs font-bold uppercase tracking-wide text-[#A77E1C]">
+        <p className="text-xs font-bold uppercase tracking-wide text-[#8A6614]">
           Evaluated product
         </p>
 

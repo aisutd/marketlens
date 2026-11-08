@@ -183,7 +183,7 @@ function SectionHeading({
   return (
     <div>
       {eyebrow && (
-        <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
+        <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#8A6614]">
           {eyebrow}
         </p>
       )}
@@ -205,12 +205,15 @@ function SectionHeading({
 // ESTIMATED RANGE TEXT
 // ========================================
 
-function RangeText({ metric, light = false }) {
+function RangeText({ metric, light = false, colorClass }) {
   const range = validRange(metric);
 
-  const color = light
-    ? "text-white/75"
-    : "text-[#61738B]";
+  // colorClass lets a card override the default (for
+  // example dark text on the light yellow card, where
+  // translucent white is unreadable).
+  const color =
+    colorClass ||
+    (light ? "text-white/75" : "text-[#61738B]");
 
   if (!range) {
     return metric?.range ? (
@@ -261,6 +264,8 @@ function HeroMetric({
         "linear-gradient(135deg, #F6C94D, #F9DD86)",
       text: "text-[#25334A]",
       muted: "text-[#6C5528]",
+      // Dark range text: white is unreadable on yellow.
+      range: "text-[#6C5528]",
       badge: "bg-white/40 text-[#705211]",
       badgeLabel: "SALES VOLUME",
     },
@@ -317,7 +322,11 @@ function HeroMetric({
       </div>
 
       <div className="relative z-10 mt-3">
-        <RangeText metric={metric} light />
+        <RangeText
+          metric={metric}
+          light
+          colorClass={style.range}
+        />
       </div>
     </article>
   );
@@ -622,7 +631,7 @@ function DemandChart({ predictions }) {
         </div>
 
         <div className="rounded-xl bg-[#F1F6FC] p-4">
-          <p className="text-xs text-[#61738B]">
+          <p className="text-xs text-[#56677E]">
             Estimated demand
           </p>
 
@@ -660,7 +669,7 @@ function MiniTabs({
           className={`rounded-lg px-4 py-2 text-xs font-semibold transition-all duration-200 ${
             value === option.value
               ? "bg-white text-[#193B66] shadow-sm"
-              : "text-[#61738B] hover:text-[#25334A]"
+              : "text-[#56677E] hover:text-[#25334A]"
           }`}
         >
           {option.label}
@@ -837,7 +846,7 @@ function ProfitabilityPanel({ predictions }) {
     <section className="min-w-0 rounded-2xl border border-[#D7E0EB] bg-white p-6 shadow-sm">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
+          <p className="text-xs font-bold uppercase tracking-[0.13em] text-[#8A6614]">
             Profitability
           </p>
 
@@ -1124,7 +1133,7 @@ function DemandDirectionPanel({
     <section className="min-w-0 rounded-2xl border border-[#D7E0EB] bg-white p-6 shadow-sm">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
+          <p className="text-xs font-bold uppercase tracking-[0.13em] text-[#8A6614]">
             Demand intelligence
           </p>
 
@@ -1726,7 +1735,7 @@ function ForecastDetails({
       icon: "calendar",
       label: "Forecast period",
       value: formatPeriod(period),
-      color: "text-[#A77E1C]",
+      color: "text-[#8A6614]",
       background: "bg-[#FFF6DD]",
     },
   ];
@@ -2048,7 +2057,7 @@ export default function SalesForecastOverview({
 
       <div className="mt-6 flex flex-col justify-between gap-5 md:flex-row md:items-start">
         <div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#8A6614]">
             MarketLens / Sales Intelligence
           </p>
 
@@ -2075,7 +2084,7 @@ export default function SalesForecastOverview({
       <section className="mt-7 rounded-2xl border border-[#D7E0EB] bg-white p-6 shadow-sm">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-[#A77E1C]">
+            <p className="text-xs font-bold uppercase tracking-wider text-[#8A6614]">
               Existing product
             </p>
 

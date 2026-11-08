@@ -2,9 +2,9 @@
 // product_success/README.md: how often products in each band really reached
 // the top 20% of sales in their category.
 
-const GREEN = "#16A34A";
-const AMBER = "#CA8A04";
-const RED = "#DC2626";
+const GREEN = "#15803D";
+const AMBER = "#9A5C06";
+const RED = "#B91C1C";
 
 const BANDS = [
   {

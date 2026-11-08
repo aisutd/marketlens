@@ -225,7 +225,7 @@ function SectionHeading({
     <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
       <div>
         {eyebrow && (
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#8A6614]">
             {eyebrow}
           </p>
         )}
@@ -433,7 +433,7 @@ function ScenarioControl({
         className="mt-5 w-full cursor-pointer accent-[#193B66] disabled:cursor-not-allowed"
       />
 
-      <div className="mt-2 flex justify-between text-xs text-[#8FA0B4]">
+      <div className="mt-2 flex justify-between text-xs text-[#61738B]">
         <span>
           {prefix}
           {numberText(min)}
@@ -755,7 +755,7 @@ function ComparisonCard({
         </div>
 
         <div className="rounded-xl bg-[#EDF7F2] p-3">
-          <p className="text-xs text-[#61738B]">
+          <p className="text-xs text-[#56677E]">
             Scenario
           </p>
 
@@ -853,7 +853,7 @@ function AIPriceSimulation({
     <section className="mt-10 rounded-2xl border border-[#D7E0EB] bg-white p-6 shadow-sm sm:p-7">
       <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
         <div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#8A6614]">
             Model-powered analysis
           </p>
 
@@ -928,7 +928,7 @@ function AIPriceSimulation({
             className="mt-6 grid gap-4 md:grid-cols-3"
           >
             <div className="rounded-2xl bg-[#F1F6FC] p-5">
-              <p className="text-sm text-[#61738B]">
+              <p className="text-sm text-[#56677E]">
                 Original score
               </p>
 
@@ -1397,7 +1397,7 @@ export default function LaunchFeasibility({
         className="mt-6 flex flex-col justify-between gap-5 md:flex-row md:items-start"
       >
         <div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#8A6614]">
             MarketLens / Pricing Intelligence
           </p>
 
@@ -1439,7 +1439,7 @@ export default function LaunchFeasibility({
           </div>
 
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-wide text-[#A77E1C]">
+            <p className="text-xs font-bold uppercase tracking-wide text-[#8A6614]">
               Evaluated product
             </p>
 

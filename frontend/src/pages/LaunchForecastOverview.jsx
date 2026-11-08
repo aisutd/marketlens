@@ -149,7 +149,7 @@ function SectionHeading({
   return (
     <div>
       {eyebrow && (
-        <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
+        <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#8A6614]">
           {eyebrow}
         </p>
       )}
@@ -171,12 +171,15 @@ function SectionHeading({
 // ESTIMATED RANGE TEXT
 // ========================================
 
-function RangeText({ metric, light = false }) {
+function RangeText({ metric, light = false, colorClass }) {
   const range = validRange(metric);
 
-  const color = light
-    ? "text-white/75"
-    : "text-[#61738B]";
+  // colorClass lets a card override the default (for
+  // example dark text on the light yellow card, where
+  // translucent white is unreadable).
+  const color =
+    colorClass ||
+    (light ? "text-white/75" : "text-[#61738B]");
 
   if (!range) {
     return metric?.range ? (
@@ -227,6 +230,8 @@ function HeroMetric({
         "linear-gradient(135deg, #F6C94D, #F9DD86)",
       text: "text-[#25334A]",
       muted: "text-[#6C5528]",
+      // Dark range text: white is unreadable on yellow.
+      range: "text-[#6C5528]",
       badge: "bg-white/40 text-[#705211]",
       badgeLabel: "SALES VOLUME",
     },
@@ -283,7 +288,11 @@ function HeroMetric({
       </div>
 
       <div className="relative z-10 mt-3">
-        <RangeText metric={metric} light />
+        <RangeText
+          metric={metric}
+          light
+          colorClass={style.range}
+        />
       </div>
     </article>
   );
@@ -795,7 +804,7 @@ function HorizonComparisonChart({ predictions }) {
         </div>
 
         <div className="rounded-xl bg-[#F1F6FC] p-4">
-          <p className="text-xs text-[#61738B]">
+          <p className="text-xs text-[#56677E]">
             Units sold, 24 months
           </p>
           <p className="mt-2 text-xl font-bold text-[#25334A]">
@@ -1105,7 +1114,7 @@ export default function LaunchForecastOverview({
 
       <div className="mt-6 flex flex-col justify-between gap-5 md:flex-row md:items-start">
         <div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#8A6614]">
             MarketLens / Launch Intelligence
           </p>
 
@@ -1132,7 +1141,7 @@ export default function LaunchForecastOverview({
       <section className="mt-7 rounded-2xl border border-[#D7E0EB] bg-white p-6 shadow-sm">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-wider text-[#A77E1C]">
+            <p className="text-xs font-bold uppercase tracking-wider text-[#8A6614]">
               New product
             </p>
 
@@ -1159,7 +1168,7 @@ export default function LaunchForecastOverview({
 
             {listPrice !== null && (
               <div className="rounded-xl bg-[#F1F6FC] px-4 py-3">
-                <p className="text-xs font-semibold text-[#61738B]">
+                <p className="text-xs font-semibold text-[#56677E]">
                   List price
                 </p>
                 <p className="mt-1 text-sm font-bold text-[#25334A]">
