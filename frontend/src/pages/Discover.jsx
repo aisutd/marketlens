@@ -10,6 +10,7 @@ import {
 } from "../services/marketlensApi";
 
 import {
+  predictLaunch,
   predictMonthly,
   predictYearly,
 } from "../services/forecastingApi";
@@ -28,9 +29,9 @@ export default function Discover({
   const [categoriesError, setCategoriesError] =
     useState("");
 
-  // ----------------------------------------
-  // LOAD SCORING CATEGORIES
-  // ----------------------------------------
+  // ========================================
+  // LOAD OPPORTUNITY SCORE CATEGORIES
+  // ========================================
 
   useEffect(() => {
     let active = true;
@@ -61,9 +62,9 @@ export default function Discover({
     };
   }, []);
 
-  // ----------------------------------------
-  // HANDLE ANALYSIS
-  // ----------------------------------------
+  // ========================================
+  // HANDLE ALL THREE WORKFLOWS
+  // ========================================
 
   async function handleAnalyze(search) {
     if (loading) return;
@@ -72,9 +73,9 @@ export default function Discover({
     setError("");
 
     try {
-      // ========================================
-      // MODEL 1: PRODUCT OPPORTUNITY ANALYSIS
-      // ========================================
+      // ====================================
+      // MODEL 1: OPPORTUNITY ANALYSIS
+      // ====================================
 
       if (search.method === "details") {
         const product = search.scoringProduct;
@@ -85,7 +86,7 @@ export default function Discover({
           );
         }
 
-        // Product Scoring API only.
+        // Uses the Product Success API only.
         const score = await predictProduct(product);
 
         if (!score) {
@@ -94,22 +95,74 @@ export default function Discover({
           );
         }
 
+        // Store opportunity model results.
         setProduct(product);
         setScoredProduct(product);
         setPrediction(score);
 
-        // Remove previous forecast data
-        // from the current analysis.
+        // Clear previous sales forecasting results.
         setForecast(null);
 
         navigate("/product-overview");
+        return;
       }
 
-      // ========================================
-      // MODEL 2: EXISTING PRODUCT FORECASTING
-      // ========================================
+      // ====================================
+      // MODEL 2A: NEW PRODUCT LAUNCH
+      // ====================================
 
-      else if (search.method === "id") {
+      if (search.method === "launch") {
+        const product = search.forecastingProduct;
+
+        if (!product) {
+          throw new Error(
+            "Valid launch product details are required."
+          );
+        }
+
+        // Uses the Sales Forecasting API only.
+        // POST /api/v1/predictions/launch
+        const launchResult = await predictLaunch(
+          product
+        );
+
+        if (
+          !launchResult ||
+          !launchResult.predictions
+        ) {
+          throw new Error(
+            "No launch forecast was returned."
+          );
+        }
+
+        // Clear opportunity scoring data.
+        // The two models remain independent.
+        setProduct(null);
+        setScoredProduct(null);
+        setPrediction(null);
+
+        // Store the launch forecast.
+        setForecast({
+          type: "launch",
+          productName: product.name,
+          productId: null,
+          launchInput: product,
+          launch: launchResult,
+          monthly: null,
+          yearly: null,
+          notCovered: false,
+        });
+
+        // Open dedicated launch results dashboard.
+        navigate("/launch-forecast-overview");
+        return;
+      }
+
+      // ====================================
+      // MODEL 2B: EXISTING PRODUCT FORECAST
+      // ====================================
+
+      if (search.method === "id") {
         const productId = String(
           search.productId ?? ""
         ).trim();
@@ -120,6 +173,8 @@ export default function Discover({
           );
         }
 
+        // Monthly and yearly forecasts are
+        // independently requested.
         const [monthlyResult, yearlyResult] =
           await Promise.allSettled([
             predictMonthly(productId),
@@ -136,12 +191,22 @@ export default function Discover({
             ? yearlyResult.value
             : null;
 
-        if (monthly === null && yearly === null) {
+        if (
+          monthly === null &&
+          yearly === null
+        ) {
+          const firstError =
+            monthlyResult.status === "rejected"
+              ? monthlyResult.reason
+              : yearlyResult.reason;
+
           throw new Error(
-            "No forecasts were returned for this Product ID."
+            firstError?.message ||
+              "No forecasts were returned for this Product ID."
           );
         }
 
+        // Clear opportunity scoring data.
         setProduct(null);
         setScoredProduct(null);
         setPrediction(null);
@@ -149,6 +214,10 @@ export default function Discover({
         setForecast({
           type: "existing",
           productId,
+          productName:
+            monthly?.product_name ||
+            yearly?.product_name ||
+            productId,
           launch: null,
           monthly,
           yearly,
@@ -156,20 +225,12 @@ export default function Discover({
         });
 
         navigate("/sales-forecast-overview");
+        return;
       }
 
-      // Step 2 includes a launch form,
-      // but standalone launch routing is
-      // intentionally not implemented yet.
-      else if (search.method === "launch") {
-        throw new Error(
-          "New Product Launch is not connected yet."
-        );
-      } else {
-        throw new Error(
-          "Unknown analysis method."
-        );
-      }
+      throw new Error(
+        "Unknown analysis method."
+      );
     } catch (err) {
       setError(
         err.message ||
@@ -179,6 +240,10 @@ export default function Discover({
       setLoading(false);
     }
   }
+
+  // ========================================
+  // PAGE LAYOUT
+  // ========================================
 
   return (
     <main className="mx-auto max-w-[1440px] px-6 py-10 lg:px-24">
