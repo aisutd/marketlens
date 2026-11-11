@@ -24,10 +24,8 @@ import {
   ShieldCheck,
   BrainCircuit,
   ChevronDown,
-  Package,
   DollarSign,
   Wallet,
-  Clock3,
 } from "lucide-react";
 
 import {

@@ -3,21 +3,16 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import {
-  ArrowLeft,
   ArrowRight,
   BookOpen,
-  Check,
   ChevronDown,
   ChevronUp,
   CircleHelp,
   Info,
   Lightbulb,
   MessageSquareText,
-  Search,
   ShieldCheck,
-  Sparkles,
   ThumbsUp,
-  TrendingUp,
 } from "lucide-react";
 
 import { getPredictionReasons } from "../services/marketlensApi";
@@ -28,14 +23,6 @@ import { factorKey, factorName } from "../constants/scoreFactors";
 // ========================================
 // THEME AND FORMATTING
 // ========================================
-
-const COLORS = {
-  navy: "#193B66",
-  gold: "#D4A529",
-  green: "#13795B",
-  amber: "#B66A29",
-  muted: "#61738B",
-};
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",

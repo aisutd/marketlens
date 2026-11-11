@@ -147,9 +147,9 @@ function AnimatedScoreGauge({ score }) {
     Math.min(100, Number(score) || 0)
   );
 
+  // animatedScore starts at 0, so the first frame animates the ring
+  // from empty to the score.
   useEffect(() => {
-    setAnimatedScore(0);
-
     const frame = requestAnimationFrame(() => {
       setAnimatedScore(boundedScore);
     });

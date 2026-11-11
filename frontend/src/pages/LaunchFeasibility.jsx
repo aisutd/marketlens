@@ -9,7 +9,6 @@ import {
   ArrowDownRight,
   BarChart3,
   Calculator,
-  CheckCircle2,
   DollarSign,
   Info,
   Layers3,
@@ -822,7 +821,6 @@ function ComparisonCard({
 function AIPriceSimulation({
   product,
   prediction,
-  values,
   isValid,
   loading,
   error,
