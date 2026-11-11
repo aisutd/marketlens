@@ -89,6 +89,29 @@ function formatMetric(value, unit = "") {
   return numberFormatter.format(numeric);
 }
 
+// "±0.0%" reads as no error at all; a small but real error
+// is shown as "under ±0.1%" instead.
+function formatPlusMinus(value, unit = "") {
+  const numeric = Number(value);
+
+  if (
+    unit === "%" &&
+    Number.isFinite(numeric) &&
+    numeric > 0 &&
+    numeric < 0.05
+  ) {
+    return "under ±0.1%";
+  }
+
+  return `±${formatMetric(value, unit)}`;
+}
+
+// API codes such as "small_standard" -> "Small standard".
+function humanizeCode(value) {
+  const text = String(value).replace(/_/g, " ").trim();
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 function formatForecastMetric(metric) {
   if (!metric) return "—";
 
@@ -168,8 +191,8 @@ function MetricCard({
 
       {metric?.plus_minus != null && (
         <p className="mt-2 text-xs text-[#61738B]">
-          Typical error: ±
-          {formatMetric(
+          Typical error:{" "}
+          {formatPlusMinus(
             metric.plus_minus,
             metric.unit
           )}
@@ -324,6 +347,9 @@ function SalesVolumeChart({ predictions }) {
         <YAxis
           tick={{ fontSize: 11 }}
           width={65}
+          tickFormatter={(value) =>
+            numberFormatter.format(value)
+          }
         />
 
         <Tooltip
@@ -412,7 +438,7 @@ function UnitEconomics({ economics }) {
 
       {economics.size_tier && (
         <p className="mt-4 text-xs text-[#61738B]">
-          Size tier: {economics.size_tier}
+          Size tier: {humanizeCode(economics.size_tier)}
         </p>
       )}
     </section>
@@ -540,8 +566,8 @@ function AdditionalMetrics({ predictions }) {
 
               {metric.plus_minus != null && (
                 <p className="mt-1 text-xs text-[#61738B]">
-                  Typical error: ±
-                  {formatMetric(
+                  Typical error:{" "}
+                  {formatPlusMinus(
                     metric.plus_minus,
                     metric.unit
                   )}

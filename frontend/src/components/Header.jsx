@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 import MarketLensLogo from "./MarketLensLogo";
@@ -7,6 +7,8 @@ import MarketLensLogo from "./MarketLensLogo";
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [notice, setNotice] = useState("");
+  const menuRef = useRef(null);
+  const toggleRef = useRef(null);
 
   const location = useLocation();
 
@@ -28,6 +30,33 @@ export default function Header() {
     setNotice("");
   }
 
+  // Close on Escape (focus returns to the toggle) and on any
+  // press outside the menu and its toggle.
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        closeMenu();
+        toggleRef.current?.focus();
+      }
+    }
+
+    function handlePointerDown(event) {
+      if (!menuRef.current?.contains(event.target)) {
+        closeMenu();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [menuOpen]);
+
   const menuItemStyle =
     "flex w-full items-center gap-3 rounded-lg px-4 py-3 " +
     "text-left text-sm font-medium transition-colors";
@@ -44,8 +73,9 @@ export default function Header() {
         />
 
         {/* NAVIGATION MENU */}
-        <div className="relative">
+        <div ref={menuRef} className="relative">
           <button
+            ref={toggleRef}
             type="button"
             onClick={toggleMenu}
             aria-expanded={menuOpen}

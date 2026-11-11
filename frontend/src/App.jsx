@@ -190,7 +190,6 @@ export default function App() {
   );
 
   const {
-    product,
     prediction,
     scoredProduct,
     forecast,
