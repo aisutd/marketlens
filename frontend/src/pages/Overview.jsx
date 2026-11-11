@@ -384,14 +384,12 @@ function OpportunityScoreHero({
 
 function ScoreSummaryCards({ prediction }) {
   const score = numberOrNull(prediction?.opportunity_score);
-  const probability = numberOrNull(prediction?.probability);
   const band = getScoreBand(score);
 
-  const probabilityValid =
-    probability !== null &&
-    probability >= 0 &&
-    probability <= 1;
-
+  // The raw model probability is not shown: it is not comparable across
+  // categories (a 15/100 product can show a higher probability than a
+  // 98/100 one in another category), so it reads as contradicting the
+  // score. The score and its band carry the result.
   const cards = [
     {
       label: "Opportunity score",
@@ -411,17 +409,6 @@ function ScoreSummaryCards({ prediction }) {
       muted: "text-[#705A31]",
       badge: "RATING",
     },
-    {
-      label: "Model probability",
-      value: probabilityValid
-        ? `${(probability * 100).toFixed(1)}%`
-        : "—",
-      subtitle: "Probability returned by the model",
-      background: "linear-gradient(135deg,#11684F,#219674)",
-      text: "text-white",
-      muted: "text-[#D6F3E9]",
-      badge: "MODEL OUTPUT",
-    },
   ];
 
   return (
@@ -432,7 +419,7 @@ function ScoreSummaryCards({ prediction }) {
         description="Key results from your product evaluation."
       />
 
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
         {cards.map((card, index) => (
           <motion.article
             key={card.label}
