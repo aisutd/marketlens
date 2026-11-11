@@ -6,76 +6,71 @@ import { getPredictionReasons } from "../services/marketlensApi";
 import { getScoreBand } from "../constants/scoreBands";
 import NewIdeaTag from "../components/NewIdeaTag";
 import ScoreSentence from "../components/ScoreSentence";
+import { factorKey, factorName } from "../constants/scoreFactors";
 
 // ============================================================
 // MARKETLENS — OPPORTUNITY SCORE DETAILS
 // Strengths & Watchouts experience
 // ============================================================
 
-// Friendly explanations for known scoring features.
-// These are educational interpretations, not causal claims.
+// Friendly explanations for known scoring factors, keyed by the API's
+// factor label (see constants/scoreFactors.js). These are educational
+// interpretations, not causal claims.
 
 const FEATURE_DETAILS = {
-  title_words: {
-    title: "Product title length",
+  "title length": {
     description:
-      "The number of words in your product title is one of the signals considered by the scoring model.",
+      "The length of your product title is one of the signals considered by the scoring model.",
     recommendation:
       "Keep your title descriptive, concise, and easy for shoppers to understand.",
   },
 
-  brand_size_log: {
-    title: "Brand presence",
+  "brand size": {
     description:
       "This factor represents the brand's relative presence in the product data used by the model.",
     recommendation:
       "Research competing brands and consider what would make your product different.",
   },
 
-  title_caps_ratio: {
-    title: "Title formatting",
+  "title capitals": {
     description:
       "The model considers capitalization patterns in product titles.",
     recommendation:
       "Use consistent capitalization and avoid unnecessary all-caps wording.",
   },
 
-  title_score: {
-    title: "Title wording",
+  "title wording": {
     description:
       "The model considers patterns in product title wording. This factor does not identify which individual words are responsible for the score.",
     recommendation:
       "Review your title for accuracy, readability, and relevance to your intended customers.",
   },
 
-  title_emb_pca_14: {
-    title: "Title meaning",
+  "title meaning": {
     description:
       "This factor captures a statistical pattern in the meaning of your product title. It cannot be interpreted as a specific keyword problem.",
     recommendation:
       "Make sure your title accurately describes the product and its important features.",
   },
 
-  brand_cat_rate: {
-    title: "Brand track record in category",
+  "brand track record in category": {
     description:
       "This factor represents a pattern associated with how the brand performs in this product category.",
     recommendation:
       "Study established competitors and look for customer needs that may be underserved.",
+  },
+
+  "brand track record": {
+    description:
+      "This factor represents a pattern associated with how the brand performs across all of its product categories.",
+    recommendation:
+      "Look at how established brands earn shopper trust and what they offer that you could match or improve on.",
   },
 };
 
 // ============================================================
 // HELPERS
 // ============================================================
-
-function formatFeatureName(value) {
-  return String(value || "Other factor")
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (character) =>
-      character.toUpperCase()
-    );
-}
 
 function normalizeReasons(data) {
   const normalizeGroup = (items) => {
@@ -93,15 +88,12 @@ function normalizeReasons(data) {
           item?.feature ||
           `factor_${index + 1}`;
 
-        const known = FEATURE_DETAILS[feature];
+        const known = FEATURE_DETAILS[factorKey(item)];
 
         return {
           id: `${feature}-${index}`,
           feature,
-          label:
-            known?.title ||
-            item?.label ||
-            formatFeatureName(feature),
+          label: factorName(item),
           impact,
           description: known?.description || null,
           recommendation:

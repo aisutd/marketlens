@@ -23,6 +23,7 @@ import {
 import { getPredictionReasons } from "../services/marketlensApi";
 import { getScoreBand } from "../constants/scoreBands";
 import OpportunityGauge from "../components/OpportunityGauge";
+import { factorKey, factorName } from "../constants/scoreFactors";
 
 // ========================================
 // THEME AND FORMATTING
@@ -140,12 +141,13 @@ function SectionHeading({ eyebrow, title, description }) {
 // FRIENDLY FACTOR INTERPRETATIONS
 // ========================================
 
-// These explanations describe what each model feature
+// Keyed by the API's factor label (see constants/scoreFactors.js).
+// These explanations describe what each model factor
 // represents. They do not claim that changing the feature
 // will cause the opportunity score to increase.
 
 const FACTOR_GUIDANCE = {
-  title_words: {
+  "title length": {
     strength: "Your product title's length is a positive signal",
     watchout: "Your product title's length is worth reviewing",
     explanation:
@@ -154,7 +156,7 @@ const FACTOR_GUIDANCE = {
       "Keep your title clear and easy to scan. Include the product details shoppers need without unnecessary wording.",
     icon: MessageSquareText,
   },
-  title_score: {
+  "title wording": {
     strength: "Your title wording is a positive signal",
     watchout: "Your product title deserves a closer look",
     explanation:
@@ -163,7 +165,7 @@ const FACTOR_GUIDANCE = {
       "Read your title from a shopper's perspective. Is it clear what the product is and why someone might choose it?",
     icon: MessageSquareText,
   },
-  brand_size_log: {
+  "brand size": {
     strength: "Brand size is working in your favor",
     watchout: "Brand size may be a challenge",
     explanation:
@@ -172,7 +174,7 @@ const FACTOR_GUIDANCE = {
       "Consider how shoppers learn about your brand. Clear information and consistent product presentation can help them evaluate it.",
     icon: ShieldCheck,
   },
-  brand_cat_rate: {
+  "brand track record in category": {
     strength: "Brand history in this category is a positive signal",
     watchout: "Brand track record may be a challenge",
     explanation:
@@ -181,7 +183,7 @@ const FACTOR_GUIDANCE = {
       "Review how your brand is presented in this category. Trust, accurate descriptions, and reliable customer experiences matter beyond the model score.",
     icon: ShieldCheck,
   },
-  title_caps_ratio: {
+  "title capitals": {
     strength: "Title capitalization contributed positively",
     watchout: "Title capitalization is worth reviewing",
     explanation:
@@ -190,26 +192,29 @@ const FACTOR_GUIDANCE = {
       "Prioritize readability and a consistent writing style. Avoid changing capitalization solely to influence a model score.",
     icon: BookOpen,
   },
+  "brand track record": {
+    strength: "Brand history across categories is a positive signal",
+    watchout: "Brand track record overall may be a challenge",
+    explanation:
+      "The model considered a feature related to the brand's track record across all of its product categories.",
+    consideration:
+      "Consider how shoppers judge an unfamiliar brand. Accurate listings and reliable customer experiences build trust beyond the model score.",
+    icon: ShieldCheck,
+  },
+  // Sums all title_emb_pca_* columns in the API.
+  "title meaning": {
+    strength: "The meaning of your title is a positive signal",
+    watchout: "Your title's meaning is worth reviewing",
+    explanation:
+      "A text-meaning feature associated with your product title contributed to the model's assessment.",
+    consideration:
+      "Check whether a new shopper would immediately understand what your product does. A clearer title can improve communication, but is not a guaranteed way to raise the score.",
+    icon: MessageSquareText,
+  },
 };
 
 function interpretFactor(reason, positive) {
-  const feature = String(reason?.feature || "");
-
-  let guidance = FACTOR_GUIDANCE[feature];
-
-  // The title-meaning features may include a numbered
-  // dimension, such as title_emb_pca_14.
-  if (!guidance && feature.startsWith("title_emb_")) {
-    guidance = {
-      strength: "The meaning of your title is a positive signal",
-      watchout: "Your title's meaning is worth reviewing",
-      explanation:
-        "A text-meaning feature associated with your product title contributed to the model's assessment.",
-      consideration:
-        "Check whether a new shopper would immediately understand what your product does. A clearer title can improve communication, but is not a guaranteed way to raise the score.",
-      icon: MessageSquareText,
-    };
-  }
+  const guidance = FACTOR_GUIDANCE[factorKey(reason)];
 
   if (guidance) {
     return {
@@ -221,11 +226,12 @@ function interpretFactor(reason, positive) {
   }
 
   return {
-    title:
-      reason?.label ||
-      (positive
+    title: factorName(
+      reason,
+      positive
         ? "Another positive product signal"
-        : "Another area worth reviewing"),
+        : "Another area worth reviewing"
+    ),
     explanation:
       positive
         ? "This product characteristic contributed positively to the model's assessment."
@@ -264,7 +270,7 @@ function ScoreChips({ reasons }) {
           key={`positive-${index}`}
           className="rounded-full border border-[#B9E5D2] bg-[#EAF8F1] px-3 py-1.5 text-xs font-semibold text-[#13795B]"
         >
-          + {reason.label || "Positive signal"}
+          + {factorName(reason, "Positive signal")}
         </span>
       ))}
 
@@ -273,7 +279,7 @@ function ScoreChips({ reasons }) {
           key={`negative-${index}`}
           className="rounded-full border border-[#F2D7BD] bg-[#FFF3E8] px-3 py-1.5 text-xs font-semibold text-[#97531B]"
         >
-          − {reason.label || "Potential concern"}
+          − {factorName(reason, "Potential concern")}
         </span>
       ))}
     </div>
