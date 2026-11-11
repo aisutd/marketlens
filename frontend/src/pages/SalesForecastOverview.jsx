@@ -203,12 +203,12 @@ function SectionHeading({
 // ESTIMATED RANGE TEXT
 // ========================================
 
-function RangeText({ metric, light = false }) {
+function RangeText({ metric, light = false, colorClass }) {
   const range = validRange(metric);
 
-  const color = light
-    ? "text-white/75"
-    : "text-[#61738B]";
+  const color =
+    colorClass ||
+    (light ? "text-white/75" : "text-[#61738B]");
 
   if (!range) {
     return metric?.range ? (
@@ -259,6 +259,8 @@ function HeroMetric({
         "linear-gradient(135deg, #F6C94D, #F9DD86)",
       text: "text-[#25334A]",
       muted: "text-[#6C5528]",
+      // White range text is about 1.4:1 on this yellow.
+      range: "text-[#25334A]",
       badge: "bg-white/40 text-[#705211]",
       badgeLabel: "SALES VOLUME",
     },
@@ -315,7 +317,11 @@ function HeroMetric({
       </div>
 
       <div className="relative z-10 mt-3">
-        <RangeText metric={metric} light />
+        <RangeText
+          metric={metric}
+          light
+          colorClass={style.range}
+        />
       </div>
     </article>
   );
