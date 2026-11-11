@@ -656,7 +656,14 @@ function CostBreakdown({ values }) {
               left: 0,
             }}
           >
-            <XAxis type="number" hide />
+            {/* Fixed to the total so the stacked bar fills
+                the width; an auto domain rounds up (8,750
+                becomes 10,000) and leaves a gap. */}
+            <XAxis
+              type="number"
+              domain={[0, total || 1]}
+              hide
+            />
             <YAxis
               type="category"
               dataKey="name"
