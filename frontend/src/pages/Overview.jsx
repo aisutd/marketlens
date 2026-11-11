@@ -932,7 +932,13 @@ function StrengthsAndWatchouts({ reasons }) {
 // PRODUCT INFORMATION
 // ========================================
 
-function ProductInformation({ product }) {
+function ProductInformation({ product, prediction }) {
+  // Same signal as NewIdeaTag on the score details page: the launch-time
+  // model scored the product and never saw the review count.
+  const reviewsUnused =
+    prediction?.model_used === "launch" &&
+    Number(product.reviews) > 0;
+
   const details = [
     {
       label: "Category",
@@ -957,6 +963,9 @@ function ProductInformation({ product }) {
         product.reviews == null
           ? "—"
           : formatNumber(product.reviews),
+      note: reviewsUnused
+        ? "Not used in this score: scored as a new idea"
+        : null,
       symbol: "★",
       color: "#13795B",
       background: "#EAF6F0",
@@ -995,6 +1004,12 @@ function ProductInformation({ product }) {
               <p className="mt-2 break-words text-lg font-bold text-[#25334A]">
                 {detail.value}
               </p>
+
+              {detail.note && (
+                <p className="mt-1 text-xs text-[#61738B]">
+                  {detail.note}
+                </p>
+              )}
             </div>
           </article>
         ))}
@@ -1717,7 +1732,10 @@ export default function Overview({
       {/* PRODUCT INFORMATION */}
 
       {product && (
-        <ProductInformation product={product} />
+        <ProductInformation
+          product={product}
+          prediction={prediction}
+        />
       )}
 
       {/* PRICE SCENARIOS */}
