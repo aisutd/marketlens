@@ -1,27 +1,24 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "motion/react";
 import {
+  ArrowLeft,
   ArrowRight,
-  BookOpen,
   ChevronDown,
   ChevronUp,
   CircleHelp,
   Info,
   Lightbulb,
-  MessageSquareText,
-  ShieldCheck,
-  ThumbsUp,
+  RotateCcw,
+  TrendingUp,
 } from "lucide-react";
 
 import { getPredictionReasons } from "../services/marketlensApi";
 import { getScoreBand } from "../constants/scoreBands";
 import OpportunityGauge from "../components/OpportunityGauge";
-import { factorKey, factorName } from "../constants/scoreFactors";
 
 // ========================================
-// THEME AND FORMATTING
+// FORMATTING
 // ========================================
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
@@ -34,9 +31,10 @@ const numberFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
-function numberOrNull(value) {
+function numeric(value) {
   if (
-    value == null ||
+    value === null ||
+    value === undefined ||
     value === "" ||
     !Number.isFinite(Number(value))
   ) {
@@ -47,76 +45,129 @@ function numberOrNull(value) {
 }
 
 function currency(value) {
-  const number = numberOrNull(value);
-  return number === null
+  const amount = numeric(value);
+
+  return amount === null
     ? "—"
-    : currencyFormatter.format(number);
+    : currencyFormatter.format(amount);
 }
 
-function formatNumber(value) {
-  const number = numberOrNull(value);
-  return number === null
+function formattedNumber(value) {
+  const amount = numeric(value);
+
+  return amount === null
     ? "—"
-    : numberFormatter.format(number);
+    : numberFormatter.format(amount);
 }
 
-function formatMetric(metric) {
-  const value = numberOrNull(metric?.value);
+function sortedFactors(factors) {
+  if (!Array.isArray(factors)) return [];
 
-  if (value === null) return "—";
-  if (metric.unit === "USD") return currency(value);
-  if (metric.unit === "%") return `${value.toFixed(2)}%`;
-
-  return formatNumber(value);
+  return [...factors].sort(
+    (a, b) =>
+      Math.abs(numeric(b?.impact) ?? 0) -
+      Math.abs(numeric(a?.impact) ?? 0)
+  );
 }
 
-function validRange(metric) {
-  const value = numberOrNull(metric?.value);
-  const range = metric?.range;
+// ========================================
+// SHARED DESIGN STYLES
+// ========================================
 
-  if (
-    value === null ||
-    !Array.isArray(range) ||
-    range.length !== 2
-  ) {
-    return null;
+const hoverCard =
+  "transition-[background-color,box-shadow,transform] " +
+  "duration-200 ease-out hover:-translate-y-[2px] " +
+  "hover:bg-[#F8EEE0] hover:shadow-offset " +
+  "motion-reduce:transform-none " +
+  "motion-reduce:transition-none";
+
+const primaryButton =
+  "inline-flex items-center justify-center gap-3 " +
+  "border border-ink bg-primary px-6 py-3 " +
+  "font-semibold text-primary-foreground shadow-offset " +
+  "transition-transform duration-150 " +
+  "hover:translate-x-[2px] hover:translate-y-[2px] " +
+  "focus-visible:outline-2 focus-visible:outline-offset-4 " +
+  "focus-visible:outline-primary";
+
+// ========================================
+// BUSINESS-FRIENDLY SCORE LANGUAGE
+// ========================================
+
+function getOpportunityMessage(score) {
+  if (score === null) {
+    return {
+      headline: "Your opportunity is being evaluated.",
+      summary:
+        "Review the available information before making a business decision.",
+      nextStep:
+        "Start by reviewing similar products and customer needs.",
+    };
   }
 
-  const low = numberOrNull(range[0]);
-  const high = numberOrNull(range[1]);
-
-  if (
-    low === null ||
-    high === null ||
-    low > high ||
-    value < low ||
-    value > high
-  ) {
-    return null;
+  if (score >= 90) {
+    return {
+      headline: "A promising opportunity to explore.",
+      summary:
+        "This product compares favorably with many products in its category. It may deserve further research before you commit resources.",
+      nextStep:
+        "Look into customer demand, competition, and the costs of bringing this product to market.",
+    };
   }
 
-  return [low, high];
+  if (score >= 80) {
+    return {
+      headline: "An opportunity worth a closer look.",
+      summary:
+        "This product has a relatively strong evaluation. There may be potential here, but the business details still matter.",
+      nextStep:
+        "Research competing products and check whether your proposed pricing leaves room for profit.",
+    };
+  }
+
+  if (score >= 40) {
+    return {
+      headline: "An average opportunity.",
+      summary:
+        "This product may be worth exploring, but there are important factors to review before making a decision.",
+      nextStep:
+        "Compare similar products, understand customer demand, and review your pricing before investing.",
+    };
+  }
+
+  return {
+    headline: "An opportunity that needs more research.",
+    summary:
+      "This product received a relatively low evaluation compared with other products in its category. Consider investigating the challenges before moving forward.",
+    nextStep:
+      "Look for ways to differentiate the product, understand potential customers, and examine the competitive landscape.",
+  };
 }
 
 // ========================================
 // SHARED SECTION HEADING
 // ========================================
 
-function SectionHeading({ eyebrow, title, description }) {
+function SectionHeading({
+  number,
+  eyebrow,
+  title,
+  description,
+}) {
   return (
     <div>
-      {eyebrow && (
-        <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
-          {eyebrow}
-        </p>
-      )}
+      <p className="eyebrow flex items-center gap-3 text-muted-foreground">
+        <span className="text-primary">{number}</span>
+        <span className="h-px w-8 bg-current" />
+        {eyebrow}
+      </p>
 
-      <h2 className="text-xl font-bold tracking-tight text-[#25334A] sm:text-2xl">
+      <h2 className="mt-4 font-display text-3xl leading-tight sm:text-4xl">
         {title}
       </h2>
 
       {description && (
-        <p className="mt-2 text-sm leading-6 text-[#61738B]">
+        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
           {description}
         </p>
       )}
@@ -125,252 +176,281 @@ function SectionHeading({ eyebrow, title, description }) {
 }
 
 // ========================================
-// FRIENDLY FACTOR INTERPRETATIONS
+// FRIENDLY FACTOR EXPLANATIONS
 // ========================================
 
-// Keyed by the API's factor label (see constants/scoreFactors.js).
-// These explanations describe what each model factor
-// represents. They do not claim that changing the feature
-// will cause the opportunity score to increase.
-
 const FACTOR_GUIDANCE = {
-  "title length": {
-    strength: "Your product title's length is a positive signal",
-    watchout: "Your product title's length is worth reviewing",
-    explanation:
-      "The number of words in your product title contributed to the model's assessment.",
+  title_words: {
+    positive: "Your product title is a positive factor",
+    negative: "Review the length of your product title",
+    description:
+      "The length of your product title was associated with this evaluation.",
     consideration:
-      "Keep your title clear and easy to scan. Include the product details shoppers need without unnecessary wording.",
-    icon: MessageSquareText,
+      "Make sure your title is clear, easy to read, and includes the details shoppers need.",
   },
-  "title wording": {
-    strength: "Your title wording is a positive signal",
-    watchout: "Your product title deserves a closer look",
-    explanation:
-      "The model found a contribution associated with how your product title is worded.",
+
+  title_score: {
+    positive: "Your product wording is a positive factor",
+    negative: "Review how your product is described",
+    description:
+      "Patterns in your product title's wording influenced the evaluation. This does not identify specific words as the cause.",
     consideration:
-      "Read your title from a shopper's perspective. Is it clear what the product is and why someone might choose it?",
-    icon: MessageSquareText,
+      "Ask whether a shopper could quickly understand what your product is, what it does, and who it is for.",
   },
-  "brand size": {
-    strength: "Brand size is working in your favor",
-    watchout: "Brand size may be a challenge",
-    explanation:
-      "A feature related to the size of the brand contributed to the model's assessment.",
+
+  brand_size_log: {
+    positive: "Brand presence is a positive factor",
+    negative: "Brand presence deserves a closer look",
+    description:
+      "A characteristic associated with the brand's presence contributed to the evaluation.",
     consideration:
-      "Consider how shoppers learn about your brand. Clear information and consistent product presentation can help them evaluate it.",
-    icon: ShieldCheck,
+      "Look at competing brands and consider how customers would discover and recognize your product.",
   },
-  "brand track record in category": {
-    strength: "Brand history in this category is a positive signal",
-    watchout: "Brand track record may be a challenge",
-    explanation:
-      "The model considered a feature related to the brand's track record in this product category.",
+
+  brand_cat_rate: {
+    positive: "Brand experience in this category is a positive factor",
+    negative: "Review the competitive landscape",
+    description:
+      "A pattern associated with the brand's track record in this product category contributed to the evaluation.",
     consideration:
-      "Review how your brand is presented in this category. Trust, accurate descriptions, and reliable customer experiences matter beyond the model score.",
-    icon: ShieldCheck,
+      "Research established competitors and identify customer needs that might not be fully addressed.",
   },
-  "title capitals": {
-    strength: "Title capitalization contributed positively",
-    watchout: "Title capitalization is worth reviewing",
-    explanation:
-      "The pattern of capital letters in the title contributed to the model's assessment.",
+
+  title_caps_ratio: {
+    positive: "Title formatting is a positive factor",
+    negative: "Review your product title formatting",
+    description:
+      "Capitalization patterns in the title contributed to the evaluation.",
     consideration:
-      "Prioritize readability and a consistent writing style. Avoid changing capitalization solely to influence a model score.",
-    icon: BookOpen,
-  },
-  "brand track record": {
-    strength: "Brand history across categories is a positive signal",
-    watchout: "Brand track record overall may be a challenge",
-    explanation:
-      "The model considered a feature related to the brand's track record across all of its product categories.",
-    consideration:
-      "Consider how shoppers judge an unfamiliar brand. Accurate listings and reliable customer experiences build trust beyond the model score.",
-    icon: ShieldCheck,
-  },
-  // Sums all title_emb_pca_* columns in the API.
-  "title meaning": {
-    strength: "The meaning of your title is a positive signal",
-    watchout: "Your title's meaning is worth reviewing",
-    explanation:
-      "A text-meaning feature associated with your product title contributed to the model's assessment.",
-    consideration:
-      "Check whether a new shopper would immediately understand what your product does. A clearer title can improve communication, but is not a guaranteed way to raise the score.",
-    icon: MessageSquareText,
+      "Use clear, consistent capitalization and prioritize readability for customers.",
   },
 };
 
-function interpretFactor(reason, positive) {
-  const guidance = FACTOR_GUIDANCE[factorKey(reason)];
+function factorInterpretation(reason, positive) {
+  const feature = String(reason?.feature || "");
+  const guidance = FACTOR_GUIDANCE[feature];
 
   if (guidance) {
     return {
-      ...guidance,
       title: positive
-        ? guidance.strength
-        : guidance.watchout,
+        ? guidance.positive
+        : guidance.negative,
+      description: guidance.description,
+      consideration: guidance.consideration,
+    };
+  }
+
+  if (feature.startsWith("title_emb_")) {
+    return {
+      title: positive
+        ? "Your product description is a positive factor"
+        : "Review how clearly your product is described",
+      description:
+        "A pattern related to the meaning of your product title contributed to the evaluation. It does not establish that any particular keyword is responsible.",
+      consideration:
+        "Check whether your title accurately communicates the product's purpose and important features.",
+    };
+  }
+
+  if (feature === "price") {
+    return {
+      title: positive
+        ? "Your price is a positive factor"
+        : "Review your proposed selling price",
+      description:
+        "Your selling price was one of the characteristics associated with this evaluation.",
+      consideration:
+        "Compare the prices of similar products and estimate your costs to determine whether your pricing is competitive and sustainable.",
+    };
+  }
+
+  if (
+    feature === "list_price" ||
+    feature === "discount_pct"
+  ) {
+    return {
+      title: positive
+        ? "Your pricing details are a positive factor"
+        : "Review your pricing strategy",
+      description:
+        "The relationship between your selling price and listed price contributed to the evaluation.",
+      consideration:
+        "Check your pricing against comparable products and make sure discounts fit your business goals.",
+    };
+  }
+
+  if (feature === "category") {
+    return {
+      title: positive
+        ? "Your product category is a positive factor"
+        : "Research your product category",
+      description:
+        "The category associated with your product contributed to its evaluation.",
+      consideration:
+        "Explore the types of products already sold in this category and consider how your offering could stand out.",
     };
   }
 
   return {
-    title: factorName(
-      reason,
-      positive
-        ? "Another positive product signal"
-        : "Another area worth reviewing"
-    ),
-    explanation:
-      positive
-        ? "This product characteristic contributed positively to the model's assessment."
-        : "This product characteristic contributed negatively to the model's assessment.",
+    title:
+      reason?.label ||
+      (positive
+        ? "Another factor looks promising"
+        : "Another area deserves attention"),
+    description: positive
+      ? "This product characteristic contributed positively to the evaluation."
+      : "This product characteristic contributed negatively to the evaluation.",
     consideration:
-      "Consider this signal alongside customer needs, competitors, costs, and other business information rather than relying on it alone.",
-    icon: CircleHelp,
+      "Consider this finding alongside customer needs, competing products, costs, and other business information.",
   };
 }
 
-function sortFactors(items) {
-  if (!Array.isArray(items)) return [];
+// ========================================
+// FIND PRACTICAL NEXT STEP
+// ========================================
 
-  return [...items].sort((a, b) => {
-    const aImpact = numberOrNull(a?.impact);
-    const bImpact = numberOrNull(b?.impact);
+function getRecommendedAction(reasons, fallback) {
+  const watchouts = sortedFactors(
+    reasons?.reasons_down
+  );
 
-    return Math.abs(bImpact ?? 0) - Math.abs(aImpact ?? 0);
-  });
+  if (watchouts.length === 0) {
+    return fallback;
+  }
+
+  const mostImportant = watchouts[0];
+
+  return factorInterpretation(
+    mostImportant,
+    false
+  ).consideration;
 }
 
 // ========================================
 // SCORE HERO
 // ========================================
 
-function ScoreChips({ reasons }) {
-  if (!reasons) return null;
-
-  const positive = sortFactors(reasons.reasons_up).slice(0, 2);
-  const negative = sortFactors(reasons.reasons_down).slice(0, 2);
-
-  return (
-    <div className="mt-5 flex flex-wrap gap-2">
-      {positive.map((reason, index) => (
-        <span
-          key={`positive-${index}`}
-          className="rounded-full border border-[#B9E5D2] bg-[#EAF8F1] px-3 py-1.5 text-xs font-semibold text-[#13795B]"
-        >
-          + {factorName(reason, "Positive signal")}
-        </span>
-      ))}
-
-      {negative.map((reason, index) => (
-        <span
-          key={`negative-${index}`}
-          className="rounded-full border border-[#F2D7BD] bg-[#FFF3E8] px-3 py-1.5 text-xs font-semibold text-[#97531B]"
-        >
-          − {factorName(reason, "Potential concern")}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-function OpportunityScoreHero({
+function ScoreHero({
   prediction,
   reasons,
-  onExploreFactors,
+  onExplore,
 }) {
-  const score = numberOrNull(prediction?.opportunity_score);
-  const hasScore = score !== null;
-  const scoreBand = getScoreBand(score);
+  const score = numeric(
+    prediction?.opportunity_score
+  );
+
+  const band = getScoreBand(score);
+  const message = getOpportunityMessage(score);
+
+  const positive = sortedFactors(
+    reasons?.reasons_up
+  ).slice(0, 2);
+
+  const negative = sortedFactors(
+    reasons?.reasons_down
+  ).slice(0, 2);
 
   return (
-    <section className="mt-7 overflow-hidden rounded-2xl border border-[#D7E0EB] bg-white shadow-sm">
+    <section className="mt-10 border border-ink bg-card shadow-offset">
       <div className="grid lg:grid-cols-[320px_minmax(0,1fr)]">
-        <div className="relative flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#193B66] to-[#275788] p-8 text-center text-white">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full border-[38px] border-white/5"
-          />
-
-          <p className="relative z-10 text-xs font-bold uppercase tracking-[0.16em] text-[#FFD45A]">
-            Opportunity intelligence
+        <div className="flex flex-col items-center justify-center border-b border-ink bg-foreground p-8 text-center text-background lg:border-b-0 lg:border-r">
+          <p className="eyebrow text-background/70">
+            Product opportunity
           </p>
 
-          <div className="relative z-10 mt-5 rounded-full bg-white p-4 shadow-xl">
+          <div className="mt-7 rounded-full bg-card p-4">
             <OpportunityGauge score={score} />
           </div>
 
-          <p className="relative z-10 mt-6 text-sm font-semibold text-[#DCE8F5]">
-            Product opportunity score
+          <p className="mt-6 font-display text-xl">
+            Your opportunity score
           </p>
 
-          <p className="relative z-10 mt-2 text-xs text-[#C9D9EA]">
-            Model-generated assessment
+          <p className="mt-2 max-w-[220px] text-center text-xs leading-relaxed text-background/70">
+            A comparison with other products in this
+            category.
           </p>
         </div>
 
-        <div className="flex flex-col justify-center p-6 sm:p-8">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="rounded-full bg-[#FFF6DD] px-4 py-2 text-xs font-bold uppercase tracking-wide text-[#8B6B1E]">
-              Opportunity analysis
-            </span>
+        <div className="p-6 sm:p-9">
+          <p className="eyebrow text-primary">
+            Your evaluation
+          </p>
 
-            {hasScore && (
-              <span
-                className="rounded-full px-4 py-2 text-xs font-bold"
-                style={{
-                  color: scoreBand.color,
-                  backgroundColor: `${scoreBand.color}14`,
-                }}
-              >
-                {scoreBand.label}
-              </span>
-            )}
-          </div>
-
-          <h2 className="mt-5 text-2xl font-bold tracking-tight text-[#25334A] sm:text-3xl">
-            Your product's opportunity
+          <h2 className="mt-4 font-display text-4xl leading-tight">
+            Is this product{" "}
+            <em className="text-primary">
+              worth exploring?
+            </em>
           </h2>
 
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-[#61738B]">
-            Understand your product's potential, discover
-            the signals behind its assessment, and explore
-            what may deserve more attention.
+          <div className="mt-7 flex flex-wrap items-center gap-4">
+            <span className="border border-ink bg-[#F8EEE0] px-4 py-2 font-mono text-sm font-semibold">
+              {score === null
+                ? "—"
+                : `${score}/100`}
+            </span>
+
+            <span className="text-sm font-semibold">
+              {band.label} opportunity
+            </span>
+          </div>
+
+          <h3 className="mt-6 font-display text-2xl">
+            {message.headline}
+          </h3>
+
+          <p className="mt-3 max-w-xl text-sm leading-7 text-muted-foreground">
+            {message.summary}
           </p>
 
-          {hasScore && scoreBand.odds && (
-            <div className="mt-5 rounded-xl border border-[#E2EAF3] bg-[#F6F9FD] p-4">
-              <p className="text-xs font-bold uppercase tracking-wide text-[#193B66]">
-                What your score means
-              </p>
+          {(positive.length > 0 ||
+            negative.length > 0) && (
+            <div className="mt-6 flex flex-wrap gap-2">
+              {positive.map((reason, index) => (
+                <span
+                  key={`positive-${index}`}
+                  className="border border-[#8AB6A4] bg-[#E8F3EC] px-3 py-2 text-xs text-[#255D49]"
+                >
+                  +{" "}
+                  {factorInterpretation(
+                    reason,
+                    true
+                  ).title}
+                </span>
+              ))}
 
-              <p className="mt-2 text-sm leading-6 text-[#61738B]">
-                {scoreBand.odds}
-              </p>
+              {negative.map((reason, index) => (
+                <span
+                  key={`negative-${index}`}
+                  className="border border-primary/50 bg-[#F8EEE0] px-3 py-2 text-xs text-foreground"
+                >
+                  −{" "}
+                  {factorInterpretation(
+                    reason,
+                    false
+                  ).title}
+                </span>
+              ))}
             </div>
           )}
 
-          <ScoreChips reasons={reasons} />
+          <div className="mt-8 flex flex-wrap gap-4">
+            <button
+              type="button"
+              onClick={onExplore}
+              className={primaryButton}
+            >
+              Explore your findings
+              <ArrowRight size={17} />
+            </button>
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            {hasScore && (
-              <button
-                type="button"
-                onClick={onExploreFactors}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#FFD45A] px-6 py-3 text-sm font-bold text-[#25334A] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#F6C94D] motion-reduce:transition-none"
-              >
-                Explore product insights
-                <ArrowRight size={17} />
-              </button>
-            )}
-
-            {hasScore && (
-              <Link
-                to="/score-details"
-                className="rounded-xl border border-[#D7E0EB] bg-white px-6 py-3 text-center text-sm font-semibold text-[#193B66] transition hover:bg-[#F5F8FC]"
-              >
-                Detailed explanations
-              </Link>
-            )}
+            <Link
+              to="/score-details"
+              className="inline-flex items-center justify-center border border-ink bg-card px-6 py-3 text-sm font-semibold transition-colors hover:bg-[#F8EEE0]"
+            >
+              Understand your results
+            </Link>
           </div>
         </div>
       </div>
@@ -379,524 +459,334 @@ function OpportunityScoreHero({
 }
 
 // ========================================
-// SCORE KPI CARDS
+// RESULTS SUMMARY
 // ========================================
 
-function ScoreSummaryCards({ prediction }) {
-  const score = numberOrNull(prediction?.opportunity_score);
-  const band = getScoreBand(score);
+function ScoreSummary({
+  prediction,
+  reasons,
+}) {
+  const score = numeric(
+    prediction?.opportunity_score
+  );
 
-  // The raw model probability is not shown: it is not comparable across
-  // categories (a 15/100 product can show a higher probability than a
-  // 98/100 one in another category), so it reads as contradicting the
-  // score. The score and its band carry the result.
-  const cards = [
-    {
-      label: "Opportunity score",
-      value: score === null ? "—" : `${score}/100`,
-      subtitle: "Overall product assessment",
-      background: "linear-gradient(135deg,#193B66,#275788)",
-      text: "text-white",
-      muted: "text-[#DCE8F5]",
-      badge: "SCORE",
-    },
-    {
-      label: "Score classification",
-      value: band.label,
-      subtitle: "Product evaluation category",
-      background: "linear-gradient(135deg,#F6C94D,#F9DD86)",
-      text: "text-[#25334A]",
-      muted: "text-[#705A31]",
-      badge: "RATING",
-    },
-  ];
+  const band = getScoreBand(score);
+  const message = getOpportunityMessage(score);
+
+  const nextStep = getRecommendedAction(
+    reasons,
+    message.nextStep
+  );
 
   return (
-    <section className="mt-9">
+    <section className="mt-14">
       <SectionHeading
-        eyebrow="Score performance"
-        title="Evaluation overview"
-        description="Key results from your product evaluation."
+        number="01"
+        eyebrow="Your results"
+        title="Your results, at a glance."
+        description="Start with the overall opportunity, then explore what deserves more attention."
       />
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        {cards.map((card, index) => (
-          <motion.article
-            key={card.label}
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: index * 0.1 }}
-            whileHover={{ y: -5 }}
-            className="relative flex min-h-[220px] min-w-0 flex-col justify-between overflow-hidden rounded-2xl p-6 shadow-md"
-            style={{ background: card.background }}
-          >
-            <div
+      <div className="mt-7 grid gap-5 md:grid-cols-3">
+        <article
+          className={
+            `flex min-h-52 flex-col justify-between border border-ink bg-[#F8EEE0] p-6 ${hoverCard}`
+          }
+        >
+          <p className="eyebrow text-muted-foreground">
+            Opportunity score
+          </p>
+
+          <div className="mt-8">
+            <p className="font-display text-4xl leading-tight">
+              {score === null
+                ? "—"
+                : `${score}/100`}
+            </p>
+
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              How this product compares within its
+              category.
+            </p>
+          </div>
+        </article>
+
+        <article
+          className={
+            `flex min-h-52 flex-col justify-between border border-ink bg-card p-6 ${hoverCard}`
+          }
+        >
+          <p className="eyebrow text-muted-foreground">
+            Opportunity rating
+          </p>
+
+          <div className="mt-8">
+            <p className="font-display text-4xl leading-tight">
+              {band.label}
+            </p>
+
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              {message.summary}
+            </p>
+          </div>
+        </article>
+
+        <article
+          className={
+            `flex min-h-52 flex-col justify-between border border-ink bg-card p-6 ${hoverCard}`
+          }
+        >
+          <p className="eyebrow text-muted-foreground">
+            What to consider next
+          </p>
+
+          <div className="mt-8">
+            <Lightbulb
+              size={24}
+              className="text-primary"
               aria-hidden="true"
-              className="pointer-events-none absolute -right-14 -top-14 h-44 w-44 rounded-full border-[30px] border-white/10"
             />
 
-            <div className="relative z-10 flex items-start justify-between gap-3">
-              <p className={`text-sm font-semibold ${card.muted}`}>
-                {card.label}
-              </p>
-              <span className={`rounded-full bg-white/15 px-3 py-1 text-[10px] font-bold ${card.text}`}>
-                {card.badge}
-              </span>
-            </div>
-
-            <div className="relative z-10 mt-8">
-              <p className={`break-words text-[clamp(1.8rem,3vw,2.5rem)] font-bold tracking-tight ${card.text}`}>
-                {card.value}
-              </p>
-              <p className={`mt-3 text-sm ${card.muted}`}>
-                {card.subtitle}
-              </p>
-            </div>
-          </motion.article>
-        ))}
+            <p className="mt-4 text-sm leading-relaxed">
+              {nextStep}
+            </p>
+          </div>
+        </article>
       </div>
     </section>
   );
 }
 
 // ========================================
-// FRIENDLY INSIGHT CARD
+// INDIVIDUAL INSIGHT CARD
 // ========================================
 
-function FriendlyInsightCard({
+function InsightCard({
   reason,
   positive,
-  index,
 }) {
-  const [expanded, setExpanded] = useState(false);
-  const interpretation = interpretFactor(reason, positive);
-  const Icon = interpretation.icon;
+  const [expanded, setExpanded] =
+    useState(false);
 
-  const impact = numberOrNull(reason?.impact);
+  const guidance = factorInterpretation(
+    reason,
+    positive
+  );
 
   return (
-    <motion.article
-      layout
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.05 }}
-      className="w-full max-w-[900px] overflow-hidden rounded-2xl border border-[#D7E0EB] bg-white shadow-sm transition-shadow hover:shadow-md"
-    >
+    <article className="border border-ink bg-card">
       <button
         type="button"
-        onClick={() => setExpanded((value) => !value)}
+        onClick={() =>
+          setExpanded((value) => !value)
+        }
         aria-expanded={expanded}
-        className="flex w-full items-center gap-4 p-5 text-left sm:p-6"
+        className="flex w-full items-start gap-4 p-5 text-left transition-colors hover:bg-[#F8EEE0] sm:p-6"
       >
-        <div
-          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
-            positive
-              ? "bg-[#E6F5ED] text-[#13795B]"
-              : "bg-[#FFF2E8] text-[#B66A29]"
-          }`}
+        <span
+          className={
+            "flex size-10 shrink-0 items-center justify-center border border-ink " +
+            (positive
+              ? "bg-[#E8F3EC]"
+              : "bg-[#F8EEE0]")
+          }
         >
-          <Icon size={22} aria-hidden="true" />
-        </div>
+          {positive ? (
+            <TrendingUp size={19} />
+          ) : (
+            <Lightbulb size={19} />
+          )}
+        </span>
 
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold leading-6 text-[#25334A] sm:text-base">
-            {interpretation.title}
+          <p className="font-semibold leading-relaxed">
+            {guidance.title}
           </p>
 
-          <p className="mt-1 text-xs text-[#61738B]">
+          <p className="mt-2 text-xs text-muted-foreground">
             {positive
-              ? "Positive product signal"
-              : "Something worth reviewing"}
+              ? "What looks promising"
+              : "What to look into"}
           </p>
         </div>
 
-        <div
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-            positive
-              ? "bg-[#E6F5ED] text-[#13795B]"
-              : "bg-[#FFF2E8] text-[#B66A29]"
-          }`}
-        >
-          {expanded ? (
-            <ChevronUp size={18} aria-hidden="true" />
-          ) : (
-            <ChevronDown size={18} aria-hidden="true" />
-          )}
-        </div>
+        {expanded ? (
+          <ChevronUp
+            size={18}
+            className="mt-2 shrink-0"
+          />
+        ) : (
+          <ChevronDown
+            size={18}
+            className="mt-2 shrink-0"
+          />
+        )}
       </button>
 
       {expanded && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-          className="border-t border-[#E8EEF4] px-5 pb-5 pt-5 sm:px-6 sm:pb-6"
-        >
-          <p className="text-sm leading-7 text-[#61738B]">
-            {interpretation.explanation}
+        <div className="border-t border-border px-5 pb-6 pt-5 sm:px-6">
+          <h4 className="text-sm font-semibold">
+            Why this matters
+          </h4>
+
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">
+            {guidance.description}
           </p>
 
-          <div
-            className={`mt-5 rounded-xl p-4 ${
-              positive ? "bg-[#F0F8F4]" : "bg-[#FFF7EE]"
-            }`}
+          <div className="mt-5 border-l-2 border-primary bg-[#F8EEE0] p-4">
+            <p className="text-sm font-semibold">
+              What you can do next
+            </p>
+
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              {guidance.consideration}
+            </p>
+          </div>
+        </div>
+      )}
+    </article>
+  );
+}
+
+// ========================================
+// PRODUCT INSIGHTS
+// ========================================
+
+function ProductInsights({
+  reasons,
+  loading,
+  error,
+  onRetry,
+}) {
+  const [category, setCategory] =
+    useState("strengths");
+
+  const strengths = sortedFactors(
+    reasons?.reasons_up
+  );
+
+  const watchouts = sortedFactors(
+    reasons?.reasons_down
+  );
+
+  const items =
+    category === "strengths"
+      ? strengths
+      : watchouts;
+
+  return (
+    <div className="mt-7">
+      <div
+        role="group"
+        aria-label="Product findings"
+        className="grid gap-4 sm:grid-cols-2"
+      >
+        {[
+          {
+            id: "strengths",
+            title: "What's working in my favor?",
+            count: strengths.length,
+            description: "What looks promising",
+          },
+          {
+            id: "watchouts",
+            title: "What should I investigate?",
+            count: watchouts.length,
+            description: "What to look into",
+          },
+        ].map((option) => {
+          const active = category === option.id;
+
+          return (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() =>
+                setCategory(option.id)
+              }
+              aria-pressed={active}
+              className={
+                "border border-ink p-5 text-left " +
+                (active
+                  ? "bg-[#F8EEE0] shadow-offset "
+                  : `bg-card ${hoverCard}`)
+              }
+            >
+              <p className="text-sm font-semibold">
+                {option.title}
+              </p>
+
+              <p className="mt-4 font-display text-3xl">
+                {reasons
+                  ? option.count
+                  : "—"}
+              </p>
+
+              <p className="mt-2 text-xs text-muted-foreground">
+                {option.description}
+              </p>
+            </button>
+          );
+        })}
+      </div>
+
+      {loading && (
+        <p
+          role="status"
+          className="mt-6 border border-ink bg-card p-6 text-sm text-muted-foreground"
+        >
+          Preparing your product findings...
+        </p>
+      )}
+
+      {error && !loading && (
+        <div
+          role="alert"
+          className="mt-6 border border-ink bg-[#F8EEE0] p-6"
+        >
+          <p className="text-sm">
+            {error}
+          </p>
+
+          <button
+            type="button"
+            onClick={onRetry}
+            className="mt-3 text-sm font-semibold text-primary underline"
           >
-            <div className="flex items-center gap-2">
-              <Lightbulb
-                size={17}
-                className={
-                  positive
-                    ? "text-[#13795B]"
-                    : "text-[#B66A29]"
+            Try again
+          </button>
+        </div>
+      )}
+
+      {reasons && !loading && (
+        <div className="mt-6 space-y-4">
+          {items.length ? (
+            items.map((reason, index) => (
+              <InsightCard
+                key={`${category}-${reason?.feature || index}-${index}`}
+                reason={reason}
+                positive={
+                  category === "strengths"
                 }
               />
-              <p className="text-sm font-bold text-[#25334A]">
-                Worth considering
-              </p>
-            </div>
-
-            <p className="mt-2 text-sm leading-6 text-[#61738B]">
-              {interpretation.consideration}
-            </p>
-          </div>
-
-          {impact !== null && (
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span className="text-xs text-[#61738B]">
-                Model contribution:
-              </span>
-
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-bold ${
-                  positive
-                    ? "bg-[#E6F5ED] text-[#13795B]"
-                    : "bg-[#FFF2E8] text-[#97531B]"
-                }`}
-              >
-                {impact > 0 ? "+" : ""}
-                {impact.toFixed(3)}
-              </span>
-
-              <span className="text-xs text-[#61738B]">
-                Not opportunity-score points
-              </span>
+            ))
+          ) : (
+            <div className="border border-ink bg-card p-6 text-sm text-muted-foreground">
+              No additional findings are available
+              in this category.
             </div>
           )}
-        </motion.div>
-      )}
-    </motion.article>
-  );
-}
-
-// ========================================
-// STRENGTHS / WATCHOUTS PANEL
-// ========================================
-
-function InsightCategoryPanel({
-  category,
-  reasons,
-}) {
-  const positive = category === "strengths";
-
-  const items = sortFactors(
-    positive
-      ? reasons?.reasons_up
-      : reasons?.reasons_down
-  );
-
-  const strongest = items[0]
-    ? interpretFactor(items[0], positive)
-    : null;
-
-  return (
-    <div
-      className="flex h-full min-h-[450px] flex-col rounded-2xl border border-[#D7E0EB] p-5 sm:p-7"
-      style={{
-        backgroundColor: positive
-          ? "#F0F8F4"
-          : "#FFF7EE",
-      }}
-    >
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div
-            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
-              positive
-                ? "bg-[#DDF1E6] text-[#13795B]"
-                : "bg-[#FCE9D6] text-[#B66A29]"
-            }`}
-          >
-            {positive ? (
-              <ThumbsUp size={23} />
-            ) : (
-              <Lightbulb size={23} />
-            )}
-          </div>
-
-          <div>
-            <h3 className="text-xl font-bold text-[#25334A]">
-              {positive
-                ? "What's working in your favor"
-                : "Things worth reviewing"}
-            </h3>
-
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#61738B]">
-              {positive
-                ? "Explore the product characteristics that contributed positively to your assessment."
-                : "Understand the characteristics that raised potential concerns in your assessment."}
-            </p>
-          </div>
-        </div>
-
-        <span
-          className={`rounded-full px-4 py-2 text-xs font-bold ${
-            positive
-              ? "bg-[#DDF1E6] text-[#13795B]"
-              : "bg-[#FCE9D6] text-[#97531B]"
-          }`}
-        >
-          {items.length}{" "}
-          {items.length === 1 ? "signal" : "signals"}
-        </span>
-      </div>
-
-      {strongest && (
-        <div className="mt-6 rounded-xl border border-white/80 bg-white/75 p-4">
-          <p
-            className={`text-xs font-bold uppercase tracking-wide ${
-              positive
-                ? "text-[#13795B]"
-                : "text-[#97531B]"
-            }`}
-          >
-            Most prominent {positive ? "strength" : "watchout"}
-          </p>
-
-          <p className="mt-2 text-sm font-semibold leading-6 text-[#25334A]">
-            {strongest.title}
-          </p>
-
-          <p className="mt-1 text-xs leading-5 text-[#61738B]">
-            Based on the largest absolute model contribution
-            displayed in this group.
-          </p>
         </div>
       )}
 
-      <div className="my-auto flex flex-col items-center gap-4 py-6">
-        {items.length > 0 ? (
-          items.map((reason, index) => (
-            <FriendlyInsightCard
-              key={`${category}-${reason?.feature || index}-${index}`}
-              reason={reason}
-              positive={positive}
-              index={index}
-            />
-          ))
-        ) : (
-          <div className="w-full max-w-[900px] rounded-xl bg-white p-6 text-sm text-[#61738B]">
-            No {positive ? "positive signals" : "watchouts"}{" "}
-            were provided for this product.
-          </div>
-        )}
-      </div>
-
-      <div className="flex items-start gap-2">
-        <Info
-          size={16}
-          className="mt-0.5 shrink-0 text-[#61738B]"
-        />
-        <p className="text-xs leading-6 text-[#61738B]">
-          These insights describe model associations.
-          They are not guaranteed improvements or
-          direct changes to the opportunity score.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// ========================================
-// FULL-PANEL 3D INSIGHT TRANSITION
-// ========================================
-
-function StrengthsAndWatchouts({ reasons }) {
-  const [category, setCategory] = useState("strengths");
-  const [nextCategory, setNextCategory] = useState(null);
-  const [flipped, setFlipped] = useState(false);
-
-  const strengths = Array.isArray(reasons?.reasons_up)
-    ? reasons.reasons_up.length
-    : 0;
-
-  const watchouts = Array.isArray(reasons?.reasons_down)
-    ? reasons.reasons_down.length
-    : 0;
-
-  function selectCategory(newCategory) {
-    if (
-      newCategory === category ||
-      nextCategory !== null
-    ) {
-      return;
-    }
-
-    if (
-      window.matchMedia?.(
-        "(prefers-reduced-motion: reduce)"
-      ).matches
-    ) {
-      setCategory(newCategory);
-      return;
-    }
-
-    setNextCategory(newCategory);
-    setFlipped(true);
-  }
-
-  function finishFlip(event) {
-    if (
-      event.target !== event.currentTarget ||
-      event.propertyName !== "transform" ||
-      !flipped ||
-      nextCategory === null
-    ) {
-      return;
-    }
-
-    setCategory(nextCategory);
-    setNextCategory(null);
-    setFlipped(false);
-  }
-
-  const selectedCategory = nextCategory ?? category;
-
-  return (
-    <div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <button
-          type="button"
-          disabled={nextCategory !== null}
-          onClick={() => selectCategory("strengths")}
-          aria-pressed={selectedCategory === "strengths"}
-          className={`rounded-2xl border-2 p-5 text-left transition-all ${
-            selectedCategory === "strengths"
-              ? "border-[#13795B] bg-[#E6F5ED]"
-              : "border-[#D7E0EB] bg-white hover:border-[#B7D6C6]"
-          }`}
+      <div className="mt-6 flex justify-end">
+        <Link
+          to="/score-details"
+          className="inline-flex items-center gap-2 border border-ink bg-card px-5 py-3 text-sm font-semibold transition-colors hover:bg-[#F8EEE0]"
         >
-          <div className="flex items-center gap-2">
-            <ThumbsUp
-              size={20}
-              className={
-                selectedCategory === "strengths"
-                  ? "text-[#13795B]"
-                  : "text-[#61738B]"
-              }
-            />
-
-            <p className="font-bold text-[#25334A]">
-              Strengths
-            </p>
-          </div>
-
-          <p className="mt-3 text-3xl font-bold text-[#13795B]">
-            {strengths}
-          </p>
-
-          <p className="mt-1 text-xs text-[#61738B]">
-            Positive product signals
-          </p>
-        </button>
-
-        <button
-          type="button"
-          disabled={nextCategory !== null}
-          onClick={() => selectCategory("watchouts")}
-          aria-pressed={selectedCategory === "watchouts"}
-          className={`rounded-2xl border-2 p-5 text-left transition-all ${
-            selectedCategory === "watchouts"
-              ? "border-[#B66A29] bg-[#FFF2E8]"
-              : "border-[#D7E0EB] bg-white hover:border-[#F0D7BE]"
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            <Lightbulb
-              size={20}
-              className={
-                selectedCategory === "watchouts"
-                  ? "text-[#B66A29]"
-                  : "text-[#61738B]"
-              }
-            />
-
-            <p className="font-bold text-[#25334A]">
-              Watchouts
-            </p>
-          </div>
-
-          <p className="mt-3 text-3xl font-bold text-[#B66A29]">
-            {watchouts}
-          </p>
-
-          <p className="mt-1 text-xs text-[#61738B]">
-            Potential concerns
-          </p>
-        </button>
-      </div>
-
-      <div
-        className="mt-6 w-full"
-        style={{ perspective: "1600px" }}
-      >
-        <div
-          className="grid w-full"
-          onTransitionEnd={finishFlip}
-          style={{
-            transformStyle: "preserve-3d",
-            transform: flipped
-              ? "rotateY(180deg)"
-              : "rotateY(0deg)",
-            transition: flipped
-              ? "transform 700ms cubic-bezier(0.22,1,0.36,1)"
-              : "none",
-          }}
-        >
-          <div
-            className="min-w-0"
-            style={{
-              gridArea: "1 / 1",
-              backfaceVisibility: "hidden",
-              WebkitBackfaceVisibility: "hidden",
-            }}
-            aria-hidden={flipped}
-            inert={flipped}
-          >
-            <InsightCategoryPanel
-              category={category}
-              reasons={reasons}
-            />
-          </div>
-
-          <div
-            className="min-w-0"
-            style={{
-              gridArea: "1 / 1",
-              transform: "rotateY(180deg)",
-              backfaceVisibility: "hidden",
-              WebkitBackfaceVisibility: "hidden",
-            }}
-            aria-hidden={!flipped}
-            inert={!flipped}
-          >
-            {nextCategory && (
-              <InsightCategoryPanel
-                category={nextCategory}
-                reasons={reasons}
-              />
-            )}
-          </div>
-        </div>
+          Understand your results
+          <ArrowRight size={17} />
+        </Link>
       </div>
     </div>
   );
@@ -906,85 +796,50 @@ function StrengthsAndWatchouts({ reasons }) {
 // PRODUCT INFORMATION
 // ========================================
 
-function ProductInformation({ product, prediction }) {
-  // Same signal as NewIdeaTag on the score details page: the launch-time
-  // model scored the product and never saw the review count.
-  const reviewsUnused =
-    prediction?.model_used === "launch" &&
-    Number(product.reviews) > 0;
-
+function ProductInformation({ product }) {
   const details = [
     {
-      label: "Category",
+      label: "Product category",
       value:
         product.categoryName ||
         product.category ||
         "—",
-      symbol: "▦",
-      color: "#193B66",
-      background: "#EBF2FA",
     },
     {
       label: "Selling price",
       value: currency(product.price),
-      symbol: "$",
-      color: "#A77E1C",
-      background: "#FFF6DD",
     },
     {
       label: "Customer reviews",
       value:
         product.reviews == null
           ? "—"
-          : formatNumber(product.reviews),
-      note: reviewsUnused
-        ? "Not used in this score: scored as a new idea"
-        : null,
-      symbol: "★",
-      color: "#13795B",
-      background: "#EAF6F0",
+          : formattedNumber(product.reviews),
     },
   ];
 
   return (
-    <section className="mt-10">
+    <section className="mt-14">
       <SectionHeading
-        eyebrow="Product intelligence"
-        title="Product information"
-        description="Details associated with the evaluated product."
+        number="03"
+        eyebrow="Product details"
+        title="Your product information."
+        description="The details you provided for this evaluation."
       />
 
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
+      <div className="mt-7 grid gap-5 md:grid-cols-3">
         {details.map((detail) => (
           <article
             key={detail.label}
-            className="flex min-w-0 items-start gap-4 rounded-2xl border border-[#D7E0EB] bg-white p-5 shadow-sm"
+            className={`min-w-0 border border-ink bg-card p-6 ${hoverCard}`}
           >
-            <div
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl font-bold"
-              style={{
-                color: detail.color,
-                backgroundColor: detail.background,
-              }}
-            >
-              {detail.symbol}
-            </div>
+            <p className="eyebrow text-muted-foreground">
+              {detail.label}
+            </p>
 
-            <div className="min-w-0">
-              <p className="text-xs text-[#61738B]">
-                {detail.label}
-              </p>
-
-              <p className="mt-2 break-words text-lg font-bold text-[#25334A]">
-                {detail.value}
-              </p>
-
-              {detail.note && (
-                <p className="mt-1 text-xs text-[#61738B]">
-                  {detail.note}
-                </p>
-              )}
-            </div>
+            <p className="mt-6 break-words font-display text-2xl">
+              {detail.value}
+            </p>
           </article>
         ))}
       </div>
@@ -993,7 +848,7 @@ function ProductInformation({ product, prediction }) {
 }
 
 // ========================================
-// PRICE SCENARIO PREVIEW
+// PRICE SCENARIOS
 // ========================================
 
 function PriceScenarioPreview({ product }) {
@@ -1005,78 +860,60 @@ function PriceScenarioPreview({ product }) {
   const minPrice = Math.max(
     0.01,
     Number(
-      Math.min(100000, originalPrice * 0.5).toFixed(2)
+      Math.min(
+        100000,
+        originalPrice * 0.5
+      ).toFixed(2)
     )
   );
 
   const maxPrice = Math.min(
     100000,
     Number(
-      Math.max(originalPrice * 1.5, minPrice).toFixed(2)
+      Math.max(
+        originalPrice * 1.5,
+        minPrice
+      ).toFixed(2)
     )
   );
 
-  const numericPrice = Number(selectedPrice);
+  const adjustedPrice = numeric(selectedPrice);
 
   const validPrice =
-    selectedPrice.trim() !== "" &&
-    Number.isFinite(numericPrice) &&
-    numericPrice >= 0.01 &&
-    numericPrice <= 100000;
+    adjustedPrice !== null &&
+    adjustedPrice >= 0.01 &&
+    adjustedPrice <= 100000;
 
-  const priceChange =
+  const change =
     validPrice && originalPrice > 0
-      ? (numericPrice / originalPrice - 1) * 100
+      ? (
+          (adjustedPrice / originalPrice - 1) *
+          100
+        )
       : null;
 
   return (
-    <section className="mt-10 overflow-hidden rounded-2xl border border-[#D7E0EB] bg-white p-6 shadow-sm sm:p-7">
-      <div className="flex flex-col justify-between gap-5 md:flex-row md:items-start">
-        <div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
-            Pricing strategy
+    <section className="mt-14">
+      <SectionHeading
+        number="04"
+        eyebrow="Pricing strategy"
+        title="Explore a different price."
+        description="See how your proposed selling price compares with the original, then explore pricing scenarios."
+      />
+
+      <div className="mt-7 grid border border-ink bg-card shadow-offset lg:grid-cols-2">
+        <div className="p-6 sm:p-8">
+          <p className="eyebrow text-muted-foreground">
+            Price scenario
           </p>
 
-          <h2 className="text-xl font-bold text-[#25334A] sm:text-2xl">
-            Explore price scenarios
-          </h2>
-
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#61738B]">
-            Preview a different selling price, then
-            explore how your assumptions affect
-            profitability and product evaluation.
-          </p>
-        </div>
-
-        <Link
-          to="/launch-feasibility"
-          state={{
-            suggestedPrice: validPrice
-              ? numericPrice
-              : originalPrice,
-          }}
-          aria-disabled={!validPrice}
-          tabIndex={validPrice ? undefined : -1}
-          className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold transition ${
-            validPrice
-              ? "bg-[#FFD45A] text-[#25334A] hover:bg-[#F5C842]"
-              : "pointer-events-none bg-slate-200 text-slate-400"
-          }`}
-        >
-          Explore Price Scenarios
-          <ArrowRight size={18} />
-        </Link>
-      </div>
-
-      <div className="mt-7 grid gap-5 lg:grid-cols-2">
-        <div className="rounded-2xl bg-[#F5F8FC] p-5 sm:p-6">
-          <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="mt-7 grid gap-6 sm:grid-cols-2">
             <div>
-              <p className="text-xs text-[#61738B]">
+              <p className="text-sm text-muted-foreground">
                 Original price
               </p>
 
-              <p className="mt-2 text-2xl font-bold text-[#25334A]">
+              <p className="mt-3 font-display text-3xl">
                 {currency(originalPrice)}
               </p>
             </div>
@@ -1084,13 +921,13 @@ function PriceScenarioPreview({ product }) {
             <div>
               <label
                 htmlFor="preview-price"
-                className="text-xs text-[#61738B]"
+                className="text-sm text-muted-foreground"
               >
-                Scenario price
+                New selling price
               </label>
 
-              <div className="mt-2 flex items-center gap-2">
-                <span className="font-bold text-[#25334A]">
+              <div className="mt-2 flex items-center border border-ink bg-card px-4">
+                <span className="text-sm">
                   $
                 </span>
 
@@ -1102,9 +939,11 @@ function PriceScenarioPreview({ product }) {
                   step="0.01"
                   value={selectedPrice}
                   onChange={(event) =>
-                    setSelectedPrice(event.target.value)
+                    setSelectedPrice(
+                      event.target.value
+                    )
                   }
-                  className="h-12 w-36 rounded-xl border border-[#D7E0EB] bg-white px-4 text-base font-bold text-[#25334A] outline-none focus:border-[#193B66]"
+                  className="h-12 min-w-0 w-full bg-transparent px-3 font-semibold outline-none"
                 />
               </div>
             </div>
@@ -1119,113 +958,112 @@ function PriceScenarioPreview({ product }) {
               validPrice
                 ? Math.max(
                     minPrice,
-                    Math.min(maxPrice, numericPrice)
+                    Math.min(
+                      maxPrice,
+                      adjustedPrice
+                    )
                   )
                 : originalPrice
             }
             onChange={(event) =>
-              setSelectedPrice(event.target.value)
+              setSelectedPrice(
+                event.target.value
+              )
             }
             disabled={minPrice >= maxPrice}
             aria-label="Preview selling price"
-            className="mt-8 w-full cursor-pointer accent-[#193B66]"
+            className="mt-9 w-full accent-[#D95332]"
           />
 
-          <div className="mt-3 flex justify-between text-xs text-[#61738B]">
-            <span>{currency(minPrice)}</span>
-            <span>{currency(maxPrice)}</span>
+          <div className="mt-3 flex justify-between font-mono text-xs text-muted-foreground">
+            <span>
+              {currency(minPrice)}
+            </span>
+
+            <span>
+              {currency(maxPrice)}
+            </span>
           </div>
-        </div>
-
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#193B66] to-[#275788] p-5 text-white sm:p-6">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full border-[30px] border-white/5"
-          />
-
-          <p className="relative z-10 text-sm text-[#DCE8F5]">
-            Price adjustment
-          </p>
-
-          <p className="relative z-10 mt-5 text-4xl font-bold">
-            {priceChange === null
-              ? "—"
-              : `${priceChange > 0 ? "+" : ""}${priceChange.toFixed(1)}%`}
-          </p>
-
-          <p className="relative z-10 mt-3 text-sm text-[#DCE8F5]">
-            {validPrice
-              ? `Scenario price: ${currency(numericPrice)}`
-              : "Enter a valid scenario price."}
-          </p>
 
           <button
             type="button"
             onClick={() =>
-              setSelectedPrice(String(originalPrice))
+              setSelectedPrice(
+                String(originalPrice)
+              )
             }
-            className="relative z-10 mt-6 rounded-lg border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+            className="mt-7 inline-flex items-center gap-2 text-sm font-semibold transition-colors hover:text-primary"
           >
+            <RotateCcw size={16} />
             Reset price
           </button>
         </div>
+
+        <div className="flex flex-col justify-between border-t border-ink bg-[#F8EEE0] p-6 sm:p-8 lg:border-l lg:border-t-0">
+          <div>
+            <p className="eyebrow text-muted-foreground">
+              Price adjustment
+            </p>
+
+            <p className="mt-5 font-display text-5xl">
+              {change === null
+                ? "—"
+                : `${change > 0 ? "+" : ""}${change.toFixed(1)}%`}
+            </p>
+
+            <p className="mt-4 text-sm text-muted-foreground">
+              {validPrice
+                ? `New price: ${currency(adjustedPrice)}`
+                : "Enter a valid selling price."}
+            </p>
+          </div>
+
+          <Link
+            to="/launch-feasibility"
+            state={{
+              suggestedPrice: validPrice
+                ? adjustedPrice
+                : originalPrice,
+            }}
+            aria-disabled={!validPrice}
+            tabIndex={
+              validPrice ? undefined : -1
+            }
+            className={
+              `mt-9 w-fit ${primaryButton} ` +
+              (!validPrice
+                ? "pointer-events-none opacity-50"
+                : "")
+            }
+          >
+            Explore price scenarios
+            <ArrowRight size={17} />
+          </Link>
+        </div>
       </div>
 
-      <p className="mt-5 text-xs leading-5 text-[#61738B]">
-        This preview does not recalculate your score or
-        forecast sales. Your chosen price is carried
-        into the scenario simulator.
+      <p className="mt-4 text-xs leading-6 text-muted-foreground">
+        This preview shows how much the price
+        changes. It does not calculate new sales
+        or profits. You can explore the effect
+        of different prices in the next step.
       </p>
     </section>
   );
 }
 
 // ========================================
-// LEGACY LAUNCH METRICS
-// ========================================
-
-function MetricCard({ label, metric }) {
-  const range = validRange(metric);
-
-  return (
-    <article className="min-h-[150px] rounded-2xl border border-[#D7E0EB] bg-white p-5 shadow-sm">
-      <p className="text-sm font-medium text-[#61738B]">
-        {label}
-      </p>
-
-      <p className="mt-4 break-words text-3xl font-bold text-[#25334A]">
-        {formatMetric(metric)}
-      </p>
-
-      {range ? (
-        <p className="mt-3 text-xs leading-5 text-[#61738B]">
-          Estimated range:{" "}
-          {formatMetric({
-            value: range[0],
-            unit: metric.unit,
-          })}
-          {" – "}
-          {formatMetric({
-            value: range[1],
-            unit: metric.unit,
-          })}
-        </p>
-      ) : metric?.range ? (
-        <p className="mt-3 text-xs text-[#61738B]">
-          Estimated range unavailable.
-        </p>
-      ) : null}
-    </article>
-  );
-}
-
-// ========================================
-// FLOATING SCORE INFORMATION
+// ABOUT THE OPPORTUNITY SCORE
 // ========================================
 
 function AboutScore({ prediction }) {
-  const [open, setOpen] = useState(false);
-  const score = numberOrNull(prediction?.opportunity_score);
+  const [open, setOpen] =
+    useState(false);
+
+  const score = numeric(
+    prediction?.opportunity_score
+  );
+
   const band = getScoreBand(score);
 
   return (
@@ -1233,16 +1071,15 @@ function AboutScore({ prediction }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="About this opportunity score"
-        title="About this opportunity score"
-        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#193B66] text-white shadow-xl ring-4 ring-white/70 transition hover:-translate-y-1 hover:bg-[#275788]"
+        aria-label="About the opportunity score"
+        className="fixed bottom-6 right-6 z-40 flex size-12 items-center justify-center border border-ink bg-primary text-primary-foreground shadow-offset transition-transform hover:-translate-y-[2px]"
       >
-        <Info size={25} />
+        <Info size={21} />
       </button>
 
       {open && (
         <div
-          className="fixed inset-0 z-50"
+          className="fixed inset-0 z-50 flex items-end justify-end p-4 sm:p-6"
           onKeyDown={(event) => {
             if (event.key === "Escape") {
               setOpen(false);
@@ -1252,87 +1089,90 @@ function AboutScore({ prediction }) {
           <button
             type="button"
             aria-label="Close score information"
-            onClick={() => setOpen(false)}
-            className="absolute inset-0 h-full w-full cursor-default bg-[#0F172A]/40 backdrop-blur-[2px]"
+            onClick={() =>
+              setOpen(false)
+            }
+            className="absolute inset-0 bg-foreground/45"
           />
 
           <section
             role="dialog"
             aria-modal="true"
-            aria-labelledby="about-score-title"
-            className="absolute bottom-6 right-4 flex max-h-[85vh] w-[calc(100%-2rem)] max-w-[440px] flex-col overflow-hidden rounded-2xl border border-[#D7E0EB] bg-white shadow-2xl sm:right-6"
+            aria-labelledby="score-information-title"
+            className="relative z-10 max-h-[85vh] w-full max-w-md overflow-y-auto border border-ink bg-card p-6 shadow-offset sm:p-8"
           >
-            <div className="flex items-start justify-between gap-4 border-b border-[#E6EDF4] bg-[#F8FAFD] p-5">
-              <div>
-                <h2
-                  id="about-score-title"
-                  className="text-lg font-bold text-[#25334A]"
-                >
-                  About this score
-                </h2>
-
-                <p className="mt-1 text-xs text-[#61738B]">
-                  How to understand your evaluation
-                </p>
-              </div>
+            <div className="flex items-start justify-between gap-4">
+              <h2
+                id="score-information-title"
+                className="font-display text-3xl"
+              >
+                Understanding your score
+              </h2>
 
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={() =>
+                  setOpen(false)
+                }
                 aria-label="Close"
-                className="rounded-lg p-2 text-[#61738B] hover:bg-[#E6EDF4]"
+                className="text-lg"
               >
-                ✕
+                ×
               </button>
             </div>
 
-            <div className="overflow-y-auto p-5">
-              <p className="text-sm leading-7 text-[#61738B]">
-                Your opportunity score is generated by
-                MarketLens's product scoring model.
-                It is an estimate, not a guarantee
-                of commercial success.
+            <p className="mt-5 text-sm leading-7 text-muted-foreground">
+              Your opportunity score compares
+              your product with others in its
+              category. A higher score means a
+              more favorable comparison.
+            </p>
+
+            <div className="mt-6 border border-ink bg-[#F8EEE0] p-5">
+              <p className="eyebrow text-muted-foreground">
+                Your current result
               </p>
 
-              {score !== null && (
-                <div className="mt-5 rounded-xl bg-[#F5F8FC] p-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-[#61738B]">
-                    Current score category
-                  </p>
+              <p className="mt-3 font-display text-2xl">
+                {score === null
+                  ? "—"
+                  : `${score}/100`}
+                {" · "}
+                {band.label}
+              </p>
 
-                  <p
-                    className="mt-2 text-lg font-bold"
-                    style={{ color: band.color }}
-                  >
-                    {band.label}
-                  </p>
-
-                  {band.odds && (
-                    <p className="mt-3 text-sm leading-6 text-[#61738B]">
-                      {band.odds}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              <p className="mt-5 text-sm leading-7 text-[#61738B]">
-                Strengths and watchouts describe
-                model associations. They are not
-                guaranteed ways to improve your score.
-                Actual product performance depends on
-                many factors beyond the model.
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                {getOpportunityMessage(score).summary}
               </p>
             </div>
 
-            <div className="border-t border-[#E6EDF4] p-4">
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="w-full rounded-xl bg-[#193B66] px-5 py-3 text-sm font-semibold text-white hover:bg-[#275788]"
-              >
-                Got it
-              </button>
-            </div>
+            <h3 className="mt-6 font-semibold">
+              What doesn't this score tell me?
+            </h3>
+
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
+              It does not guarantee that your
+              product will sell or make a profit.
+              Costs, customer demand, competition,
+              and execution all affect business
+              performance.
+            </p>
+
+            <p className="mt-4 text-sm leading-7 text-muted-foreground">
+              Use this evaluation as one source
+              of information when researching
+              your product idea.
+            </p>
+
+            <button
+              type="button"
+              onClick={() =>
+                setOpen(false)
+              }
+              className={`mt-7 w-full ${primaryButton}`}
+            >
+              Got it
+            </button>
           </section>
         </div>
       )}
@@ -1341,50 +1181,43 @@ function AboutScore({ prediction }) {
 }
 
 // ========================================
-// MAIN OPPORTUNITY ANALYSIS
+// MAIN PRODUCT OVERVIEW PAGE
 // ========================================
 
 export default function Overview({
   product,
   prediction,
-  forecast,
 }) {
-  const [showExplanations, setShowExplanations] =
-    useState(false);
+  const [
+    showExplanations,
+    setShowExplanations,
+  ] = useState(false);
 
-  const [loadedReasons, setLoadedReasons] =
-    useState(null);
+  const [
+    loadedReasons,
+    setLoadedReasons,
+  ] = useState(null);
 
-  const [loadingReasons, setLoadingReasons] =
-    useState(false);
+  const [
+    loadingReasons,
+    setLoadingReasons,
+  ] = useState(false);
 
-  const [reasonsError, setReasonsError] =
-    useState("");
+  const [
+    reasonsError,
+    setReasonsError,
+  ] = useState("");
 
-  const [retryCount, setRetryCount] =
-    useState(0);
+  const [
+    retryCount,
+    setRetryCount,
+  ] = useState(0);
 
-  const [launchTimeframe, setLaunchTimeframe] =
-    useState("12m");
+  const score = numeric(
+    prediction?.opportunity_score
+  );
 
-  const score = numberOrNull(prediction?.opportunity_score);
   const hasScore = score !== null;
-
-  const launch =
-    forecast?.type === "launch"
-      ? forecast.launch
-      : null;
-
-  const predictions = launch?.predictions;
-
-  const hasProductResult =
-    Boolean(product) &&
-    (hasScore || Boolean(launch));
-
-  const productName =
-    product?.title ||
-    launch?.input?.name ||
-    "Selected product";
 
   const reasons =
     loadedReasons?.product === product &&
@@ -1392,9 +1225,9 @@ export default function Overview({
       ? loadedReasons.data
       : null;
 
-  // ========================================
-  // LOAD MODEL REASONS
-  // ========================================
+  // ----------------------------------------
+  // RETRIEVE PRODUCT FINDINGS
+  // ----------------------------------------
 
   useEffect(() => {
     if (
@@ -1426,10 +1259,8 @@ export default function Overview({
         }
       } catch {
         if (active) {
-          // Do not display technical request errors
-          // or backend route names to customers.
           setReasonsError(
-            "We couldn't load your product insights. Please try again."
+            "We couldn't load your product findings. Please try again."
           );
         }
       } finally {
@@ -1455,15 +1286,19 @@ export default function Overview({
 
   function retryExplanations() {
     setReasonsError("");
-    setRetryCount((value) => value + 1);
+    setRetryCount(
+      (value) => value + 1
+    );
   }
 
-  function exploreFactors() {
+  function exploreInsights() {
     setShowExplanations(true);
 
     requestAnimationFrame(() => {
       document
-        .getElementById("opportunity-product-insights")
+        .getElementById(
+          "opportunity-product-insights"
+        )
         ?.scrollIntoView({
           behavior: "smooth",
           block: "start",
@@ -1471,159 +1306,108 @@ export default function Overview({
     });
   }
 
-  const isTwelveMonths = launchTimeframe === "12m";
-
-  const launchMetrics = isTwelveMonths
-    ? [
-        {
-          label: "Units sold — first 12 months",
-          metric: predictions?.units_sold_12m,
-        },
-        {
-          label: "Revenue — first 12 months",
-          metric: predictions?.revenue_12m,
-        },
-        {
-          label: "Net profit — first 12 months",
-          metric: predictions?.profit_12m,
-        },
-        {
-          label: "Profit margin — first 12 months",
-          metric: predictions?.margin_pct_12m,
-        },
-        {
-          label: "ROI — first 12 months",
-          metric: predictions?.roi_pct_12m,
-        },
-        {
-          label: "Average selling price",
-          metric: predictions?.avg_price_12m,
-        },
-      ]
-    : [
-        {
-          label: "Units sold — first 24 months",
-          metric: predictions?.units_sold_24m,
-        },
-        {
-          label: "Revenue — first 24 months",
-          metric: predictions?.revenue_24m,
-        },
-        {
-          label: "Net profit — first 24 months",
-          metric: predictions?.profit_24m,
-        },
-        {
-          label: "Profit margin — first 24 months",
-          metric: predictions?.margin_pct_24m,
-        },
-        {
-          label: "ROI — first 24 months",
-          metric: predictions?.roi_pct_24m,
-        },
-      ];
-
-  // ========================================
+  // ----------------------------------------
   // EMPTY STATE
-  // ========================================
+  // ----------------------------------------
 
-  if (!hasProductResult) {
+  if (!product || !hasScore) {
     return (
-      <main className="mx-auto max-w-[1440px] px-6 py-12 lg:px-24">
-        <h1 className="text-3xl font-bold text-[#25334A]">
-          Product overview
+      <main className="min-h-screen bg-background px-6 py-20 text-center text-foreground">
+        <h1 className="font-display text-4xl">
+          No product evaluation available.
         </h1>
 
-        <p className="mt-4 text-[#61738B]">
-          No product evaluation is available.
-          Search using Product Details to generate
-          an opportunity score.
+        <p className="mt-4 text-muted-foreground">
+          Evaluate a product to view its
+          opportunity score and findings.
         </p>
 
         <Link
           to="/discover"
-          className="mt-6 inline-block rounded-xl bg-[#FFD45A] px-6 py-3 font-semibold text-[#25334A]"
+          className={`mt-8 ${primaryButton}`}
         >
           Discover products
+          <ArrowRight size={18} />
         </Link>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto max-w-[1440px] px-5 py-8 text-[#0F172A] sm:px-8 lg:px-16 xl:px-24">
-      {/* BREADCRUMB */}
-
-      <div className="text-xs text-[#61738B]">
-        Discover
-        <span className="mx-3">›</span>
-        Product overview
-      </div>
-
-      {/* HEADER */}
-
-      <div className="mt-6 flex flex-col justify-between gap-5 md:flex-row md:items-start">
-        <div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
-            MarketLens / Product Intelligence
-          </p>
-
-          <h1 className="text-3xl font-bold tracking-tight text-[#25334A] sm:text-4xl">
-            Opportunity analysis
-          </h1>
-
-          <p className="mt-3 text-sm leading-6 text-[#61738B] sm:text-base">
-            Explore your product's potential, strengths,
-            watchouts, and pricing opportunities.
-          </p>
-        </div>
-
+    <main className="min-h-screen bg-background text-foreground">
+      <div className="mx-auto max-w-6xl px-5 pb-24 pt-12 sm:px-8 lg:pt-16">
         <Link
           to="/discover"
-          className="shrink-0 rounded-xl border border-[#D4A529] bg-white px-5 py-3 text-center text-sm font-semibold text-[#25334A] hover:bg-[#FFFAEC]"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary"
         >
-          Explore another product
+          <ArrowLeft size={16} />
+          Back to Discovery
         </Link>
-      </div>
 
-      {/* PRODUCT */}
+        {/* PAGE HEADER */}
 
-      <section className="mt-7 rounded-2xl border border-[#D7E0EB] bg-white p-6 shadow-sm">
-        <p className="text-xs font-bold uppercase tracking-wide text-[#A77E1C]">
-          Evaluated product
-        </p>
+        <header className="mt-10 border-b border-ink pb-10">
+          <p className="eyebrow flex items-center gap-3 text-muted-foreground">
+            <span className="text-primary">
+              02
+            </span>
 
-        <h2 className="mt-2 break-words text-lg font-bold text-[#25334A] sm:text-xl">
-          {productName}
-        </h2>
-      </section>
+            <span className="h-px w-8 bg-current" />
 
-      {/* SCORE HERO */}
+            Product opportunity
+          </p>
 
-      <OpportunityScoreHero
-        prediction={prediction}
-        reasons={reasons}
-        onExploreFactors={exploreFactors}
-      />
+          <h1 className="mt-6 font-display text-5xl leading-tight sm:text-6xl">
+            Your product{" "}
+            <em className="text-primary">
+              outlook.
+            </em>
+          </h1>
 
-      {/* KPI CARDS */}
+          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+            Understand your product's potential,
+            explore important findings, and
+            decide what to investigate next.
+          </p>
 
-      {hasScore && (
-        <ScoreSummaryCards prediction={prediction} />
-      )}
+          <div className="mt-8 border-l-2 border-primary pl-5">
+            <p className="eyebrow text-muted-foreground">
+              Evaluated product
+            </p>
 
-      {/* STRENGTHS & WATCHOUTS */}
+            <h2 className="mt-2 break-words font-display text-2xl">
+              {product.title}
+            </h2>
+          </div>
+        </header>
 
-      {hasScore && (
+        {/* OPPORTUNITY SCORE */}
+
+        <ScoreHero
+          prediction={prediction}
+          reasons={reasons}
+          onExplore={exploreInsights}
+        />
+
+        {/* RESULTS SUMMARY */}
+
+        <ScoreSummary
+          prediction={prediction}
+          reasons={reasons}
+        />
+
+        {/* PRODUCT FINDINGS */}
+
         <section
           id="opportunity-product-insights"
-          className="mt-10 scroll-mt-8"
+          className="mt-14 scroll-mt-8"
         >
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+          <div className="flex flex-wrap items-end justify-between gap-5">
             <SectionHeading
-              eyebrow="Your product insights"
-              title="What stands out about your product?"
-              description="Understand what's working in your favor and what may deserve a closer look."
+              number="02"
+              eyebrow="Product findings"
+              title="What should you know?"
+              description="Explore the characteristics helping your product's evaluation and the areas that may need more research."
             />
 
             <button
@@ -1633,156 +1417,96 @@ export default function Overview({
                   (value) => !value
                 )
               }
-              aria-expanded={showExplanations}
-              aria-controls="strengths-watchouts-content"
-              className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#D7E0EB] bg-white px-5 py-3 text-sm font-semibold text-[#193B66] shadow-sm hover:bg-[#F5F8FC]"
+              aria-expanded={
+                showExplanations
+              }
+              aria-controls="opportunity-insights-content"
+              className="inline-flex items-center gap-2 border border-ink bg-card px-5 py-3 text-sm font-semibold transition-colors hover:bg-[#F8EEE0]"
             >
               {showExplanations
-                ? "Hide insights"
-                : "Explore insights"}
+                ? "Hide findings"
+                : "Explore findings"}
 
               {showExplanations ? (
-                <ChevronUp size={18} />
+                <ChevronUp size={17} />
               ) : (
-                <ChevronDown size={18} />
+                <ChevronDown size={17} />
               )}
             </button>
           </div>
 
           {showExplanations && (
-            <div
-              id="strengths-watchouts-content"
-              className="mt-6"
-            >
-              {loadingReasons && (
-                <p
-                  role="status"
-                  className="rounded-2xl border border-[#D7E0EB] bg-white p-6 text-sm text-[#61738B]"
-                >
-                  Preparing your product insights...
-                </p>
-              )}
-
-              {reasonsError && !loadingReasons && (
-                <div
-                  role="alert"
-                  className="rounded-2xl border border-amber-200 bg-[#FFF7EE] p-6"
-                >
-                  <p className="text-sm text-[#97531B]">
-                    {reasonsError}
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={retryExplanations}
-                    className="mt-3 text-sm font-bold text-[#97531B] underline"
-                  >
-                    Try again
-                  </button>
-                </div>
-              )}
-
-              {reasons && !loadingReasons && (
-                <StrengthsAndWatchouts
-                  key={productName}
-                  reasons={reasons}
-                />
-              )}
-
-              <div className="mt-5 flex justify-end">
-                <Link
-                  to="/score-details"
-                  className="inline-flex items-center gap-2 rounded-xl border border-[#D7E0EB] bg-white px-5 py-3 text-sm font-semibold text-[#193B66] hover:bg-[#F5F8FC]"
-                >
-                  View detailed explanations
-                  <ArrowRight size={17} />
-                </Link>
-              </div>
+            <div id="opportunity-insights-content">
+              <ProductInsights
+                reasons={reasons}
+                loading={loadingReasons}
+                error={reasonsError}
+                onRetry={retryExplanations}
+              />
             </div>
           )}
         </section>
-      )}
 
-      {/* PRODUCT INFORMATION */}
+        {/* PRODUCT INFORMATION */}
 
-      {product && (
         <ProductInformation
           product={product}
+        />
+
+        {/* PRICE EXPLORATION */}
+
+        {numeric(product.price) !== null &&
+          Number(product.price) > 0 && (
+            <PriceScenarioPreview
+              key={JSON.stringify(product)}
+              product={product}
+            />
+          )}
+
+        {/* NEXT ANALYSIS */}
+
+        <section className="mt-14 flex flex-col items-start justify-between gap-5 border-t border-ink pt-8 sm:flex-row sm:items-center">
+          <div>
+            <p className="eyebrow text-primary">
+              Continue exploring
+            </p>
+
+            <h2 className="mt-3 font-display text-2xl">
+              Have another product in mind?
+            </h2>
+
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Compare other product ideas before
+              deciding where to invest your time
+              and resources.
+            </p>
+          </div>
+
+          <Link
+            to="/discover"
+            className={primaryButton}
+          >
+            Explore another product
+            <ArrowRight size={18} />
+          </Link>
+        </section>
+
+        {/* SCORE INFORMATION */}
+
+        <AboutScore
           prediction={prediction}
         />
-      )}
 
-      {/* PRICE SCENARIOS */}
+        <div className="mt-8 flex items-center gap-2 text-xs text-muted-foreground">
+          <CircleHelp size={15} />
 
-      {hasScore &&
-        product &&
-        numberOrNull(product.price) !== null &&
-        Number(product.price) > 0 && (
-          <PriceScenarioPreview
-            key={JSON.stringify(product)}
-            product={product}
-          />
-        )}
-
-      {/* EXISTING LEGACY LAUNCH RESULTS */}
-
-      {predictions && (
-        <section className="mt-10">
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-            <SectionHeading
-              eyebrow="Previously generated estimates"
-              title="Product launch estimates"
-              description="Compare saved launch estimates over 12 or 24 months."
-            />
-
-            <div
-              role="group"
-              aria-label="Launch forecast timeframe"
-              className="inline-flex w-fit gap-1 rounded-xl border border-[#D7E0EB] bg-white p-1 shadow-sm"
-            >
-              <button
-                type="button"
-                onClick={() => setLaunchTimeframe("12m")}
-                aria-pressed={isTwelveMonths}
-                className={`rounded-lg px-5 py-3 text-sm font-semibold ${
-                  isTwelveMonths
-                    ? "bg-[#FFD45A] text-[#25334A]"
-                    : "text-[#61738B] hover:bg-[#F5F8FC]"
-                }`}
-              >
-                12 Months
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setLaunchTimeframe("24m")}
-                aria-pressed={!isTwelveMonths}
-                className={`rounded-lg px-5 py-3 text-sm font-semibold ${
-                  !isTwelveMonths
-                    ? "bg-[#FFD45A] text-[#25334A]"
-                    : "text-[#61738B] hover:bg-[#F5F8FC]"
-                }`}
-              >
-                24 Months
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {launchMetrics.map(({ label, metric }) => (
-              <MetricCard
-                key={label}
-                label={label}
-                metric={metric}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* FLOATING HELP */}
-
-      <AboutScore prediction={prediction} />
+          <span>
+            Results are estimates intended to
+            support research, not guarantees
+            of business performance.
+          </span>
+        </div>
+      </div>
     </main>
   );
 }

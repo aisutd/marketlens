@@ -26,13 +26,9 @@ export default function Discover({
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [categoriesError, setCategoriesError] =
-    useState("");
+  const [categoriesError, setCategoriesError] = useState("");
 
-  // ========================================
-  // LOAD OPPORTUNITY SCORE CATEGORIES
-  // ========================================
-
+  // Load categories used by Opportunity Analysis.
   useEffect(() => {
     let active = true;
 
@@ -48,8 +44,7 @@ export default function Discover({
       } catch (err) {
         if (active) {
           setCategoriesError(
-            err.message ||
-              "Unable to load categories."
+            err.message || "Unable to load categories."
           );
         }
       }
@@ -62,10 +57,6 @@ export default function Discover({
     };
   }, []);
 
-  // ========================================
-  // HANDLE ALL THREE WORKFLOWS
-  // ========================================
-
   async function handleAnalyze(search) {
     if (loading) return;
 
@@ -73,9 +64,9 @@ export default function Discover({
     setError("");
 
     try {
-      // ====================================
-      // MODEL 1: OPPORTUNITY ANALYSIS
-      // ====================================
+      // ----------------------------------------
+      // PRODUCT OPPORTUNITY ANALYSIS
+      // ----------------------------------------
 
       if (search.method === "details") {
         const product = search.scoringProduct;
@@ -86,7 +77,6 @@ export default function Discover({
           );
         }
 
-        // Uses the Product Success API only.
         const score = await predictProduct(product);
 
         if (!score) {
@@ -95,74 +85,19 @@ export default function Discover({
           );
         }
 
-        // Store opportunity model results.
         setProduct(product);
         setScoredProduct(product);
         setPrediction(score);
-
-        // Clear previous sales forecasting results.
         setForecast(null);
 
         navigate("/product-overview");
-        return;
       }
 
-      // ====================================
-      // MODEL 2A: NEW PRODUCT LAUNCH
-      // ====================================
+      // ----------------------------------------
+      // EXISTING PRODUCT FORECASTING
+      // ----------------------------------------
 
-      if (search.method === "launch") {
-        const product = search.forecastingProduct;
-
-        if (!product) {
-          throw new Error(
-            "Valid launch product details are required."
-          );
-        }
-
-        // Uses the Sales Forecasting API only.
-        // POST /api/v1/predictions/launch
-        const launchResult = await predictLaunch(
-          product
-        );
-
-        if (
-          !launchResult ||
-          !launchResult.predictions
-        ) {
-          throw new Error(
-            "No launch forecast was returned."
-          );
-        }
-
-        // Clear opportunity scoring data.
-        // The two models remain independent.
-        setProduct(null);
-        setScoredProduct(null);
-        setPrediction(null);
-
-        // Store the launch forecast.
-        setForecast({
-          type: "launch",
-          productName: product.name,
-          productId: null,
-          launchInput: product,
-          launch: launchResult,
-          monthly: null,
-          yearly: null,
-          notCovered: false,
-        });
-
-        // Open dedicated launch results dashboard.
-        navigate("/launch-forecast-overview");
-        return;
-      }
-
-      // ====================================
-      // MODEL 2B: EXISTING PRODUCT FORECAST
-      // ====================================
-
-      if (search.method === "id") {
+      else if (search.method === "id") {
         const productId = String(
           search.productId ?? ""
         ).trim();
@@ -173,8 +108,6 @@ export default function Discover({
           );
         }
 
-        // Monthly and yearly forecasts are
-        // independently requested.
         const [monthlyResult, yearlyResult] =
           await Promise.allSettled([
             predictMonthly(productId),
@@ -191,22 +124,12 @@ export default function Discover({
             ? yearlyResult.value
             : null;
 
-        if (
-          monthly === null &&
-          yearly === null
-        ) {
-          const firstError =
-            monthlyResult.status === "rejected"
-              ? monthlyResult.reason
-              : yearlyResult.reason;
-
+        if (monthly === null && yearly === null) {
           throw new Error(
-            firstError?.message ||
-              "No forecasts were returned for this Product ID."
+            "No forecasts were returned for this Product ID."
           );
         }
 
-        // Clear opportunity scoring data.
         setProduct(null);
         setScoredProduct(null);
         setPrediction(null);
@@ -214,10 +137,6 @@ export default function Discover({
         setForecast({
           type: "existing",
           productId,
-          productName:
-            monthly?.product_name ||
-            yearly?.product_name ||
-            productId,
           launch: null,
           monthly,
           yearly,
@@ -225,12 +144,54 @@ export default function Discover({
         });
 
         navigate("/sales-forecast-overview");
-        return;
       }
 
-      throw new Error(
-        "Unknown analysis method."
-      );
+      // ----------------------------------------
+      // NEW PRODUCT LAUNCH FORECASTING
+      // ----------------------------------------
+
+      else if (search.method === "launch") {
+        const product = search.forecastingProduct;
+
+        if (!product) {
+          throw new Error(
+            "Valid launch product details are required."
+          );
+        }
+
+        const result = await predictLaunch(product);
+
+        if (!result || !result.predictions) {
+          throw new Error(
+            "No launch forecast was returned."
+          );
+        }
+
+        // Clear previous analysis results.
+        setProduct(null);
+        setScoredProduct(null);
+        setPrediction(null);
+
+        // Store the launch prediction separately
+        // from existing-product forecasts.
+        setForecast({
+          type: "launch",
+          productId: null,
+          product,
+          launch: result,
+          monthly: null,
+          yearly: null,
+          notCovered: false,
+        });
+
+        navigate("/sales-forecast-overview");
+      }
+
+      else {
+        throw new Error(
+          "Unknown analysis method."
+        );
+      }
     } catch (err) {
       setError(
         err.message ||
@@ -241,50 +202,66 @@ export default function Discover({
     }
   }
 
-  // ========================================
-  // PAGE LAYOUT
-  // ========================================
-
   return (
-    <main className="mx-auto max-w-[1440px] px-6 py-10 lg:px-24">
-      <div className="mb-8">
-        <p className="mb-3 text-xs font-medium text-[#61738B]">
-          Discover / Product search
-        </p>
+    <main className="min-h-screen bg-background text-foreground">
+      <div className="mx-auto max-w-6xl px-5 pb-24 pt-12 sm:px-8 lg:pt-16">
+        <header className="mb-12 border-b border-ink pb-10">
+          <p className="eyebrow flex items-center gap-3 text-muted-foreground">
+            <span className="text-primary">01</span>
+            <span className="h-px w-8 bg-current" />
+            Product Discovery
+          </p>
 
-        <h1 className="text-[32px] font-bold text-[#25334A]">
-          Discover products
-        </h1>
+          <h1 className="mt-6 max-w-3xl font-display text-5xl leading-[1.02] sm:text-6xl">
+            Discover your next{" "}
+            <em className="text-primary">
+              opportunity.
+            </em>
+          </h1>
 
-        <p className="mt-2 text-base text-[#61738B]">
-          Choose between independent Product
-          Opportunity Analysis and Sales Forecasting.
-        </p>
+          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+            Evaluate a product idea, explore sales
+            forecasts, and make more informed
+            decisions with MarketLens.
+          </p>
+        </header>
+
+        {categoriesError && (
+          <div
+            role="alert"
+            className="mb-6 border border-primary bg-card p-5 text-sm text-foreground shadow-offset-sm"
+          >
+            <p className="font-semibold">
+              Categories unavailable
+            </p>
+
+            <p className="mt-1 text-muted-foreground">
+              {categoriesError}
+            </p>
+          </div>
+        )}
+
+        {error && (
+          <div
+            role="alert"
+            className="mb-6 border border-destructive bg-card p-5 text-sm text-foreground shadow-offset-sm"
+          >
+            <p className="font-semibold">
+              Unable to complete analysis
+            </p>
+
+            <p className="mt-1 text-muted-foreground">
+              {error}
+            </p>
+          </div>
+        )}
+
+        <ProductSearch
+          categories={categories}
+          loading={loading}
+          onAnalyze={handleAnalyze}
+        />
       </div>
-
-      {categoriesError && (
-        <p
-          role="alert"
-          className="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800"
-        >
-          {categoriesError}
-        </p>
-      )}
-
-      {error && (
-        <p
-          role="alert"
-          className="mb-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700"
-        >
-          {error}
-        </p>
-      )}
-
-      <ProductSearch
-        categories={categories}
-        loading={loading}
-        onAnalyze={handleAnalyze}
-      />
     </main>
   );
 }

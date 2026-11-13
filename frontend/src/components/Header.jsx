@@ -1,23 +1,51 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import {
+  Bookmark,
+  ChevronDown,
+  LogOut,
+  Menu,
+  ScanSearch,
+  Search,
+  UserRound,
+} from "lucide-react";
 
-import MarketLensLogo from "./MarketLensLogo";
+// ========================================
+// SHARED MENU STYLES
+// ========================================
+
+const menuItemStyle =
+  "flex w-full items-center gap-3 rounded-md " +
+  "px-4 py-3 text-left text-sm font-medium " +
+  "transition-colors duration-150 " +
+  "focus-visible:outline-2 " +
+  "focus-visible:outline-offset-2 " +
+  "focus-visible:outline-primary";
+
+// ========================================
+// HEADER
+// ========================================
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [notice, setNotice] = useState("");
+
   const menuRef = useRef(null);
   const toggleRef = useRef(null);
 
   const location = useLocation();
 
-  const isDiscover = location.pathname === "/discover";
+  const isDiscover =
+    location.pathname === "/discover";
 
-  // Placeholder actions until these features
-  // are implemented.
-  function handlePlaceholder(feature) {
-    setNotice(`${feature} is coming soon.`);
+  // ========================================
+  // MENU ACTIONS
+  // ========================================
+
+  function closeMenu() {
+    setMenuOpen(false);
+    setNotice("");
   }
 
   function toggleMenu() {
@@ -25,229 +53,295 @@ export default function Header() {
     setNotice("");
   }
 
-  function closeMenu() {
-    setMenuOpen(false);
-    setNotice("");
+  function handlePlaceholder(feature) {
+    setNotice(`${feature} is coming soon.`);
   }
 
-  // Close on Escape (focus returns to the toggle) and on any
-  // press outside the menu and its toggle.
+  // ========================================
+  // KEYBOARD AND OUTSIDE CLICK
+  // ========================================
+
   useEffect(() => {
     if (!menuOpen) return;
 
     function handleKeyDown(event) {
       if (event.key === "Escape") {
-        closeMenu();
+        setMenuOpen(false);
+        setNotice("");
         toggleRef.current?.focus();
       }
     }
 
     function handlePointerDown(event) {
-      if (!menuRef.current?.contains(event.target)) {
-        closeMenu();
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target)
+      ) {
+        setMenuOpen(false);
+        setNotice("");
       }
     }
 
-    document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener(
+      "keydown",
+      handleKeyDown
+    );
+
+    document.addEventListener(
+      "pointerdown",
+      handlePointerDown
+    );
 
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener(
+        "keydown",
+        handleKeyDown
+      );
+
+      document.removeEventListener(
+        "pointerdown",
+        handlePointerDown
+      );
     };
   }, [menuOpen]);
 
-  const menuItemStyle =
-    "flex w-full items-center gap-3 rounded-lg px-4 py-3 " +
-    "text-left text-sm font-medium transition-colors";
+  // ========================================
+  // RENDER
+  // ========================================
 
   return (
-    <header className="relative z-30 bg-[#131E29] text-white">
-      <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-6 py-5 lg:px-24">
+    <header className="sticky top-0 z-40 border-b border-ink bg-background">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
 
-        {/* MARKETLENS BRAND */}
-        <MarketLensLogo
+        {/* ========================================
+            EXACT LANDING PAGE LOGO
+        ======================================== */}
+
+        <Link
           to="/"
-          tagline
           onClick={closeMenu}
-        />
+          aria-label="MarketLens home"
+          className="flex items-center gap-2"
+        >
+          <span className="flex size-8 items-center justify-center rounded-full border border-ink bg-primary text-primary-foreground">
+            <ScanSearch className="size-4" />
+          </span>
 
-        {/* NAVIGATION MENU */}
-        <div ref={menuRef} className="relative">
+          <span className="font-display text-xl">
+            MarketLens
+          </span>
+        </Link>
+
+        {/* ========================================
+            COLLAPSIBLE NAVIGATION
+        ======================================== */}
+
+        <div
+          ref={menuRef}
+          className="relative shrink-0"
+        >
+
+          {/* MENU BUTTON */}
+
           <button
             ref={toggleRef}
             type="button"
             onClick={toggleMenu}
             aria-expanded={menuOpen}
             aria-controls="marketlens-menu"
-            aria-label="Toggle navigation menu"
-            className="flex items-center gap-3 rounded-lg bg-[#F1F5FA] px-5 py-3 text-sm font-semibold text-[#263549] transition-colors hover:bg-white"
+            aria-label={
+              menuOpen
+                ? "Close navigation menu"
+                : "Open navigation menu"
+            }
+            aria-haspopup="true"
+            className={
+              "inline-flex items-center gap-2 " +
+              "rounded-md border border-ink bg-ink " +
+              "px-4 py-2 text-sm font-medium " +
+              "text-ink-foreground shadow-offset-sm " +
+              "transition-all duration-150 " +
+              "hover:translate-x-[1px] " +
+              "hover:translate-y-[1px] " +
+              "hover:shadow-none " +
+              "focus-visible:outline-2 " +
+              "focus-visible:outline-offset-4 " +
+              "focus-visible:outline-primary"
+            }
           >
-            Menu
+            <span>Menu</span>
 
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+            <Menu
+              size={17}
+              strokeWidth={1.8}
               aria-hidden="true"
-            >
-              <path d="M4 7h16" />
-              <path d="M4 12h16" />
-              <path d="M4 17h16" />
-            </svg>
+            />
 
-            <span
+            <ChevronDown
+              size={15}
+              strokeWidth={1.8}
               aria-hidden="true"
-              className={`text-xs transition-transform ${
-                menuOpen ? "rotate-180" : ""
-              }`}
-            >
-              ▾
-            </span>
+              className={
+                "transition-transform duration-150 " +
+                (menuOpen ? "rotate-180" : "")
+              }
+            />
           </button>
+
+          {/* ========================================
+              FLOATING DROPDOWN
+
+              Does not expand the header.
+              Does not shift the page content.
+          ======================================== */}
 
           {menuOpen && (
             <nav
               id="marketlens-menu"
               aria-label="Main navigation"
-              className="absolute right-0 top-[calc(100%+12px)] z-50 w-64 rounded-xl border border-[#D7E0EB] bg-white p-3 text-[#25334A] shadow-xl"
+              className={
+                "absolute right-0 top-full z-50 " +
+                "mt-3 w-[min(18rem,calc(100vw-2.5rem))] " +
+                "rounded-md border border-ink " +
+                "bg-card p-2 text-foreground " +
+                "shadow-offset"
+              }
             >
               <div className="space-y-1">
 
                 {/* DISCOVER PRODUCTS */}
+
                 <Link
                   to="/discover"
                   onClick={closeMenu}
                   aria-current={
-                    isDiscover ? "page" : undefined
-                  }
-                  className={`${menuItemStyle} ${
                     isDiscover
-                      ? "bg-[#FFFAE9] font-semibold text-[#0F172A]"
-                      : "text-[#475569] hover:bg-[#F3F6FA]"
-                  }`}
+                      ? "page"
+                      : undefined
+                  }
+                  className={
+                    menuItemStyle +
+                    " " +
+                    (isDiscover
+                      ? "bg-secondary font-semibold text-foreground"
+                      : "text-muted-foreground hover:bg-secondary")
+                  }
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="19"
-                    height="19"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                  <Search
+                    size={18}
+                    strokeWidth={1.8}
+                    className="shrink-0"
                     aria-hidden="true"
-                  >
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="m16 16 5 5" />
-                  </svg>
+                  />
 
-                  <span>Discover Products</span>
+                  <span>
+                    Discover Products
+                  </span>
+
+                  {isDiscover && (
+                    <span
+                      className="ml-auto size-1.5 rounded-full bg-primary"
+                      aria-hidden="true"
+                    />
+                  )}
                 </Link>
 
                 {/* SAVED PRODUCTS */}
+
                 <button
                   type="button"
                   onClick={() =>
                     handlePlaceholder("Saved Products")
                   }
-                  className={`${menuItemStyle} text-[#475569] hover:bg-[#F3F6FA]`}
+                  className={
+                    menuItemStyle +
+                    " text-muted-foreground hover:bg-secondary"
+                  }
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="19"
-                    height="19"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                  <Bookmark
+                    size={18}
+                    strokeWidth={1.8}
+                    className="shrink-0"
                     aria-hidden="true"
-                  >
-                    <path d="M6 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18l-6-4-6 4z" />
-                  </svg>
+                  />
 
-                  <span>Saved Products</span>
+                  <span>
+                    Saved Products
+                  </span>
                 </button>
 
                 {/* PROFILE */}
+
                 <button
                   type="button"
                   onClick={() =>
                     handlePlaceholder("Profile")
                   }
-                  className={`${menuItemStyle} text-[#475569] hover:bg-[#F3F6FA]`}
+                  className={
+                    menuItemStyle +
+                    " text-muted-foreground hover:bg-secondary"
+                  }
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="19"
-                    height="19"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                  <UserRound
+                    size={18}
+                    strokeWidth={1.8}
+                    className="shrink-0"
                     aria-hidden="true"
-                  >
-                    <circle cx="12" cy="8" r="4" />
-                    <path d="M4 21a8 8 0 0 1 16 0" />
-                  </svg>
+                  />
 
-                  <span>Profile</span>
+                  <span>
+                    Profile
+                  </span>
                 </button>
               </div>
 
-              {/* LOG OUT */}
-              <div className="mt-3 border-t border-[#E7ECF3] pt-3">
+              {/* ========================================
+                  LOG OUT
+              ======================================== */}
+
+              <div className="mt-2 border-t border-border pt-2">
                 <button
                   type="button"
                   onClick={() =>
                     handlePlaceholder("Log Out")
                   }
-                  className={`${menuItemStyle} text-[#B45353] hover:bg-red-50`}
+                  className={
+                    menuItemStyle +
+                    " text-[#B04435] hover:bg-secondary"
+                  }
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="19"
-                    height="19"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                  <LogOut
+                    size={18}
+                    strokeWidth={1.8}
+                    className="shrink-0"
                     aria-hidden="true"
-                  >
-                    <path d="M10 17l5-5-5-5" />
-                    <path d="M15 12H3" />
-                    <path d="M12 3h6a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3h-6" />
-                  </svg>
+                  />
 
-                  <span>Log Out</span>
+                  <span>
+                    Log Out
+                  </span>
                 </button>
               </div>
 
-              {/* PLACEHOLDER FEEDBACK */}
+              {/* ========================================
+                  PLACEHOLDER FEEDBACK
+              ======================================== */}
+
               {notice && (
                 <div
                   role="status"
                   aria-live="polite"
-                  className="mt-3 rounded-lg border border-[#D7E0EB] bg-[#F6F9FD] px-4 py-3"
+                  className={
+                    "mt-3 border-l-2 border-primary " +
+                    "bg-secondary px-4 py-3"
+                  }
                 >
-                  <p className="text-xs font-medium text-[#193B66]">
+                  <p className="text-xs leading-5 text-foreground">
                     {notice}
                   </p>
                 </div>
               )}
+
             </nav>
           )}
         </div>
