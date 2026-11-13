@@ -1,35 +1,23 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowLeft,
   ArrowRight,
-  ArrowUpRight,
-  ArrowDownRight,
-  BarChart3,
-  Calculator,
-  DollarSign,
-  Info,
-  Layers3,
-  Package,
+  CircleAlert,
   Play,
   RotateCcw,
   SlidersHorizontal,
-  Sparkles,
-  Target,
-  TrendingUp,
-  Wallet,
 } from "lucide-react";
 import {
-  ResponsiveContainer,
-  BarChart,
   Bar,
-  Cell,
+  BarChart,
   CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  Tooltip,
 } from "recharts";
 
 import {
@@ -38,16 +26,19 @@ import {
 } from "../services/marketlensApi";
 
 // ========================================
-// THEME AND CONSTANTS
+// DESIGN SYSTEM
 // ========================================
 
 const COLORS = {
-  navy: "#193B66",
-  gold: "#D4A529",
-  green: "#13795B",
+  orange: "#D95332",
+  green: "#47866B",
+  ink: "#1D150F",
+  muted: "#776C61",
+  cream: "#F8EEE0",
+  background: "#F8F3EA",
+  gray: "#AFA49A",
+  grid: "#E8DED2",
   red: "#B94747",
-  slate: "#8FA4BA",
-  muted: "#61738B",
 };
 
 const DEFAULT_COSTS = {
@@ -62,53 +53,73 @@ const COST_FIELDS = [
   {
     id: "manufacturing",
     label: "Manufacturing",
-    description: "Product production cost per unit",
-    color: "#193B66",
+    description: "Production cost per unit",
+    color: COLORS.orange,
   },
   {
     id: "shipping",
     label: "Shipping",
     description: "Shipping cost per unit",
-    color: "#8FA4BA",
+    color: "#D9A376",
   },
   {
     id: "amazonFees",
     label: "Amazon fees",
     description: "Marketplace fees per unit",
-    color: "#D4A529",
+    color: COLORS.green,
   },
   {
     id: "advertising",
     label: "Advertising",
     description: "Advertising cost per unit",
-    color: "#7C6BB1",
+    color: COLORS.ink,
   },
 ];
 
-const ENTER_TRANSITION = {
-  duration: 0.45,
-  ease: "easeOut",
-};
+const primaryButton =
+  "inline-flex items-center justify-center gap-3 " +
+  "border border-ink bg-primary px-6 py-3 " +
+  "text-sm font-semibold text-primary-foreground " +
+  "shadow-offset transition-transform duration-150 " +
+  "hover:translate-x-[2px] hover:translate-y-[2px] " +
+  "focus-visible:outline-2 focus-visible:outline-offset-4 " +
+  "focus-visible:outline-primary disabled:cursor-not-allowed " +
+  "disabled:opacity-50 disabled:hover:translate-x-0 " +
+  "disabled:hover:translate-y-0";
 
-const numberFormatter = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 0,
-});
+const secondaryButton =
+  "inline-flex items-center justify-center gap-2 " +
+  "border border-ink bg-card px-4 py-2.5 " +
+  "text-sm font-semibold text-foreground " +
+  "transition-colors hover:bg-[#F8EEE0] " +
+  "focus-visible:outline-2 focus-visible:outline-offset-4 " +
+  "focus-visible:outline-primary";
 
-const currencyFormatter = new Intl.NumberFormat("en-US", {
+// ========================================
+// FORMATTING
+// ========================================
+
+const moneyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
 
-// ========================================
-// FORMATTING AND CALCULATIONS
-// ========================================
+const numberFormatter = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 0,
+});
 
-function numberOrNull(value) {
+const compactFormatter = new Intl.NumberFormat("en-US", {
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
+
+function numeric(value) {
   if (
     value === "" ||
-    value == null ||
+    value === null ||
+    value === undefined ||
     !Number.isFinite(Number(value))
   ) {
     return null;
@@ -117,24 +128,24 @@ function numberOrNull(value) {
   return Number(value);
 }
 
-function money(value) {
-  const number = numberOrNull(value);
+function formatMoney(value) {
+  const number = numeric(value);
 
   return number === null
     ? "—"
-    : currencyFormatter.format(number);
+    : moneyFormatter.format(number);
 }
 
-function numberText(value) {
-  const number = numberOrNull(value);
+function formatNumber(value) {
+  const number = numeric(value);
 
   return number === null
     ? "—"
     : numberFormatter.format(number);
 }
 
-function percent(value) {
-  const number = numberOrNull(value);
+function formatPercent(value) {
+  const number = numeric(value);
 
   return number === null
     ? "—"
@@ -142,22 +153,38 @@ function percent(value) {
 }
 
 function signedMoney(value) {
-  const number = numberOrNull(value);
+  const number = numeric(value);
 
   if (number === null) return "—";
 
-  return `${number > 0 ? "+" : number < 0 ? "−" : ""}${money(
-    Math.abs(number)
-  )}`;
+  return `${
+    number > 0 ? "+" : number < 0 ? "−" : ""
+  }${formatMoney(Math.abs(number))}`;
 }
 
 function signedPercent(value) {
-  const number = numberOrNull(value);
+  const number = numeric(value);
 
   if (number === null) return "—";
 
-  return `${number > 0 ? "+" : ""}${number.toFixed(1)}%`;
+  return `${
+    number > 0 ? "+" : ""
+  }${number.toFixed(1)}%`;
 }
+
+function validSuggestedPrice(value) {
+  const number = numeric(value);
+
+  return number !== null &&
+    number > 0 &&
+    number <= 100000
+    ? number
+    : null;
+}
+
+// ========================================
+// FINANCIAL CALCULATIONS
+// ========================================
 
 function calculateFinancials(values) {
   const unitCost =
@@ -171,7 +198,9 @@ function calculateFinancials(values) {
   const profit = revenue - totalCosts;
 
   const margin =
-    revenue > 0 ? (profit / revenue) * 100 : 0;
+    revenue > 0
+      ? (profit / revenue) * 100
+      : 0;
 
   const roi =
     totalCosts > 0
@@ -189,213 +218,149 @@ function calculateFinancials(values) {
   };
 }
 
-function calculateChange(current, baseline) {
-  if (
-    !Number.isFinite(current) ||
-    !Number.isFinite(baseline)
-  ) {
-    return null;
-  }
-
-  return current - baseline;
-}
-
-function validSuggestedPrice(suggestedPrice) {
-  const value = numberOrNull(suggestedPrice);
-
-  return value !== null &&
-    value > 0 &&
-    value <= 100000
-    ? value
-    : null;
-}
-
 // ========================================
-// SHARED SECTION HEADING
+// SECTION HEADING
 // ========================================
 
 function SectionHeading({
+  number,
   eyebrow,
   title,
   description,
-  action,
 }) {
   return (
-    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-      <div>
-        {eyebrow && (
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
-            {eyebrow}
-          </p>
-        )}
+    <div>
+      <p className="eyebrow flex items-center gap-3 text-muted-foreground">
+        <span className="text-primary">
+          {number}
+        </span>
 
-        <h2 className="text-xl font-bold tracking-tight text-[#25334A] sm:text-2xl">
-          {title}
-        </h2>
+        <span className="h-px w-8 bg-current" />
 
-        {description && (
-          <p className="mt-2 text-sm leading-6 text-[#61738B]">
-            {description}
-          </p>
-        )}
-      </div>
+        {eyebrow}
+      </p>
 
-      {action}
+      <h2 className="mt-4 font-display text-3xl leading-tight sm:text-4xl">
+        {title}
+      </h2>
+
+      {description && (
+        <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground">
+          {description}
+        </p>
+      )}
     </div>
   );
 }
 
 // ========================================
-// ANIMATED METRIC CARD
+// SHARED WORKSPACE HEADER
 // ========================================
 
-function MetricCard({
-  label,
-  value,
+function WorkspaceHeader({
+  eyebrow,
+  title,
   description,
   icon: Icon,
-  variant = "navy",
-  delay = 0,
+  action,
 }) {
-  const variants = {
-    navy: {
-      background:
-        "linear-gradient(135deg, #193B66, #275788)",
-      text: "text-white",
-      muted: "text-[#DCE8F5]",
-      icon: "bg-white/15 text-[#FFD45A]",
-    },
-    gold: {
-      background:
-        "linear-gradient(135deg, #F6C94D, #F9DD86)",
-      text: "text-[#25334A]",
-      muted: "text-[#705A31]",
-      icon: "bg-white/40 text-[#705211]",
-    },
-    green: {
-      background:
-        "linear-gradient(135deg, #11684F, #219674)",
-      text: "text-white",
-      muted: "text-[#D6F3E9]",
-      icon: "bg-white/15 text-[#E1FFF2]",
-    },
-  };
-
-  const style = variants[variant];
-
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 22 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        ...ENTER_TRANSITION,
-        delay,
-      }}
-      whileHover={{ y: -5 }}
-      className="relative flex min-h-[210px] min-w-0 flex-col justify-between overflow-hidden rounded-2xl p-6 shadow-md"
-      style={{ background: style.background }}
-    >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-14 -top-14 h-44 w-44 rounded-full border-[30px] border-white/10"
-      />
+    <div className="flex min-h-[118px] flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
+      <div className="min-w-0 flex-1">
+        {eyebrow && (
+          <p className="eyebrow text-primary">
+            {eyebrow}
+          </p>
+        )}
 
-      <div className="relative z-10 flex items-start justify-between gap-3">
-        <p className={`text-sm font-semibold ${style.muted}`}>
-          {label}
-        </p>
+        <div className="mt-2 flex items-center gap-3">
+          {Icon && (
+            <Icon
+              size={19}
+              color={COLORS.orange}
+              className="shrink-0"
+              aria-hidden="true"
+            />
+          )}
 
-        <div
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${style.icon}`}
-        >
-          <Icon size={21} aria-hidden="true" />
+          <h3 className="font-display text-2xl leading-tight">
+            {title}
+          </h3>
         </div>
-      </div>
 
-      <div className="relative z-10 mt-8">
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.p
-            key={String(value)}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.16 }}
-            aria-live="polite"
-            className={`break-words text-[clamp(1.8rem,3vw,2.6rem)] font-bold tracking-tight ${style.text}`}
-          >
-            {value}
-          </motion.p>
-        </AnimatePresence>
-
-        <p className={`mt-3 text-sm ${style.muted}`}>
+        <p className="mt-2 text-xs leading-6 text-muted-foreground">
           {description}
         </p>
       </div>
-    </motion.article>
+
+      {action && (
+        <div className="shrink-0">
+          {action}
+        </div>
+      )}
+    </div>
   );
 }
 
 // ========================================
-// SYNCHRONIZED SLIDER + INPUT
+// SCENARIO CONTROL
 // ========================================
 
 function ScenarioControl({
+  id,
   label,
   description,
   value,
   onChange,
-  min = 0,
-  max = 100,
-  step = 0.01,
+  min,
+  max,
+  step,
   prefix = "",
-  suffix = "",
-  icon: Icon,
 }) {
-  const numeric = numberOrNull(value);
+  const parsed = numeric(value);
 
   const sliderValue =
-    numeric === null
+    parsed === null
       ? min
-      : Math.max(min, Math.min(max, numeric));
+      : Math.max(min, Math.min(max, parsed));
 
   const valid =
-    numeric !== null &&
-    numeric >= min &&
-    (numeric <= 100000);
+    parsed !== null &&
+    parsed >= min &&
+    parsed <= 100000 &&
+    (step !== 1 || Number.isSafeInteger(parsed));
+
+  const maximumLabel =
+    step === 1
+      ? formatNumber(max)
+      : Number(max).toFixed(2);
 
   return (
-    <div className="rounded-2xl border border-[#E4EBF3] bg-white p-4 sm:p-5">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div className="flex min-w-0 items-center gap-3">
-          {Icon && (
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EDF3FA] text-[#193B66]">
-              <Icon size={19} aria-hidden="true" />
-            </div>
-          )}
+    <div className="flex min-w-0 flex-col border border-border bg-card p-4">
+      <div className="grid min-h-[64px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+        <div className="min-w-0 self-center">
+          <label
+            htmlFor={id}
+            className="block text-sm font-semibold leading-5"
+          >
+            {label}
+          </label>
 
-          <div className="min-w-0">
-            <label className="text-sm font-bold text-[#25334A]">
-              {label}
-            </label>
-
-            {description && (
-              <p className="mt-1 text-xs leading-5 text-[#61738B]">
-                {description}
-              </p>
-            )}
-          </div>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            {description}
+          </p>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center justify-end gap-1.5">
           {prefix && (
-            <span className="text-sm font-semibold text-[#61738B]">
+            <span className="text-xs text-muted-foreground">
               {prefix}
             </span>
           )}
 
           <input
+            id={id}
             type="number"
-            aria-label={label}
             value={value}
             min={min}
             max={100000}
@@ -403,108 +368,89 @@ function ScenarioControl({
             onChange={(event) =>
               onChange(event.target.value)
             }
-            className={`h-11 w-32 rounded-xl border bg-white px-3 text-right text-sm font-bold text-[#25334A] outline-none focus:ring-2 focus:ring-[#193B66]/15 ${
-              valid
-                ? "border-[#D7E0EB] focus:border-[#193B66]"
-                : "border-red-400 focus:border-red-500"
-            }`}
+            aria-invalid={!valid}
+            className={
+              "h-10 w-24 border bg-background px-2 " +
+              "text-right font-mono text-sm " +
+              "focus:outline-2 focus:outline-primary " +
+              (valid
+                ? "border-ink"
+                : "border-red-600")
+            }
           />
-
-          {suffix && (
-            <span className="text-xs font-medium text-[#61738B]">
-              {suffix}
-            </span>
-          )}
         </div>
       </div>
 
-      <input
-        type="range"
-        aria-label={`${label} slider`}
-        min={min}
-        max={max}
-        step={step}
-        value={sliderValue}
-        onChange={(event) =>
-          onChange(event.target.value)
-        }
-        disabled={max <= min}
-        className="mt-5 w-full cursor-pointer accent-[#193B66] disabled:cursor-not-allowed"
-      />
+      <div className="mt-4">
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={sliderValue}
+          disabled={max <= min}
+          aria-label={`${label} slider`}
+          onChange={(event) =>
+            onChange(event.target.value)
+          }
+          className="block w-full cursor-pointer accent-[#D95332] disabled:cursor-not-allowed"
+        />
 
-      <div className="mt-2 flex justify-between text-xs text-[#8FA0B4]">
-        <span>
-          {prefix}
-          {numberText(min)}
-        </span>
+        <div className="mt-1 flex justify-between gap-3 font-mono text-[10px] text-muted-foreground">
+          <span>
+            {prefix}
+            {step === 1
+              ? formatNumber(min)
+              : Number(min).toFixed(2)}
+          </span>
 
-        <span>
-          {prefix}
-          {numberText(max)}
-        </span>
+          <span>
+            {prefix}
+            {maximumLabel}
+          </span>
+        </div>
       </div>
     </div>
   );
 }
 
 // ========================================
-// FINANCIAL DETAIL ROW
+// CHART TOOLTIP
 // ========================================
 
-function DetailRow({
-  label,
-  value,
-  highlight = false,
-  negative = false,
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4 border-b border-[#EDF1F6] py-4 last:border-b-0">
-      <span className="text-sm text-[#61738B]">
-        {label}
-      </span>
-
-      <span
-        className={`text-right text-base font-bold ${
-          negative
-            ? "text-red-700"
-            : highlight
-              ? "text-[#13795B]"
-              : "text-[#25334A]"
-        }`}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
-
-// ========================================
-// RECHARTS TOOLTIP
-// ========================================
-
-function FinancialTooltip({
+function ChartTooltip({
   active,
   payload,
+  unit = "USD",
 }) {
-  if (!active || !payload?.length) return null;
+  if (!active || !payload?.length) {
+    return null;
+  }
 
-  const entry = payload[0];
+  const item = payload[0];
+
+  const display =
+    unit === "USD"
+      ? formatMoney(item.value)
+      : unit === "%"
+        ? formatPercent(item.value)
+        : formatNumber(item.value);
 
   return (
-    <div className="rounded-xl border border-[#D7E0EB] bg-white px-4 py-3 shadow-xl">
-      <p className="text-sm font-semibold text-[#25334A]">
-        {entry.payload?.name || entry.name}
+    <div className="border border-ink bg-card px-4 py-3 shadow-offset">
+      <p className="text-sm font-semibold">
+        {item.payload?.name || item.name}
       </p>
 
-      <p className="mt-1 text-sm text-[#193B66]">
-        {money(entry.value)}
+      <p className="mt-2 font-mono text-sm">
+        {display}
       </p>
     </div>
   );
 }
 
 // ========================================
-// REVENUE VS. COSTS
+// REVENUE VS COSTS CHART
 // ========================================
 
 function RevenueCostChart({ financials }) {
@@ -512,37 +458,38 @@ function RevenueCostChart({ financials }) {
     {
       name: "Revenue",
       value: financials.revenue,
-      color: COLORS.gold,
+      color: COLORS.orange,
     },
     {
-      name: "Total costs",
+      name: "Costs",
       value: financials.totalCosts,
-      color: COLORS.navy,
+      color: COLORS.green,
     },
   ];
 
   return (
     <div
-      className="h-[275px] w-full"
+      className="h-[190px] w-full"
       role="img"
-      aria-label={`Revenue ${money(
+      aria-label={`Scenario revenue ${formatMoney(
         financials.revenue
-      )}; total costs ${money(financials.totalCosts)}`}
+      )}. Variable costs ${formatMoney(
+        financials.totalCosts
+      )}.`}
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
           margin={{
-            top: 14,
-            right: 15,
+            top: 12,
+            right: 8,
             bottom: 0,
             left: 0,
           }}
         >
           <CartesianGrid
-            strokeDasharray="3 3"
             vertical={false}
-            stroke="#EDF1F5"
+            stroke={COLORS.grid}
           />
 
           <XAxis
@@ -551,43 +498,223 @@ function RevenueCostChart({ financials }) {
             tickLine={false}
             tick={{
               fill: COLORS.muted,
-              fontSize: 12,
+              fontSize: 11,
             }}
           />
 
           <YAxis
+            domain={[0, "auto"]}
             axisLine={false}
             tickLine={false}
-            width={70}
+            width={58}
             tick={{
               fill: COLORS.muted,
-              fontSize: 11,
+              fontSize: 10,
             }}
             tickFormatter={(value) =>
-              value >= 1000
-                ? `$${(value / 1000).toFixed(1)}k`
-                : `$${value}`
+              `$${compactFormatter.format(value)}`
             }
           />
 
-          <Tooltip content={<FinancialTooltip />} />
+          <Tooltip
+            content={<ChartTooltip />}
+            cursor={{ fill: COLORS.cream }}
+          />
 
           <Bar
             dataKey="value"
-            radius={[8, 8, 0, 0]}
-            maxBarSize={95}
-            isAnimationActive
-            animationDuration={350}
+            maxBarSize={64}
           >
-            {data.map((entry) => (
+            {data.map((item) => (
               <Cell
-                key={entry.name}
-                fill={entry.color}
+                key={item.name}
+                fill={item.color}
               />
             ))}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+    </div>
+  );
+}
+
+// ========================================
+// LIVE METRIC
+// ========================================
+
+function LiveMetric({
+  label,
+  value,
+  featured = false,
+  negative = false,
+}) {
+  return (
+    <div
+      className={
+        "flex min-h-[102px] min-w-0 flex-col " +
+        "justify-between border border-border p-3 " +
+        (featured
+          ? "bg-[#F8EEE0]"
+          : "bg-background")
+      }
+    >
+      <p className="text-[11px] leading-4 text-muted-foreground">
+        {label}
+      </p>
+
+      <p
+        className={
+          "mt-3 break-words font-display text-xl leading-tight sm:text-2xl " +
+          (negative
+            ? "text-[#B94747]"
+            : "text-foreground")
+        }
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+// ========================================
+// STICKY LIVE RESULTS
+// ========================================
+
+function LiveResults({
+  financials,
+  isValid,
+  units,
+  price,
+}) {
+  return (
+    <aside className="min-w-0 lg:sticky lg:top-24">
+      <div className="border border-ink bg-card p-5 shadow-offset-sm sm:p-6">
+        <WorkspaceHeader
+          eyebrow="Live results"
+          title="Your scenario."
+          description="Recalculates as you adjust the inputs."
+        />
+
+        <div
+          className="mt-5 grid grid-cols-2 gap-3"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <LiveMetric
+            label="Monthly revenue"
+            value={
+              isValid
+                ? formatMoney(financials.revenue)
+                : "—"
+            }
+          />
+
+          <LiveMetric
+            label="Variable costs"
+            value={
+              isValid
+                ? formatMoney(financials.totalCosts)
+                : "—"
+            }
+          />
+
+          <LiveMetric
+            label="Profit after variable costs"
+            value={
+              isValid
+                ? formatMoney(financials.profit)
+                : "—"
+            }
+            featured
+            negative={
+              isValid && financials.profit < 0
+            }
+          />
+
+          <LiveMetric
+            label="Profit margin"
+            value={
+              isValid
+                ? formatPercent(financials.margin)
+                : "—"
+            }
+          />
+        </div>
+
+        {isValid ? (
+          <>
+            <div className="mt-4 border-t border-border pt-3">
+              <RevenueCostChart
+                financials={financials}
+              />
+            </div>
+
+            <div className="mt-3 flex flex-wrap justify-between gap-2 border-t border-border pt-3 text-xs text-muted-foreground">
+              <span>
+                Price: {formatMoney(price)}
+              </span>
+
+              <span>
+                Units: {formatNumber(units)}
+              </span>
+            </div>
+          </>
+        ) : (
+          <div
+            role="status"
+            className="mt-4 border-l-2 border-red-600 bg-red-50 p-4 text-xs leading-6 text-red-700"
+          >
+            Enter valid assumptions to calculate
+            the financial results.
+          </div>
+        )}
+      </div>
+    </aside>
+  );
+}
+
+// ========================================
+// MOBILE LIVE RESULTS
+// ========================================
+
+function MobileLiveSummary({
+  financials,
+  isValid,
+}) {
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-ink bg-[#F8F3EA] px-4 py-3 shadow-[0_-6px_20px_rgba(29,21,15,0.10)] lg:hidden">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Monthly profit after variable costs
+          </p>
+
+          <p
+            className={
+              "mt-1 font-display text-xl " +
+              (isValid && financials.profit < 0
+                ? "text-[#B94747]"
+                : "text-foreground")
+            }
+          >
+            {isValid
+              ? formatMoney(financials.profit)
+              : "—"}
+          </p>
+        </div>
+
+        <div className="text-right">
+          <p className="text-[10px] text-muted-foreground">
+            Margin
+          </p>
+
+          <p className="mt-1 font-display text-lg">
+            {isValid
+              ? formatPercent(financials.margin)
+              : "—"}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -599,7 +726,8 @@ function RevenueCostChart({ financials }) {
 function CostBreakdown({ values }) {
   const items = COST_FIELDS.map((field) => ({
     ...field,
-    amount: values[field.id] * values.units,
+    amount:
+      values[field.id] * values.units,
   }));
 
   const total = items.reduce(
@@ -607,83 +735,39 @@ function CostBreakdown({ values }) {
     0
   );
 
-  const chartData = [
-    Object.fromEntries([
-      ["name", "Costs"],
-      ...items.map((item) => [
-        item.id,
-        item.amount,
-      ]),
-    ]),
-  ];
-
   return (
-    <section className="rounded-2xl border border-[#D7E0EB] bg-white p-5 shadow-sm sm:p-6">
-      <div className="flex items-center gap-3">
-        <div className="rounded-xl bg-[#EDF3FA] p-3 text-[#193B66]">
-          <Layers3 size={21} />
-        </div>
+    <div className="flex h-full min-w-0 flex-col border border-ink bg-card p-6 sm:p-8">
+      <h3 className="font-display text-2xl">
+        Where do the variable costs go?
+      </h3>
 
-        <div>
-          <h3 className="text-lg font-bold text-[#25334A]">
-            Where your costs go
-          </h3>
-          <p className="mt-1 text-sm text-[#61738B]">
-            Estimated monthly operating costs
-          </p>
-        </div>
-      </div>
+      <p className="mt-3 text-sm leading-7 text-muted-foreground">
+        Breakdown of your monthly costs.
+      </p>
 
       <div
-        className="mt-6 h-[100px] w-full"
+        className="mt-6 flex h-7 w-full overflow-hidden border border-ink bg-background"
         role="img"
         aria-label={items
           .map(
             (item) =>
-              `${item.label} ${money(item.amount)}`
+              `${item.label}: ${formatMoney(item.amount)}`
           )
-          .join(", ")}
+          .join(". ")}
       >
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            layout="vertical"
-            data={chartData}
-            margin={{
-              top: 10,
-              right: 0,
-              bottom: 10,
-              left: 0,
-            }}
-          >
-            {/* Fixed to the total so the stacked bar fills
-                the width; an auto domain rounds up (8,750
-                becomes 10,000) and leaves a gap. */}
-            <XAxis
-              type="number"
-              domain={[0, total || 1]}
-              hide
+        {total > 0 &&
+          items.map((item) => (
+            <div
+              key={item.id}
+              style={{
+                width: `${(item.amount / total) * 100}%`,
+                backgroundColor: item.color,
+              }}
             />
-            <YAxis
-              type="category"
-              dataKey="name"
-              hide
-            />
-
-            {items.map((item) => (
-              <Bar
-                key={item.id}
-                dataKey={item.id}
-                stackId="costs"
-                fill={item.color}
-                isAnimationActive
-                animationDuration={350}
-              />
-            ))}
-          </BarChart>
-        </ResponsiveContainer>
+          ))}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="mt-5 grid flex-1 auto-rows-fr gap-3 sm:grid-cols-2">
         {items.map((item) => {
           const share =
             total > 0
@@ -693,124 +777,211 @@ function CostBreakdown({ values }) {
           return (
             <div
               key={item.id}
-              className="rounded-xl bg-[#F6F9FD] p-4"
+              className="flex min-w-0 flex-col border border-border bg-background p-4"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex min-h-[40px] items-start gap-2">
                 <span
-                  className="h-3 w-3 rounded-full"
+                  className="mt-1 h-3 w-3 shrink-0"
                   style={{
                     backgroundColor: item.color,
                   }}
                 />
-                <p className="text-xs font-medium text-[#61738B]">
+
+                <span className="text-xs leading-5 text-muted-foreground">
                   {item.label}
-                </p>
+                </span>
               </div>
 
-              <p className="mt-3 text-lg font-bold text-[#25334A]">
-                {money(item.amount)}
-              </p>
+              <div className="mt-auto pt-3">
+                <p className="break-words font-display text-xl leading-tight">
+                  {formatMoney(item.amount)}
+                </p>
 
-              <p className="mt-1 text-xs text-[#61738B]">
-                {share.toFixed(1)}% of costs
-              </p>
+                <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                  {share.toFixed(1)}% of costs
+                </p>
+              </div>
             </div>
           );
         })}
       </div>
-    </section>
+    </div>
   );
 }
 
 // ========================================
-// ORIGINAL VS. SCENARIO COMPARISON
+// FINANCIAL DETAILS
 // ========================================
 
-function ComparisonCard({
+function DetailRow({
   label,
-  original,
-  current,
-  format = money,
+  value,
+  negative = false,
 }) {
-  const difference = calculateChange(
-    current,
-    original
+  return (
+    <div className="flex items-start justify-between gap-4 border-b border-border py-4 last:border-b-0">
+      <span className="text-sm text-muted-foreground">
+        {label}
+      </span>
+
+      <span
+        className={
+          "text-right text-sm font-semibold " +
+          (negative
+            ? "text-[#B94747]"
+            : "text-foreground")
+        }
+      >
+        {value}
+      </span>
+    </div>
   );
+}
 
-  const isPositive =
-    difference !== null && difference > 0;
+// ========================================
+// SCENARIO COMPARISON
+// ========================================
 
-  const isNegative =
-    difference !== null && difference < 0;
+function ScenarioComparison({
+  baseline,
+  financials,
+  originalPrice,
+  currentPrice,
+}) {
+  if (!baseline || !financials) {
+    return (
+      <div className="mt-6 border border-ink bg-card p-6">
+        <p className="text-sm text-muted-foreground">
+          An original product price and valid
+          assumptions are required for comparison.
+        </p>
+      </div>
+    );
+  }
+
+  const metrics = [
+    {
+      label: "Monthly revenue",
+      original: baseline.revenue,
+      current: financials.revenue,
+      format: formatMoney,
+    },
+    {
+      label: "Monthly contribution",
+      original: baseline.profit,
+      current: financials.profit,
+      format: formatMoney,
+    },
+    {
+      label: "Contribution margin",
+      original: baseline.margin,
+      current: financials.margin,
+      format: formatPercent,
+    },
+  ];
+
+  const priceChange =
+    originalPrice > 0
+      ? ((currentPrice / originalPrice) - 1) * 100
+      : null;
 
   return (
-    <div className="rounded-2xl border border-[#D7E0EB] bg-white p-5 shadow-sm">
-      <p className="text-sm font-bold text-[#25334A]">
-        {label}
-      </p>
+    <>
+      <div className="mt-6 grid gap-5 lg:grid-cols-3">
+        {metrics.map((item, index) => {
+          const difference =
+            item.current - item.original;
 
-      <div className="mt-5 grid grid-cols-2 gap-3">
-        <div className="rounded-xl bg-[#F5F8FC] p-3">
-          <p className="text-xs text-[#61738B]">
-            Original price
+          return (
+            <article
+              key={item.label}
+              className={
+                "border border-ink p-5 " +
+                (index === 0
+                  ? "bg-[#F8EEE0]"
+                  : "bg-card")
+              }
+            >
+              <p className="eyebrow text-muted-foreground">
+                {item.label}
+              </p>
+
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    Original
+                  </p>
+
+                  <p className="mt-2 break-words font-display text-xl">
+                    {item.format(item.original)}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    Adjusted
+                  </p>
+
+                  <p className="mt-2 break-words font-display text-xl">
+                    {item.format(item.current)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 border-t border-border pt-4">
+                <p
+                  className="text-sm font-semibold"
+                  style={{
+                    color:
+                      difference > 0
+                        ? COLORS.green
+                        : difference < 0
+                          ? COLORS.red
+                          : COLORS.muted,
+                  }}
+                >
+                  {item.label === "Contribution margin"
+                    ? signedPercent(difference)
+                    : signedMoney(difference)}
+                </p>
+
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Difference
+                </p>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-5 border border-ink bg-[#F8EEE0] p-5">
+        <div>
+          <p className="eyebrow text-muted-foreground">
+            Price change
           </p>
 
-          <p className="mt-2 break-words text-lg font-bold text-[#25334A]">
-            {format(original)}
+          <p className="mt-2 font-display text-3xl">
+            {signedPercent(priceChange)}
           </p>
         </div>
 
-        <div className="rounded-xl bg-[#EDF7F2] p-3">
-          <p className="text-xs text-[#61738B]">
-            Scenario
+        <div className="text-sm leading-7">
+          <p>
+            Original:{" "}
+            <strong>
+              {formatMoney(originalPrice)}
+            </strong>
           </p>
 
-          <p className="mt-2 break-words text-lg font-bold text-[#13795B]">
-            {format(current)}
+          <p>
+            Adjusted:{" "}
+            <strong>
+              {formatMoney(currentPrice)}
+            </strong>
           </p>
         </div>
       </div>
-
-      <div className="mt-4 flex items-center gap-2">
-        {isPositive ? (
-          <ArrowUpRight
-            size={18}
-            className="text-[#13795B]"
-          />
-        ) : isNegative ? (
-          <ArrowDownRight
-            size={18}
-            className="text-[#B94747]"
-          />
-        ) : (
-          <span className="text-sm text-[#61738B]">
-            —
-          </span>
-        )}
-
-        <p
-          className={`text-sm font-semibold ${
-            isPositive
-              ? "text-[#13795B]"
-              : isNegative
-                ? "text-[#B94747]"
-                : "text-[#61738B]"
-          }`}
-        >
-          {difference === null
-            ? "Not comparable"
-            : format === money
-              ? signedMoney(difference)
-              : `${difference > 0 ? "+" : ""}${format(
-                  difference
-                )}`}
-        </p>
-
-        <span className="text-xs text-[#61738B]">
-          difference
-        </span>
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -828,24 +999,24 @@ function AIPriceSimulation({
   simulations,
   onRun,
 }) {
-  const baselineScore = numberOrNull(
+  const initialScore = numeric(
     prediction?.opportunity_score
   );
 
-  const newScore = numberOrNull(
+  const updatedScore = numeric(
     rescore?.opportunity_score
   );
 
-  const scoreChange = numberOrNull(
+  const scoreChange = numeric(
     rescore?.score_change
   );
 
   const chartData = Array.isArray(simulations)
     ? simulations
         .map((item) => ({
-          price: numberOrNull(item.price),
-          score: numberOrNull(item.opportunity_score),
-          probability: numberOrNull(item.probability),
+          price: numeric(item.price),
+          score: numeric(item.opportunity_score),
+          probability: numeric(item.probability),
         }))
         .filter(
           (item) =>
@@ -855,280 +1026,276 @@ function AIPriceSimulation({
     : [];
 
   return (
-    <section className="mt-10 rounded-2xl border border-[#D7E0EB] bg-white p-6 shadow-sm sm:p-7">
-      <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
-        <div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
-            Model-powered analysis
-          </p>
+    <section className="mt-14">
+      <SectionHeading
+        number="04"
+        eyebrow="Model analysis"
+        title="How might price affect the opportunity score?"
+        description="Compare opportunity scores for nearby selling prices."
+      />
 
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-[#FFF6DD] p-3 text-[#8B6B1E]">
-              <Sparkles size={22} />
-            </div>
+      <div className="mt-7 border border-ink bg-card p-6 sm:p-8">
+        <div className="flex flex-wrap items-start justify-between gap-5">
+          <div className="max-w-xl">
+            <p className="font-semibold">
+              Compare nearby prices
+            </p>
 
-            <h2 className="text-xl font-bold text-[#25334A] sm:text-2xl">
-              AI price simulation
-            </h2>
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
+              Evaluate prices approximately 10%
+              below, equal to, and 10% above your
+              selected scenario price.
+            </p>
           </div>
 
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#61738B]">
-            Compare opportunity scores at three selling
-            prices using the product scoring backend.
-            Financial calculations above remain separate
-            from these model results.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          disabled={!isValid || loading || !product || !prediction}
-          onClick={onRun}
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#FFD45A] px-6 py-3 text-sm font-bold text-[#25334A] transition hover:bg-[#F5C842] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {loading ? (
-            <>
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#25334A]/30 border-t-[#25334A]" />
-              Simulating...
-            </>
-          ) : (
-            <>
-              <Play size={17} fill="currentColor" />
-              Run simulation
-            </>
-          )}
-        </button>
-      </div>
-
-      <div className="mt-6 flex items-start gap-3 rounded-xl bg-[#F5F8FC] p-4">
-        <Info
-          size={19}
-          className="mt-0.5 shrink-0 text-[#193B66]"
-        />
-        <p className="text-xs leading-6 text-[#61738B]">
-          The model evaluates three prices: 10% below,
-          equal to, and 10% above your selected scenario
-          price, subject to the API's valid price limits.
-          Running the simulation does not automatically
-          alter your financial assumptions.
-        </p>
-      </div>
-
-      {error && (
-        <div
-          role="alert"
-          className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
-        >
-          {error}
-        </div>
-      )}
-
-      <AnimatePresence mode="wait">
-        {rescore && (
-          <motion.div
-            key="rescore"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="mt-6 grid gap-4 md:grid-cols-3"
+          <button
+            type="button"
+            disabled={
+              !isValid ||
+              loading ||
+              !product ||
+              !prediction
+            }
+            onClick={onRun}
+            className={primaryButton}
           >
-            <div className="rounded-2xl bg-[#F1F6FC] p-5">
-              <p className="text-sm text-[#61738B]">
-                Original score
-              </p>
+            {loading ? (
+              "Simulating..."
+            ) : (
+              <>
+                <Play size={17} />
+                Run simulation
+              </>
+            )}
+          </button>
+        </div>
 
-              <p className="mt-3 text-3xl font-bold text-[#193B66]">
-                {baselineScore === null
-                  ? "—"
-                  : `${baselineScore}/100`}
-              </p>
-            </div>
-
-            <div className="rounded-2xl bg-[#FFF8E5] p-5">
-              <p className="text-sm text-[#61738B]">
-                Recalculated score
-              </p>
-
-              <p className="mt-3 text-3xl font-bold text-[#25334A]">
-                {newScore === null
-                  ? "—"
-                  : `${newScore}/100`}
-              </p>
-            </div>
-
-            <div className="rounded-2xl bg-[#F0F8F4] p-5">
-              <p className="text-sm text-[#61738B]">
-                Score difference
-              </p>
-
-              <p
-                className={`mt-3 text-3xl font-bold ${
-                  scoreChange !== null && scoreChange < 0
-                    ? "text-red-700"
-                    : "text-[#13795B]"
-                }`}
-              >
-                {scoreChange === null
-                  ? "—"
-                  : `${scoreChange > 0 ? "+" : ""}${scoreChange}`}
-              </p>
-
-              <p className="mt-2 text-xs text-[#61738B]">
-                Opportunity-score points
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {chartData.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-7"
-        >
-          <h3 className="text-lg font-bold text-[#25334A]">
-            Price sensitivity
-          </h3>
-
-          <p className="mt-2 text-sm text-[#61738B]">
-            Opportunity scores returned for the
-            simulated selling prices.
-          </p>
-
+        {error && (
           <div
-            className="mt-5 h-[250px] w-full"
-            role="img"
-            aria-label={chartData
-              .map(
-                (item) =>
-                  `Price ${money(item.price)}: score ${item.score}`
-              )
-              .join("; ")}
+            role="alert"
+            className="mt-6 border border-red-600 bg-red-50 p-4 text-sm text-red-700"
           >
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={chartData}
-                margin={{
-                  top: 15,
-                  right: 10,
-                  bottom: 0,
-                  left: 0,
-                }}
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  vertical={false}
-                  stroke="#EDF1F5"
-                />
-
-                <XAxis
-                  dataKey="price"
-                  tickFormatter={(value) =>
-                    money(value)
-                  }
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{
-                    fill: COLORS.muted,
-                    fontSize: 12,
-                  }}
-                />
-
-                <YAxis
-                  domain={[0, 100]}
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{
-                    fill: COLORS.muted,
-                    fontSize: 11,
-                  }}
-                />
-
-                <Bar
-                  dataKey="score"
-                  radius={[8, 8, 0, 0]}
-                  maxBarSize={95}
-                  fill={COLORS.navy}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="mt-5 overflow-x-auto">
-            <table className="w-full min-w-[450px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-[#D7E0EB] text-[#61738B]">
-                  <th className="py-3 pr-4 font-semibold">
-                    Selling price
-                  </th>
-                  <th className="py-3 pr-4 font-semibold">
-                    Opportunity score
-                  </th>
-                  <th className="py-3 font-semibold">
-                    Model probability
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {chartData.map((item, index) => (
-                  <tr
-                    key={`${item.price}-${index}`}
-                    className="border-b border-[#EDF1F6] last:border-b-0"
-                  >
-                    <td className="py-4 pr-4 font-medium text-[#25334A]">
-                      {money(item.price)}
-                    </td>
-
-                    <td className="py-4 pr-4 font-bold text-[#193B66]">
-                      {item.score}/100
-                    </td>
-
-                    <td className="py-4 text-[#61738B]">
-                      {item.probability !== null &&
-                      item.probability >= 0 &&
-                      item.probability <= 1
-                        ? percent(
-                            item.probability * 100
-                          )
-                        : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </motion.div>
-      )}
-
-      {!rescore &&
-        chartData.length === 0 &&
-        !loading &&
-        !error && (
-          <div className="mt-6 flex flex-col items-center rounded-xl border border-dashed border-[#D7E0EB] bg-[#FAFCFE] px-5 py-9 text-center">
-            <Target
-              size={29}
-              className="text-[#8FA4BA]"
-            />
-
-            <p className="mt-4 font-semibold text-[#25334A]">
-              Ready to compare prices
-            </p>
-
-            <p className="mt-2 max-w-md text-sm leading-6 text-[#61738B]">
-              Run the scoring simulation to see how the
-              model evaluates your selected price and
-              nearby alternatives.
-            </p>
+            {error}
           </div>
         )}
+
+        {rescore && (
+          <div className="mt-7 grid gap-4 md:grid-cols-3">
+            {[
+              {
+                label: "Original score",
+                value:
+                  initialScore === null
+                    ? "—"
+                    : `${initialScore}/100`,
+              },
+              {
+                label: "Recalculated score",
+                value:
+                  updatedScore === null
+                    ? "—"
+                    : `${updatedScore}/100`,
+              },
+              {
+                label: "Score difference",
+                value:
+                  scoreChange === null
+                    ? "—"
+                    : `${
+                        scoreChange > 0 ? "+" : ""
+                      }${scoreChange}`,
+              },
+            ].map((item, index) => (
+              <div
+                key={item.label}
+                className={
+                  "border border-ink p-5 " +
+                  (index === 0
+                    ? "bg-[#F8EEE0]"
+                    : "bg-background")
+                }
+              >
+                <p className="eyebrow text-muted-foreground">
+                  {item.label}
+                </p>
+
+                <p className="mt-4 font-display text-3xl">
+                  {item.value}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {chartData.length > 0 && (
+          <div className="mt-8">
+            <h3 className="font-display text-2xl">
+              Price sensitivity
+            </h3>
+
+            <p className="mt-3 text-sm text-muted-foreground">
+              Opportunity scores returned by
+              the product scoring model.
+            </p>
+
+            <div
+              className="mt-5 h-[260px] w-full"
+              role="img"
+              aria-label={chartData
+                .map(
+                  (item) =>
+                    `${formatMoney(item.price)}: score ${item.score}`
+                )
+                .join(". ")}
+            >
+              <ResponsiveContainer
+                width="100%"
+                height="100%"
+              >
+                <BarChart
+                  data={chartData}
+                  margin={{
+                    top: 12,
+                    right: 12,
+                    bottom: 0,
+                    left: 0,
+                  }}
+                >
+                  <CartesianGrid
+                    vertical={false}
+                    stroke={COLORS.grid}
+                  />
+
+                  <XAxis
+                    dataKey="price"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{
+                      fill: COLORS.muted,
+                      fontSize: 11,
+                    }}
+                    tickFormatter={formatMoney}
+                  />
+
+                  <YAxis
+                    domain={[0, 100]}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{
+                      fill: COLORS.muted,
+                      fontSize: 11,
+                    }}
+                  />
+
+                  <Tooltip
+                    content={({
+                      active,
+                      payload,
+                    }) => {
+                      if (
+                        !active ||
+                        !payload?.length
+                      ) {
+                        return null;
+                      }
+
+                      const item =
+                        payload[0].payload;
+
+                      return (
+                        <div className="border border-ink bg-card px-4 py-3 shadow-offset">
+                          <p className="font-semibold">
+                            {formatMoney(item.price)}
+                          </p>
+
+                          <p className="mt-2 text-sm">
+                            Score: {item.score}/100
+                          </p>
+                        </div>
+                      );
+                    }}
+                  />
+
+                  <Bar
+                    dataKey="score"
+                    maxBarSize={85}
+                    fill={COLORS.orange}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="mt-5 overflow-x-auto">
+              <table className="w-full min-w-[430px] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-ink text-muted-foreground">
+                    <th className="py-3 pr-4 font-semibold">
+                      Price
+                    </th>
+
+                    <th className="py-3 pr-4 font-semibold">
+                      Score
+                    </th>
+
+                    <th className="py-3 font-semibold">
+                      Model probability
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {chartData.map((item, index) => (
+                    <tr
+                      key={`${item.price}-${index}`}
+                      className="border-b border-border last:border-b-0"
+                    >
+                      <td className="py-4 pr-4">
+                        {formatMoney(item.price)}
+                      </td>
+
+                      <td className="py-4 pr-4 font-semibold">
+                        {item.score}/100
+                      </td>
+
+                      <td className="py-4">
+                        {item.probability !== null &&
+                        item.probability >= 0 &&
+                        item.probability <= 1
+                          ? formatPercent(
+                              item.probability * 100
+                            )
+                          : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {!loading &&
+          !error &&
+          !rescore &&
+          chartData.length === 0 && (
+            <div className="mt-7 border border-dashed border-border bg-background p-7 text-center">
+              <p className="font-display text-2xl">
+                Ready to compare prices?
+              </p>
+
+              <p className="mt-3 text-sm text-muted-foreground">
+                Run the simulation to view
+                opportunity scores at nearby prices.
+              </p>
+            </div>
+          )}
+      </div>
     </section>
   );
 }
 
 // ========================================
-// MAIN WHAT-IF SIMULATOR
+// MAIN PAGE
 // ========================================
 
 export default function LaunchFeasibility({
@@ -1137,7 +1304,7 @@ export default function LaunchFeasibility({
 }) {
   const location = useLocation();
 
-  const originalPrice = numberOrNull(
+  const originalPrice = numeric(
     product?.price
   );
 
@@ -1161,9 +1328,11 @@ export default function LaunchFeasibility({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Prevent outdated requests from restoring results
-  // after the user changes the current assumptions.
   const requestVersion = useRef(0);
+
+  // ========================================
+  // CLEAN UP ASYNC REQUESTS
+  // ========================================
 
   useEffect(() => {
     return () => {
@@ -1173,10 +1342,11 @@ export default function LaunchFeasibility({
 
   function resetResults() {
     requestVersion.current += 1;
+
     setRescore(null);
     setSimulations([]);
-    setError("");
     setLoading(false);
+    setError("");
   }
 
   function updateField(field, value) {
@@ -1201,14 +1371,14 @@ export default function LaunchFeasibility({
   }
 
   // ========================================
-  // SCENARIO VALIDATION
+  // INPUT VALIDATION
   // ========================================
 
   const values = Object.fromEntries(
     Object.entries(scenario).map(
       ([key, value]) => [
         key,
-        numberOrNull(value),
+        numeric(value),
       ]
     )
   );
@@ -1227,9 +1397,6 @@ export default function LaunchFeasibility({
     ? calculateFinancials(values)
     : null;
 
-  // The baseline uses the original selling price
-  // with the CURRENT cost and volume assumptions.
-  // This isolates the impact of changing price.
   const baselineValues =
     isValid &&
     originalPrice !== null &&
@@ -1276,7 +1443,7 @@ export default function LaunchFeasibility({
   }
 
   // ========================================
-  // AI SIMULATION
+  // AI PRICE SIMULATION
   // ========================================
 
   async function runSimulation() {
@@ -1313,7 +1480,7 @@ export default function LaunchFeasibility({
     );
 
     try {
-      const [scoreResponse, whatIfResponse] =
+      const [scoreResponse, simulationResponse] =
         await Promise.all([
           rescoreProduct(product, {
             price: selectedPrice,
@@ -1326,9 +1493,10 @@ export default function LaunchFeasibility({
       }
 
       setRescore(scoreResponse);
+
       setSimulations(
-        Array.isArray(whatIfResponse)
-          ? whatIfResponse
+        Array.isArray(simulationResponse)
+          ? simulationResponse
           : []
       );
     } catch (err) {
@@ -1337,7 +1505,7 @@ export default function LaunchFeasibility({
       }
 
       setError(
-        err.message ||
+        err?.message ||
           "Unable to complete the price simulation."
       );
     } finally {
@@ -1353,386 +1521,268 @@ export default function LaunchFeasibility({
 
   if (!product || !prediction) {
     return (
-      <main className="mx-auto max-w-[1440px] px-6 py-12 lg:px-24">
-        <h1 className="text-3xl font-bold text-[#25334A]">
-          What-If scenario simulator
-        </h1>
+      <main className="min-h-screen bg-background px-6 py-20 text-foreground">
+        <div className="mx-auto max-w-6xl">
+          <h1 className="font-display text-4xl">
+            No product analysis available.
+          </h1>
 
-        <p className="mt-4 text-[#61738B]">
-          Search and score a product before opening
-          the simulator.
-        </p>
+          <p className="mt-4 max-w-xl text-sm leading-7 text-muted-foreground">
+            Select and analyze a product before
+            using Launch Feasibility.
+          </p>
 
-        <Link
-          to="/discover"
-          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#FFD45A] px-6 py-3 font-semibold text-[#25334A]"
-        >
-          Discover products
-          <ArrowRight size={18} />
-        </Link>
+          <Link
+            to="/discover"
+            className={`mt-8 ${primaryButton}`}
+          >
+            Discover products
+            <ArrowRight size={18} />
+          </Link>
+        </div>
       </main>
     );
   }
 
-  const priceDifference =
-    isValid &&
-    originalPrice !== null &&
-    originalPrice > 0
-      ? ((values.price / originalPrice) - 1) * 100
-      : null;
+  // ========================================
+  // PAGE CONTENT
+  // ========================================
 
   return (
-    <main className="mx-auto max-w-[1440px] px-5 py-8 text-[#0F172A] sm:px-8 lg:px-16 xl:px-24">
-      {/* ====================================
-          PAGE HEADER
-      ==================================== */}
-
-      <div className="text-xs text-[#61738B]">
-        Discover
-        <span className="mx-3">›</span>
-        Opportunity Analysis
-        <span className="mx-3">›</span>
-        What-If Simulator
-      </div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={ENTER_TRANSITION}
-        className="mt-6 flex flex-col justify-between gap-5 md:flex-row md:items-start"
-      >
-        <div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.13em] text-[#A77E1C]">
-            MarketLens / Pricing Intelligence
-          </p>
-
-          <h1 className="text-3xl font-bold tracking-tight text-[#25334A] sm:text-4xl">
-            What-If Simulator
-          </h1>
-
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#61738B] sm:text-base">
-            Experiment with selling prices and operating
-            costs to understand how profitability changes.
-          </p>
-        </div>
+    <main className="min-h-screen bg-background text-foreground">
+      <div className="mx-auto max-w-6xl px-5 pb-32 pt-12 sm:px-8 lg:pb-24 lg:pt-16">
+        {/* BACK NAVIGATION */}
 
         <Link
           to="/product-overview"
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[#D7E0EB] bg-white px-5 py-3 text-sm font-semibold text-[#193B66] shadow-sm transition hover:bg-[#F5F8FC]"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary"
         >
-          <ArrowLeft size={17} />
-          Back to overview
+          <ArrowLeft size={16} />
+          Back to Product Overview
         </Link>
-      </motion.div>
 
-      {/* ====================================
-          PRODUCT SUMMARY
-      ==================================== */}
+        {/* PAGE HEADER */}
 
-      <motion.section
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{
-          ...ENTER_TRANSITION,
-          delay: 0.08,
-        }}
-        className="mt-7 flex flex-col justify-between gap-5 rounded-2xl border border-[#D7E0EB] bg-white p-6 shadow-sm sm:flex-row sm:items-center"
-      >
-        <div className="flex min-w-0 items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#EDF3FA] text-[#193B66]">
-            <Package size={26} />
-          </div>
+        <header className="mt-10 border-b border-ink pb-9">
+          <p className="eyebrow flex items-center gap-3 text-muted-foreground">
+            <span className="text-primary">
+              03
+            </span>
 
-          <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-wide text-[#A77E1C]">
+            <span className="h-px w-8 bg-current" />
+
+            Launch feasibility
+          </p>
+
+          <h1 className="mt-6 font-display text-5xl leading-tight sm:text-6xl">
+            Explore different{" "}
+            <em className="text-primary">
+              possibilities.
+            </em>
+          </h1>
+
+          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+            Adjust selling prices and costs.
+            See the financial impact immediately
+            without leaving your assumptions.
+          </p>
+
+          <div className="mt-7 border-l-2 border-primary pl-5">
+            <p className="eyebrow text-muted-foreground">
               Evaluated product
             </p>
 
-            <h2 className="mt-2 break-words text-lg font-bold text-[#25334A]">
-              {product.title || "Selected product"}
+            <h2 className="mt-2 break-words font-display text-2xl">
+              {product.title ||
+                product.name ||
+                "Selected product"}
             </h2>
-          </div>
-        </div>
 
-        <div className="flex flex-wrap gap-3">
-          <div className="rounded-xl bg-[#F5F8FC] px-5 py-3">
-            <p className="text-xs text-[#61738B]">
-              Original price
-            </p>
-            <p className="mt-1 text-lg font-bold text-[#25334A]">
-              {money(originalPrice)}
-            </p>
-          </div>
+            <div className="mt-4 flex flex-wrap gap-3">
+              {originalPrice !== null && (
+                <span className="border border-ink bg-card px-3 py-2 text-xs">
+                  Original price:{" "}
+                  {formatMoney(originalPrice)}
+                </span>
+              )}
 
-          <div className="rounded-xl bg-[#FFF6DD] px-5 py-3">
-            <p className="text-xs text-[#8B6B1E]">
-              Opportunity score
-            </p>
-            <p className="mt-1 text-lg font-bold text-[#25334A]">
-              {numberText(prediction.opportunity_score)}
-              /100
-            </p>
-          </div>
-        </div>
-      </motion.section>
-
-      {/* ====================================
-          KPI SUMMARY
-      ==================================== */}
-
-      <section className="mt-10">
-        <SectionHeading
-          eyebrow="Financial overview"
-          title="Estimated monthly performance"
-          description="Live calculations based on your scenario assumptions."
-        />
-
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <MetricCard
-            label="Estimated revenue"
-            value={
-              isValid
-                ? money(financials.revenue)
-                : "—"
-            }
-            description="Price multiplied by monthly unit sales"
-            icon={DollarSign}
-            variant="navy"
-            delay={0.1}
-          />
-
-          <MetricCard
-            label="Estimated profit"
-            value={
-              isValid
-                ? money(financials.profit)
-                : "—"
-            }
-            description="Revenue after estimated variable costs"
-            icon={Wallet}
-            variant="gold"
-            delay={0.18}
-          />
-
-          <MetricCard
-            label="Profit margin"
-            value={
-              isValid
-                ? percent(financials.margin)
-                : "—"
-            }
-            description="Profit as a percentage of revenue"
-            icon={TrendingUp}
-            variant="green"
-            delay={0.26}
-          />
-        </div>
-      </section>
-
-      {/* ====================================
-          SCENARIO CONTROLS
-      ==================================== */}
-
-      <section className="mt-10">
-        <SectionHeading
-          eyebrow="Scenario builder"
-          title="Adjust your assumptions"
-          description="Use the sliders or enter exact numbers. Financial results update immediately."
-          action={
-            <button
-              type="button"
-              onClick={resetAssumptions}
-              className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#D7E0EB] bg-white px-5 py-3 text-sm font-semibold text-[#193B66] transition hover:bg-[#F5F8FC]"
-            >
-              <RotateCcw size={17} />
-              Reset assumptions
-            </button>
-          }
-        />
-
-        <div className="mt-6 grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          {/* LEFT: INPUTS */}
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={ENTER_TRANSITION}
-            className="min-w-0 rounded-2xl border border-[#D7E0EB] bg-[#F5F8FC] p-5 shadow-sm sm:p-6"
-          >
-            <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-white p-3 text-[#193B66] shadow-sm">
-                <SlidersHorizontal size={22} />
-              </div>
-
-              <div>
-                <h3 className="text-lg font-bold text-[#25334A]">
-                  Scenario inputs
-                </h3>
-
-                <p className="mt-1 text-sm text-[#61738B]">
-                  Pricing and monthly operating assumptions
-                </p>
-              </div>
+              {numeric(prediction.opportunity_score) !== null && (
+                <span className="border border-ink bg-card px-3 py-2 text-xs">
+                  Opportunity score:{" "}
+                  {formatNumber(
+                    prediction.opportunity_score
+                  )}
+                  /100
+                </span>
+              )}
             </div>
+          </div>
+        </header>
 
-            <div className="mt-6 space-y-4">
-              <ScenarioControl
-                label="Selling price"
-                description="Price charged per product"
-                value={scenario.price}
-                onChange={(value) =>
-                  updateField("price", value)
+        {/* ====================================
+            01 — SCENARIO WORKSPACE
+        ==================================== */}
+
+        <section className="mt-12">
+          <SectionHeading
+            number="01"
+            eyebrow="Scenario builder"
+            title="Adjust your assumptions."
+            description="Change a value on the left and see the financial results on the right."
+          />
+
+          <div className="mt-7 grid items-start gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+            {/* LEFT — SCENARIO INPUTS */}
+
+            <div className="min-w-0 border border-ink bg-card p-5 sm:p-6">
+              <WorkspaceHeader
+                title="Scenario inputs"
+                description="Adjust values using the sliders or number fields."
+                icon={SlidersHorizontal}
+                action={
+                  <button
+                    type="button"
+                    onClick={resetAssumptions}
+                    className={secondaryButton}
+                  >
+                    <RotateCcw size={15} />
+                    Reset
+                  </button>
                 }
-                min={0.01}
-                max={priceSliderMax}
-                step={0.01}
-                prefix="$"
-                icon={DollarSign}
               />
 
-              <ScenarioControl
-                label="Monthly unit sales"
-                description="Assumed number of products sold monthly"
-                value={scenario.units}
-                onChange={(value) =>
-                  updateField("units", value)
-                }
-                min={0}
-                max={unitSliderMax}
-                step={1}
-                icon={Package}
-              />
-
-              <div className="pt-2">
-                <p className="text-xs font-bold uppercase tracking-wide text-[#61738B]">
-                  Variable costs per unit
-                </p>
-              </div>
-
-              {COST_FIELDS.map((field) => (
+              <div className="mt-5 space-y-3">
                 <ScenarioControl
-                  key={field.id}
-                  label={field.label}
-                  description={field.description}
-                  value={scenario[field.id]}
+                  id="scenario-price"
+                  label="Selling price"
+                  description="Price for each unit"
+                  value={scenario.price}
                   onChange={(value) =>
-                    updateField(field.id, value)
+                    updateField("price", value)
                   }
-                  min={0}
-                  max={costSliderMax(field.id)}
+                  min={0.01}
+                  max={priceSliderMax}
                   step={0.01}
                   prefix="$"
-                  icon={Calculator}
                 />
-              ))}
-            </div>
 
-            {!isValid && (
-              <div
-                role="alert"
-                className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
-              >
-                Enter a valid selling price, nonnegative
-                costs, and a whole-number monthly unit
-                quantity.
-              </div>
-            )}
-          </motion.div>
-
-          {/* RIGHT: LIVE RESULTS */}
-
-          <div className="min-w-0 space-y-5">
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={ENTER_TRANSITION}
-              className="rounded-2xl border border-[#D7E0EB] bg-white p-5 shadow-sm sm:p-6"
-            >
-              <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-[#EDF3FA] p-3 text-[#193B66]">
-                  <BarChart3 size={22} />
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-bold text-[#25334A]">
-                    Revenue vs. costs
-                  </h3>
-
-                  <p className="mt-1 text-sm text-[#61738B]">
-                    Monthly financial comparison
-                  </p>
-                </div>
+                <ScenarioControl
+                  id="scenario-units"
+                  label="Monthly units sold"
+                  description="Assumed unit sales per month"
+                  value={scenario.units}
+                  onChange={(value) =>
+                    updateField("units", value)
+                  }
+                  min={0}
+                  max={unitSliderMax}
+                  step={1}
+                />
               </div>
 
-              {isValid ? (
-                <div className="mt-5">
-                  <RevenueCostChart
-                    financials={financials}
+              <div className="mt-7 border-t border-border pt-5">
+                <p className="eyebrow text-muted-foreground">
+                  Costs per unit
+                </p>
+
+                <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                  Adjust your manufacturing, shipping,
+                  marketplace, and advertising costs.
+                </p>
+              </div>
+
+              <div className="mt-4 grid gap-3">
+                {COST_FIELDS.map((field) => (
+                  <ScenarioControl
+                    key={field.id}
+                    id={`scenario-${field.id}`}
+                    label={field.label}
+                    description={field.description}
+                    value={scenario[field.id]}
+                    onChange={(value) =>
+                      updateField(field.id, value)
+                    }
+                    min={0}
+                    max={costSliderMax(field.id)}
+                    step={0.01}
+                    prefix="$"
+                  />
+                ))}
+              </div>
+
+              {!isValid && (
+                <div
+                  role="alert"
+                  className="mt-5 flex items-start gap-3 border-l-2 border-red-600 bg-red-50 p-4"
+                >
+                  <CircleAlert
+                    size={18}
+                    className="mt-0.5 shrink-0 text-red-700"
                   />
 
-                  <div className="mt-3 rounded-xl bg-[#F5F8FC] p-4">
-                    <p className="text-xs text-[#61738B]">
-                      Estimated monthly profit / loss
-                    </p>
-
-                    <p
-                      className={`mt-2 text-2xl font-bold ${
-                        financials.profit < 0
-                          ? "text-red-700"
-                          : "text-[#13795B]"
-                      }`}
-                    >
-                      {money(financials.profit)}
-                    </p>
-                  </div>
+                  <p className="text-xs leading-6 text-red-700">
+                    Enter a positive selling price,
+                    nonnegative costs, and a
+                    whole-number sales quantity.
+                  </p>
                 </div>
-              ) : (
-                <p className="mt-6 text-sm text-[#61738B]">
-                  Enter valid assumptions to view
-                  the financial chart.
-                </p>
               )}
-            </motion.section>
+            </div>
 
-            <section className="rounded-2xl border border-[#D7E0EB] bg-white p-5 shadow-sm sm:p-6">
-              <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-[#EAF6F0] p-3 text-[#13795B]">
-                  <Calculator size={22} />
-                </div>
+            {/* RIGHT — LIVE RESULTS */}
 
-                <h3 className="text-lg font-bold text-[#25334A]">
-                  Financial details
-                </h3>
-              </div>
+            <LiveResults
+              financials={financials}
+              isValid={isValid}
+              units={values.units}
+              price={values.price}
+            />
+          </div>
+        </section>
+
+        {/* ====================================
+            02 — FINANCIAL DETAILS
+        ==================================== */}
+
+        <section className="mt-14">
+          <SectionHeading
+            number="02"
+            eyebrow="Financial details"
+            title="Understand the numbers."
+            description="Explore the calculations behind your scenario and the distribution of monthly costs."
+          />
+
+          <div className="mt-7 grid items-stretch gap-5 lg:grid-cols-2">
+            <div className="flex h-full flex-col border border-ink bg-card p-6">
+              <h3 className="font-display text-2xl">
+                Monthly calculations
+              </h3>
 
               <div className="mt-5">
                 <DetailRow
                   label="Revenue"
                   value={
                     isValid
-                      ? money(financials.revenue)
+                      ? formatMoney(financials.revenue)
                       : "—"
                   }
                 />
 
                 <DetailRow
-                  label="Total variable costs"
+                  label="Variable costs"
                   value={
                     isValid
-                      ? money(financials.totalCosts)
+                      ? formatMoney(financials.totalCosts)
                       : "—"
                   }
                 />
 
                 <DetailRow
-                  label="Estimated profit"
+                  label="Profit after variable costs"
                   value={
                     isValid
-                      ? money(financials.profit)
+                      ? formatMoney(financials.profit)
                       : "—"
-                  }
-                  highlight={
-                    isValid && financials.profit >= 0
                   }
                   negative={
                     isValid && financials.profit < 0
@@ -1743,19 +1793,19 @@ export default function LaunchFeasibility({
                   label="Profit margin"
                   value={
                     isValid
-                      ? percent(financials.margin)
+                      ? formatPercent(financials.margin)
                       : "—"
                   }
                 />
 
                 <DetailRow
-                  label="Return on investment"
+                  label="Return on variable costs"
                   value={
-                    isValid
-                      ? financials.roi === null
+                    !isValid
+                      ? "—"
+                      : financials.roi === null
                         ? "N/A"
-                        : percent(financials.roi)
-                      : "—"
+                        : formatPercent(financials.roi)
                   }
                 />
 
@@ -1763,7 +1813,7 @@ export default function LaunchFeasibility({
                   label="Contribution per unit"
                   value={
                     isValid
-                      ? money(
+                      ? formatMoney(
                           financials.contributionPerUnit
                         )
                       : "—"
@@ -1771,142 +1821,154 @@ export default function LaunchFeasibility({
                 />
 
                 <DetailRow
-                  label="Break-even units"
-                  value={
-                    !isValid
-                      ? "—"
-                      : financials.contributionPerUnit > 0
-                        ? "0 (no fixed costs)"
-                        : "Not reachable"
-                  }
+                  label="Break-even quantity"
+                  value="Not calculated"
                 />
               </div>
-
-              <p className="mt-5 text-xs leading-6 text-[#61738B]">
-                These are illustrative financial
-                calculations, not model-generated sales
-                forecasts. Fixed costs are excluded.
-              </p>
-            </section>
-          </div>
-        </div>
-      </section>
-
-      {/* ====================================
-          COST BREAKDOWN
-      ==================================== */}
-
-      {isValid && (
-        <div className="mt-6">
-          <CostBreakdown values={values} />
-        </div>
-      )}
-
-      {/* ====================================
-          BASELINE COMPARISON
-      ==================================== */}
-
-      <section className="mt-10">
-        <SectionHeading
-          eyebrow="Scenario comparison"
-          title="Original vs. adjusted price"
-          description="Compare financial results at the original product price and your proposed selling price."
-        />
-
-        <div className="mt-5 flex items-start gap-3 rounded-xl border border-[#D7E0EB] bg-white p-4">
-          <Info
-            size={18}
-            className="mt-0.5 shrink-0 text-[#193B66]"
-          />
-
-          <p className="text-xs leading-6 text-[#61738B]">
-            Both scenarios use the same current monthly
-            sales volume and per-unit cost assumptions.
-            Only the selling price differs. This isolates
-            the arithmetic effect of a price change;
-            it does not predict how demand responds.
-          </p>
-        </div>
-
-        {isValid && baseline ? (
-          <>
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
-              <ComparisonCard
-                label="Monthly revenue"
-                original={baseline.revenue}
-                current={financials.revenue}
-              />
-
-              <ComparisonCard
-                label="Monthly profit"
-                original={baseline.profit}
-                current={financials.profit}
-              />
-
-              <ComparisonCard
-                label="Profit margin"
-                original={baseline.margin}
-                current={financials.margin}
-                format={percent}
-              />
             </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-5 flex flex-col justify-between gap-4 rounded-2xl bg-gradient-to-r from-[#193B66] to-[#275788] p-6 text-white sm:flex-row sm:items-center"
-            >
-              <div>
-                <p className="text-sm text-[#DCE8F5]">
-                  Current selling price adjustment
-                </p>
+            {isValid ? (
+              <CostBreakdown values={values} />
+            ) : (
+              <div className="border border-ink bg-card p-6">
+                <h3 className="font-display text-2xl">
+                  Cost breakdown
+                </h3>
 
-                <p className="mt-2 text-3xl font-bold">
-                  {signedPercent(priceDifference)}
+                <p className="mt-4 text-sm text-muted-foreground">
+                  Enter valid assumptions to
+                  view the cost breakdown.
                 </p>
               </div>
-
-              <div className="text-left sm:text-right">
-                <p className="text-sm text-[#DCE8F5]">
-                  Original price
-                </p>
-
-                <p className="mt-1 text-lg font-bold">
-                  {money(originalPrice)}
-                </p>
-
-                <p className="mt-3 text-sm text-[#DCE8F5]">
-                  Proposed price
-                </p>
-
-                <p className="mt-1 text-lg font-bold text-[#FFD45A]">
-                  {money(values.price)}
-                </p>
-              </div>
-            </motion.div>
-          </>
-        ) : (
-          <div className="mt-6 rounded-2xl border border-[#D7E0EB] bg-white p-6 text-sm text-[#61738B]">
-            Valid assumptions and an original product
-            price are required for comparison.
+            )}
           </div>
-        )}
-      </section>
+        </section>
 
-      {/* ====================================
-          AI PRICE SIMULATION
-      ==================================== */}
+        {/* ====================================
+            03 — PRICE COMPARISON
+        ==================================== */}
 
-      <AIPriceSimulation
-        product={product}
-        prediction={prediction}
-        values={values}
+        <section className="mt-14">
+          <SectionHeading
+            number="03"
+            eyebrow="Scenario comparison"
+            title="What changes with a different price?"
+            description="Compare the original selling price with your adjusted price using the same monthly sales volume and costs."
+          />
+
+          <ScenarioComparison
+            baseline={baseline}
+            financials={financials}
+            originalPrice={originalPrice}
+            currentPrice={values.price}
+          />
+        </section>
+
+        {/* ====================================
+            04 — AI PRICE SIMULATION
+        ==================================== */}
+
+        <AIPriceSimulation
+          product={product}
+          prediction={prediction}
+          isValid={isValid}
+          loading={loading}
+          error={error}
+          rescore={rescore}
+          simulations={simulations}
+          onRun={runSimulation}
+        />
+
+        {/* ====================================
+            05 — BUSINESS GUIDANCE
+        ==================================== */}
+
+        <section className="mt-14">
+          <SectionHeading
+            number="05"
+            eyebrow="Your next decisions"
+            title="What should you review?"
+            description="Use your scenario results to explore the decisions involved in launching a product."
+          />
+
+          <div className="mt-7 border border-ink bg-card p-6 sm:p-8">
+            <div className="space-y-6">
+              {[
+                {
+                  title: "Review operating costs",
+                  description:
+                    "Compare production, shipping, marketplace fees, and advertising expenses with your selling price.",
+                },
+                {
+                  title: "Evaluate customer demand",
+                  description:
+                    "Review customer interest, similar products, and the sales volume needed to support your scenario.",
+                },
+                {
+                  title: "Compare pricing options",
+                  description:
+                    "Explore alternative selling prices and compare their financial results and opportunity scores.",
+                },
+              ].map((step, index) => (
+                <div
+                  key={step.title}
+                  className="flex items-start gap-4 border-b border-border pb-6 last:border-b-0 last:pb-0"
+                >
+                  <span className="flex size-9 shrink-0 items-center justify-center border border-ink bg-[#F8EEE0] font-mono text-xs">
+                    {String(index + 1).padStart(
+                      2,
+                      "0"
+                    )}
+                  </span>
+
+                  <div>
+                    <h3 className="font-semibold">
+                      {step.title}
+                    </h3>
+
+                    <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                      {step.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* NAVIGATION */}
+
+        <section className="mt-14 flex flex-col items-start justify-between gap-5 border-t border-ink pt-8 sm:flex-row sm:items-center">
+          <div>
+            <p className="eyebrow text-primary">
+              Continue exploring
+            </p>
+
+            <h2 className="mt-3 font-display text-2xl">
+              Have another product in mind?
+            </h2>
+
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
+              Compare different product opportunities
+              and pricing scenarios.
+            </p>
+          </div>
+
+          <Link
+            to="/discover"
+            className={primaryButton}
+          >
+            Explore another product
+            <ArrowRight size={18} />
+          </Link>
+        </section>
+      </div>
+
+      {/* MOBILE LIVE RESULTS */}
+
+      <MobileLiveSummary
+        financials={financials}
         isValid={isValid}
-        loading={loading}
-        error={error}
-        rescore={rescore}
-        simulations={simulations}
-        onRun={runSimulation}
       />
     </main>
   );
