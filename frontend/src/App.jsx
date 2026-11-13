@@ -167,6 +167,14 @@ function AppHeader() {
 // ========================================
 
 function Footer() {
+  const location = useLocation();
+
+  // LandingPage renders its own footer, the same way it renders its own
+  // header; this one would stack underneath it.
+  if (location.pathname === "/") {
+    return null;
+  }
+
   return (
     <footer className="mt-auto border-t border-border bg-white/50 px-6 py-6">
       <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-center gap-2 text-center">
