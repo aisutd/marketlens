@@ -18,8 +18,9 @@ import {
   ChevronUp,
   CircleAlert,
   CircleHelp,
-  Info,
 } from "lucide-react";
+
+import InfoDialog from "../components/InfoDialog";
 
 // ========================================
 // DESIGN SYSTEM
@@ -834,59 +835,12 @@ function NextSteps({ predictions, period }) {
 // ========================================
 
 function AboutForecast({ notes }) {
-  const [open, setOpen] = useState(false);
-
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label="About this launch forecast"
-        className="fixed bottom-6 right-6 z-40 flex size-12 items-center justify-center border border-ink bg-primary text-primary-foreground shadow-offset"
-      >
-        <Info size={21} />
-      </button>
-
-      {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-end p-4 sm:p-6"
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              setOpen(false);
-            }
-          }}
-        >
-          <button
-            type="button"
-            aria-label="Close forecast information"
-            onClick={() => setOpen(false)}
-            className="absolute inset-0 bg-foreground/45"
-          />
-
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="launch-forecast-info-title"
-            className="relative z-10 max-h-[85vh] w-full max-w-md overflow-y-auto border border-ink bg-card p-6 shadow-offset sm:p-8"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <h2
-                id="launch-forecast-info-title"
-                className="font-display text-3xl"
-              >
-                About this forecast
-              </h2>
-
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label="Close"
-                className="text-lg"
-              >
-                ×
-              </button>
-            </div>
-
+    <InfoDialog
+      triggerLabel="About this launch forecast"
+      title="About this forecast"
+      closeButtonClassName={primaryButton}
+    >
             <p className="mt-6 text-sm leading-7 text-muted-foreground">
               This forecast estimates potential
               business performance over the first
@@ -923,18 +877,7 @@ function AboutForecast({ notes }) {
                   </ul>
                 </div>
               )}
-
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className={`mt-7 w-full ${primaryButton}`}
-            >
-              Got it
-            </button>
-          </section>
-        </div>
-      )}
-    </>
+    </InfoDialog>
   );
 }
 

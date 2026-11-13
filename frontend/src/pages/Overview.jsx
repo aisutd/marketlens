@@ -7,7 +7,6 @@ import {
   ChevronDown,
   ChevronUp,
   CircleHelp,
-  Info,
   Lightbulb,
   RotateCcw,
   TrendingUp,
@@ -15,6 +14,7 @@ import {
 
 import { getPredictionReasons } from "../services/marketlensApi";
 import { getScoreBand } from "../constants/scoreBands";
+import InfoDialog from "../components/InfoDialog";
 import OpportunityGauge from "../components/OpportunityGauge";
 
 // ========================================
@@ -1057,9 +1057,6 @@ function PriceScenarioPreview({ product }) {
 // ========================================
 
 function AboutScore({ prediction }) {
-  const [open, setOpen] =
-    useState(false);
-
   const score = numeric(
     prediction?.opportunity_score
   );
@@ -1067,60 +1064,11 @@ function AboutScore({ prediction }) {
   const band = getScoreBand(score);
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label="About the opportunity score"
-        className="fixed bottom-6 right-6 z-40 flex size-12 items-center justify-center border border-ink bg-primary text-primary-foreground shadow-offset transition-transform hover:-translate-y-[2px]"
-      >
-        <Info size={21} />
-      </button>
-
-      {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-end p-4 sm:p-6"
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              setOpen(false);
-            }
-          }}
-        >
-          <button
-            type="button"
-            aria-label="Close score information"
-            onClick={() =>
-              setOpen(false)
-            }
-            className="absolute inset-0 bg-foreground/45"
-          />
-
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="score-information-title"
-            className="relative z-10 max-h-[85vh] w-full max-w-md overflow-y-auto border border-ink bg-card p-6 shadow-offset sm:p-8"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <h2
-                id="score-information-title"
-                className="font-display text-3xl"
-              >
-                Understanding your score
-              </h2>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setOpen(false)
-                }
-                aria-label="Close"
-                className="text-lg"
-              >
-                ×
-              </button>
-            </div>
-
+    <InfoDialog
+      triggerLabel="About the opportunity score"
+      title="Understanding your score"
+      closeButtonClassName={primaryButton}
+    >
             <p className="mt-5 text-sm leading-7 text-muted-foreground">
               Your opportunity score compares
               your product with others in its
@@ -1163,20 +1111,7 @@ function AboutScore({ prediction }) {
               of information when researching
               your product idea.
             </p>
-
-            <button
-              type="button"
-              onClick={() =>
-                setOpen(false)
-              }
-              className={`mt-7 w-full ${primaryButton}`}
-            >
-              Got it
-            </button>
-          </section>
-        </div>
-      )}
-    </>
+    </InfoDialog>
   );
 }
 
