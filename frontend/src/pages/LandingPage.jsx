@@ -317,10 +317,15 @@ function SectionHead({
       ? "text-ink-muted"
       : "text-muted-foreground";
 
+  const accent =
+    tone === "ink"
+      ? "text-primary-on-ink"
+      : "text-primary";
+
   return (
     <div className="max-w-2xl">
       <p className={`eyebrow flex items-center gap-3 ${muted}`}>
-        <span className="text-primary">{index}</span>
+        <span className={accent}>{index}</span>
         <span className="h-px w-8 bg-current" />
         {eyebrow}
       </p>

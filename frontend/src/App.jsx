@@ -168,14 +168,14 @@ function AppHeader() {
 
 function Footer() {
   return (
-    <footer className="mt-auto border-t border-[#D7E0EB] bg-white/50 px-6 py-6">
+    <footer className="mt-auto border-t border-border bg-white/50 px-6 py-6">
       <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-center gap-2 text-center">
-        <p className="text-sm font-medium text-[#61738B]">
+        <p className="text-sm font-medium text-muted-foreground">
           © {new Date().getFullYear()} MarketLens.
           All rights reserved.
         </p>
 
-        <p className="text-xs text-[#94A3B8]">
+        <p className="text-xs text-muted-foreground">
           AI-Powered Product Intelligence
         </p>
       </div>

@@ -28,7 +28,7 @@ import {
 const COLORS = {
   orange: "#D95332",
   ink: "#1D150F",
-  muted: "#776C61",
+  muted: "#645850", // = --muted-foreground; #776C61 was 4.46:1 on the beige panels
   cream: "#F8EEE0",
   green: "#47866B",
   gray: "#AFA49A",

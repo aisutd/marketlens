@@ -2,9 +2,13 @@
 // product_success/README.md: how often products in each band really reached
 // the top 20% of sales in their category.
 
-const GREEN = "#16A34A";
-const AMBER = "#CA8A04";
-const RED = "#DC2626";
+// Used as text on paper and card surfaces, so each holds at least 4.5:1 there
+// (green 5.5, amber 5.9, red 5.9 on --card). Green and red sit on the
+// --signal-up / --signal-down hues; the old Tailwind green was 3.2:1 and
+// off-palette.
+const GREEN = "oklch(0.5 0.105 162)";
+const AMBER = "oklch(0.5 0.12 75)";
+const RED = "oklch(0.52 0.19 30)";
 
 const BANDS = [
   {
@@ -35,7 +39,7 @@ const BANDS = [
 
 const NOT_SCORED = {
   label: "Not scored",
-  color: "#94A3B8",
+  color: "oklch(0.47 0.02 60)",
   odds: null,
 };
 

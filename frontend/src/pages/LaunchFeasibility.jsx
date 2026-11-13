@@ -33,7 +33,7 @@ const COLORS = {
   orange: "#D95332",
   green: "#47866B",
   ink: "#1D150F",
-  muted: "#776C61",
+  muted: "#645850", // = --muted-foreground; #776C61 was 4.46:1 on the beige panels
   cream: "#F8EEE0",
   background: "#F8F3EA",
   gray: "#AFA49A",
@@ -566,7 +566,7 @@ function LiveMetric({
         className={
           "mt-3 break-words font-display text-xl leading-tight sm:text-2xl " +
           (negative
-            ? "text-[#B94747]"
+            ? "text-signal-down"
             : "text-foreground")
         }
       >
@@ -693,7 +693,7 @@ function MobileLiveSummary({
             className={
               "mt-1 font-display text-xl " +
               (isValid && financials.profit < 0
-                ? "text-[#B94747]"
+                ? "text-signal-down"
                 : "text-foreground")
             }
           >
@@ -828,7 +828,7 @@ function DetailRow({
         className={
           "text-right text-sm font-semibold " +
           (negative
-            ? "text-[#B94747]"
+            ? "text-signal-down"
             : "text-foreground")
         }
       >
