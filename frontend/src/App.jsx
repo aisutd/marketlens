@@ -172,12 +172,22 @@ function Footer() {
           All rights reserved.
         </p>
 
-        <p className="text-xs text-[#94A3B8]">
-          AI-Powered Product Intelligence
+        <p className="max-w-3xl text-center text-xs leading-relaxed text-[#61738B]">
+          <strong>Disclaimer:</strong> MarketLens provides AI-generated predictions and analytical estimates for informational purposes only. Results are not guaranteed and should not be the sole basis for financial or business decisions.
         </p>
       </div>
     </footer>
   );
+}
+
+function AppFooter() {
+  const location = useLocation();
+
+  if (location.pathname === "/") {
+    return null;
+  }
+
+  return <Footer />;
 }
 
 // ========================================
@@ -360,7 +370,7 @@ export default function App() {
           </Routes>
         </div>
 
-        <Footer />
+        <AppFooter />
       </div>
     </BrowserRouter>
   );
