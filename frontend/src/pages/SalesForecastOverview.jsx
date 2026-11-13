@@ -400,6 +400,9 @@ function FinancialChart({ predictions }) {
       >
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
+            // The labelled role="img" wrapper carries the values; Recharts'
+            // accessibility layer would add an unnamed role="application" tab stop.
+            accessibilityLayer={false}
             data={data}
             margin={{
               top: 12,
@@ -533,6 +536,9 @@ function DemandChart({ predictions }) {
       >
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
+            // The labelled role="img" wrapper carries the values; Recharts'
+            // accessibility layer would add an unnamed role="application" tab stop.
+            accessibilityLayer={false}
             layout="vertical"
             data={data}
             margin={{
