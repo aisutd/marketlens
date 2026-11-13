@@ -133,25 +133,86 @@ function SelectionCard({
   );
 }
 
+// Swaps the border colour rather than adding to it: with both border-input
+// and border-destructive on the element, Tailwind's CSS order lets
+// border-input win and only the focused field turned red.
+function controlStyle(invalid) {
+  return invalid
+    ? inputStyle
+        .replace("border-input", "border-destructive")
+        .replace("focus:border-primary", "focus:border-destructive")
+        .replace("focus:ring-primary/15", "focus:ring-destructive/20")
+    : inputStyle;
+}
+
+// Each field's message sits under it and is tied to the control with
+// aria-describedby, so a screen reader reads it on focus. Ids are fixed
+// (`field-<name>`) because handleSubmit focuses the first invalid one.
+function FieldMessages({ id, hint, error }) {
+  return (
+    <>
+      {hint && (
+        <span
+          id={`${id}-hint`}
+          className="mt-2 block text-xs leading-relaxed text-muted-foreground"
+        >
+          {hint}
+        </span>
+      )}
+
+      {error && (
+        <span
+          id={`${id}-error`}
+          className="mt-2 block text-xs font-medium leading-relaxed text-destructive"
+        >
+          {error}
+        </span>
+      )}
+    </>
+  );
+}
+
+function describedBy(id, hint, error) {
+  const ids = [
+    hint && `${id}-hint`,
+    error && `${id}-error`,
+  ].filter(Boolean);
+
+  return ids.length ? ids.join(" ") : undefined;
+}
+
 function Field({
+  name,
   label,
   value,
   onChange,
   placeholder,
   type = "text",
+  inputMode,
   min,
   max,
   step,
   disabled,
+  required = false,
   hint,
+  error,
 }) {
+  const id = `field-${name}`;
+
   return (
-    <label className="block text-sm font-medium text-foreground">
-      {label}
+    <div>
+      <label
+        htmlFor={id}
+        className="block text-sm font-medium text-foreground"
+      >
+        {label}
+      </label>
 
       <input
-        className={inputStyle}
+        id={id}
+        className={controlStyle(Boolean(error))}
         type={type}
+        inputMode={inputMode}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
@@ -159,35 +220,48 @@ function Field({
         max={max}
         step={step}
         disabled={disabled}
+        aria-required={required || undefined}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy(id, hint, error)}
       />
 
-      {hint && (
-        <span className="mt-2 block text-xs leading-relaxed text-muted-foreground">
-          {hint}
-        </span>
-      )}
-    </label>
+      <FieldMessages id={id} hint={hint} error={error} />
+    </div>
   );
 }
 
 function SelectField({
+  name,
   label,
   value,
   onChange,
   options,
   placeholder = "Select a category",
   disabled = false,
+  required = false,
+  error,
 }) {
+  const id = `field-${name}`;
+
   return (
-    <label className="block text-sm font-medium text-foreground">
-      {label}
+    <div>
+      <label
+        htmlFor={id}
+        className="block text-sm font-medium text-foreground"
+      >
+        {label}
+      </label>
 
       <span className="relative block">
         <select
-          className={`${inputStyle} appearance-none pr-11`}
+          id={id}
+          className={`${controlStyle(Boolean(error))} appearance-none pr-11`}
           value={value}
           onChange={(event) => onChange(event.target.value)}
           disabled={disabled}
+          aria-required={required || undefined}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={describedBy(id, null, error)}
         >
           <option value="">{placeholder}</option>
 
@@ -204,7 +278,9 @@ function SelectField({
           className="pointer-events-none absolute bottom-4 right-4 text-muted-foreground"
         />
       </span>
-    </label>
+
+      <FieldMessages id={id} error={error} />
+    </div>
   );
 }
 
@@ -267,7 +343,10 @@ export default function ProductSearch({
   const [productsError, setProductsError] = useState("");
   const [catalogueAttempt, setCatalogueAttempt] = useState(0);
 
+  const [activeIndex, setActiveIndex] = useState(-1);
+
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const isOpportunity = model === "opportunity";
   const isLaunch =
@@ -386,12 +465,29 @@ export default function ProductSearch({
       .slice(0, MAX_SEARCH_RESULTS);
   }, [products, productQuery]);
 
+  function clearErrors() {
+    setError("");
+    setFieldErrors({});
+  }
+
+  // Editing a field clears its own message; the others stay until the
+  // next submit so the person can work down the list.
+  function clearFieldError(key) {
+    setError("");
+    setFieldErrors((previous) => {
+      if (!(key in previous)) return previous;
+      const next = { ...previous };
+      delete next[key];
+      return next;
+    });
+  }
+
   function selectModel(value) {
     if (loading) return;
 
     setModel(value);
     setShowDropdown(false);
-    setError("");
+    clearErrors();
   }
 
   function selectWorkflow(value) {
@@ -399,7 +495,7 @@ export default function ProductSearch({
 
     setForecastWorkflow(value);
     setShowDropdown(false);
-    setError("");
+    clearErrors();
   }
 
   function updateDetails(field, value) {
@@ -408,7 +504,7 @@ export default function ProductSearch({
       [field]: value,
     }));
 
-    setError("");
+    clearFieldError(`details-${field}`);
   }
 
   function updateLaunch(field, value) {
@@ -417,7 +513,7 @@ export default function ProductSearch({
       [field]: value,
     }));
 
-    setError("");
+    clearFieldError(`launch-${field}`);
   }
 
   function selectScoringCategory(value) {
@@ -434,7 +530,8 @@ export default function ProductSearch({
           : previous.stars,
     }));
 
-    setError("");
+    clearFieldError("details-category");
+    clearFieldError("details-stars");
   }
 
   function handleProductSearch(value) {
@@ -442,7 +539,8 @@ export default function ProductSearch({
     setSelectedProduct(null);
     setProductId("");
     setShowDropdown(true);
-    setError("");
+    setActiveIndex(-1);
+    clearFieldError("existing-product_id");
   }
 
   function handleSelectProduct(product) {
@@ -450,7 +548,8 @@ export default function ProductSearch({
     setProductQuery(product.product_name);
     setProductId(product.product_id);
     setShowDropdown(false);
-    setError("");
+    setActiveIndex(-1);
+    clearFieldError("existing-product_id");
   }
 
   function handleManualProductId(value) {
@@ -458,8 +557,50 @@ export default function ProductSearch({
     setSelectedProduct(null);
     setProductQuery("");
     setShowDropdown(false);
-    setError("");
+    setActiveIndex(-1);
+    clearFieldError("existing-product_id");
   }
+
+  // Combobox keyboard support (WAI-ARIA combobox pattern with a listbox
+  // popup): arrows move the highlighted option, Enter picks it, Escape
+  // closes the list. Focus stays in the input throughout.
+  function handleSearchKeyDown(event) {
+    const count = filteredProducts.length;
+
+    if (event.key === "ArrowDown") {
+      if (!productQuery.trim() || count === 0) return;
+      event.preventDefault();
+      setShowDropdown(true);
+      setActiveIndex((index) =>
+        index < count - 1 ? index + 1 : 0
+      );
+    } else if (event.key === "ArrowUp") {
+      if (!listOpen) return;
+      event.preventDefault();
+      setActiveIndex((index) =>
+        index > 0 ? index - 1 : count - 1
+      );
+    } else if (event.key === "Enter") {
+      // Without a highlighted option, Enter submits the form as usual.
+      if (listOpen && activeIndex >= 0) {
+        event.preventDefault();
+        handleSelectProduct(filteredProducts[activeIndex]);
+      }
+    } else if (event.key === "Escape") {
+      if (listOpen) {
+        event.preventDefault();
+        setShowDropdown(false);
+        setActiveIndex(-1);
+      }
+    }
+  }
+
+  const listOpen = Boolean(
+    showDropdown &&
+      productQuery.trim() &&
+      !selectedProduct &&
+      filteredProducts.length > 0
+  );
 
   function validatePrice(priceString) {
     const price = Number(priceString);
@@ -484,12 +625,62 @@ export default function ProductSearch({
     );
   }
 
+  function validateName(value) {
+    const name = value.trim();
+
+    if (!name) return "Enter a product name.";
+    if (name.length > 500) {
+      return "Keep the product name to 500 characters or fewer.";
+    }
+    return null;
+  }
+
+  function validateCount(value, noun) {
+    const count = Number(value);
+
+    if (
+      value === "" ||
+      !Number.isSafeInteger(count) ||
+      count < 0
+    ) {
+      return `Enter a whole number of ${noun}, 0 or more.`;
+    }
+    return null;
+  }
+
+  // Shows every message at once, announces a summary, and moves focus to
+  // the first field that needs fixing. Returns true when the form is valid.
+  function reportErrors(errors) {
+    const keys = Object.keys(errors);
+
+    setFieldErrors(errors);
+
+    if (keys.length === 0) {
+      setError("");
+      return true;
+    }
+
+    setError(
+      keys.length === 1
+        ? "One field needs a fix before you continue."
+        : `${keys.length} fields need a fix before you continue.`
+    );
+
+    document.getElementById(`field-${keys[0]}`)?.focus();
+    return false;
+  }
+
   function handleSubmit(event) {
     event.preventDefault();
 
     if (loading) return;
 
-    setError("");
+    clearErrors();
+
+    const PRICE_MESSAGE =
+      "Enter a price between $0.01 and $100,000.";
+    const LIST_PRICE_MESSAGE =
+      "Leave this empty, or enter a price no lower than the selling price (up to $100,000).";
 
     if (isOpportunity) {
       const category = categories.find(
@@ -505,25 +696,32 @@ export default function ProductSearch({
           ? null
           : Number(details.stars);
 
-      if (
-        !details.title.trim() ||
-        details.title.trim().length > 500 ||
-        !category ||
-        !validatePrice(details.price) ||
-        !validateListPrice(details.list_price, price) ||
-        details.review_count === "" ||
-        !Number.isSafeInteger(reviews) ||
-        reviews < 0 ||
-        (stars !== null &&
-          (!Number.isFinite(stars) ||
-            stars < 1 ||
-            stars > 5))
-      ) {
-        setError(
-          "Complete the product details with valid values."
-        );
-        return;
+      // Insertion order is the on-screen order, so the first key is the
+      // first field the person meets.
+      const errors = {};
+      const nameError = validateName(details.title);
+      if (nameError) errors["details-title"] = nameError;
+      if (!category) errors["details-category"] = "Choose a category.";
+      if (!validatePrice(details.price)) {
+        errors["details-price"] = PRICE_MESSAGE;
       }
+      if (
+        validatePrice(details.price) &&
+        !validateListPrice(details.list_price, price)
+      ) {
+        errors["details-list_price"] = LIST_PRICE_MESSAGE;
+      }
+      const reviewsError = validateCount(details.review_count, "reviews");
+      if (reviewsError) errors["details-review_count"] = reviewsError;
+      if (
+        stars !== null &&
+        (!Number.isFinite(stars) || stars < 1 || stars > 5)
+      ) {
+        errors["details-stars"] =
+          "Enter a rating from 1 to 5, or leave it empty.";
+      }
+
+      if (!reportErrors(errors)) return;
 
       onAnalyze({
         method: "details",
@@ -549,24 +747,27 @@ export default function ProductSearch({
       const reviews = Number(launch.review_count);
       const months = Number(launch.months_on_market);
 
-      if (
-        !launch.name.trim() ||
-        launch.name.trim().length > 500 ||
-        !FORECAST_CATEGORIES.includes(launch.category) ||
-        !validatePrice(launch.price) ||
-        !validateListPrice(launch.list_price, price) ||
-        launch.review_count === "" ||
-        !Number.isSafeInteger(reviews) ||
-        reviews < 0 ||
-        launch.months_on_market === "" ||
-        !Number.isSafeInteger(months) ||
-        months < 0
-      ) {
-        setError(
-          "Complete the launch details with valid values."
-        );
-        return;
+      const errors = {};
+      const nameError = validateName(launch.name);
+      if (nameError) errors["launch-name"] = nameError;
+      if (!FORECAST_CATEGORIES.includes(launch.category)) {
+        errors["launch-category"] = "Choose a forecast category.";
       }
+      if (!validatePrice(launch.price)) {
+        errors["launch-price"] = PRICE_MESSAGE;
+      }
+      if (
+        validatePrice(launch.price) &&
+        !validateListPrice(launch.list_price, price)
+      ) {
+        errors["launch-list_price"] = LIST_PRICE_MESSAGE;
+      }
+      const reviewsError = validateCount(launch.review_count, "reviews");
+      if (reviewsError) errors["launch-review_count"] = reviewsError;
+      const monthsError = validateCount(launch.months_on_market, "months");
+      if (monthsError) errors["launch-months_on_market"] = monthsError;
+
+      if (!reportErrors(errors)) return;
 
       onAnalyze({
         method: "launch",
@@ -588,12 +789,16 @@ export default function ProductSearch({
     if (isExisting) {
       const id = productId.trim();
 
-      if (!id || id.length > 100) {
-        setError(
-          "Enter or select a valid Product ID."
-        );
-        return;
+      const errors = {};
+      if (!id) {
+        errors["existing-product_id"] =
+          "Search the catalogue above, or enter a Product ID.";
+      } else if (id.length > 100) {
+        errors["existing-product_id"] =
+          "Product IDs are 100 characters or fewer.";
       }
+
+      if (!reportErrors(errors)) return;
 
       onAnalyze({
         method: "id",
@@ -612,7 +817,9 @@ export default function ProductSearch({
     !categoryUsesReviews(selectedCategory.id);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-12">
+    // noValidate: the browser's min/max/step bubbles would block submit
+    // before handleSubmit could show the per-field messages below.
+    <form onSubmit={handleSubmit} noValidate className="space-y-12">
       <section>
         <SectionHeading
           number="01"
@@ -714,6 +921,7 @@ export default function ProductSearch({
               <>
                 <div className="grid gap-x-6 gap-y-6 sm:grid-cols-2">
                   <Field
+                    name="details-title"
                     label="Product name"
                     placeholder="Wireless Bluetooth Mouse"
                     value={details.title}
@@ -721,9 +929,12 @@ export default function ProductSearch({
                       updateDetails("title", value)
                     }
                     disabled={loading}
+                    required
+                    error={fieldErrors["details-title"]}
                   />
 
                   <SelectField
+                    name="details-category"
                     label="Category"
                     value={details.category}
                     disabled={loading}
@@ -732,11 +943,15 @@ export default function ProductSearch({
                       value: category.id,
                       label: category.name,
                     }))}
+                    required
+                    error={fieldErrors["details-category"]}
                   />
 
                   <Field
+                    name="details-price"
                     label="Selling price (USD)"
                     type="number"
+                    inputMode="decimal"
                     min="0.01"
                     max="100000"
                     step="0.01"
@@ -746,25 +961,32 @@ export default function ProductSearch({
                       updateDetails("price", value)
                     }
                     disabled={loading}
+                    required
+                    error={fieldErrors["details-price"]}
                   />
 
                   <Field
-                    label="List price (before discount)"
+                    name="details-list_price"
+                    label="List price before discount (optional)"
                     type="number"
+                    inputMode="decimal"
                     min="0.01"
                     max="100000"
                     step="0.01"
-                    placeholder="Optional"
+                    placeholder="29.99"
                     value={details.list_price}
                     onChange={(value) =>
                       updateDetails("list_price", value)
                     }
                     disabled={loading}
+                    error={fieldErrors["details-list_price"]}
                   />
 
                   <Field
+                    name="details-review_count"
                     label="Review count"
                     type="number"
+                    inputMode="numeric"
                     min="0"
                     step="1"
                     value={details.review_count}
@@ -772,11 +994,15 @@ export default function ProductSearch({
                       updateDetails("review_count", value)
                     }
                     disabled={loading}
+                    required
+                    error={fieldErrors["details-review_count"]}
                   />
 
                   <Field
+                    name="details-stars"
                     label="Star rating (optional)"
                     type="number"
+                    inputMode="decimal"
                     min="1"
                     max="5"
                     step="0.1"
@@ -786,6 +1012,7 @@ export default function ProductSearch({
                       updateDetails("stars", value)
                     }
                     disabled={loading || reviewsUnused}
+                    error={fieldErrors["details-stars"]}
                   />
                 </div>
 
@@ -811,6 +1038,7 @@ export default function ProductSearch({
               <>
                 <div className="grid gap-x-6 gap-y-6 sm:grid-cols-2">
                   <Field
+                    name="launch-name"
                     label="Product name"
                     placeholder="Wireless Bluetooth Mouse"
                     value={launch.name}
@@ -818,9 +1046,12 @@ export default function ProductSearch({
                       updateLaunch("name", value)
                     }
                     disabled={loading}
+                    required
+                    error={fieldErrors["launch-name"]}
                   />
 
                   <SelectField
+                    name="launch-category"
                     label="Forecast category"
                     value={launch.category}
                     disabled={loading}
@@ -833,11 +1064,15 @@ export default function ProductSearch({
                         label: category,
                       })
                     )}
+                    required
+                    error={fieldErrors["launch-category"]}
                   />
 
                   <Field
+                    name="launch-price"
                     label="Expected selling price (USD)"
                     type="number"
+                    inputMode="decimal"
                     min="0.01"
                     max="100000"
                     step="0.01"
@@ -847,25 +1082,32 @@ export default function ProductSearch({
                       updateLaunch("price", value)
                     }
                     disabled={loading}
+                    required
+                    error={fieldErrors["launch-price"]}
                   />
 
                   <Field
-                    label="List price (before discount)"
+                    name="launch-list_price"
+                    label="List price before discount (optional)"
                     type="number"
+                    inputMode="decimal"
                     min="0.01"
                     max="100000"
                     step="0.01"
-                    placeholder="Optional"
+                    placeholder="29.99"
                     value={launch.list_price}
                     onChange={(value) =>
                       updateLaunch("list_price", value)
                     }
                     disabled={loading}
+                    error={fieldErrors["launch-list_price"]}
                   />
 
                   <Field
+                    name="launch-review_count"
                     label="Review count"
                     type="number"
+                    inputMode="numeric"
                     min="0"
                     step="1"
                     value={launch.review_count}
@@ -873,11 +1115,15 @@ export default function ProductSearch({
                       updateLaunch("review_count", value)
                     }
                     disabled={loading}
+                    required
+                    error={fieldErrors["launch-review_count"]}
                   />
 
                   <Field
+                    name="launch-months_on_market"
                     label="Months on market"
                     type="number"
+                    inputMode="numeric"
                     min="0"
                     step="1"
                     value={launch.months_on_market}
@@ -885,6 +1131,8 @@ export default function ProductSearch({
                       updateLaunch("months_on_market", value)
                     }
                     disabled={loading}
+                    required
+                    error={fieldErrors["launch-months_on_market"]}
                   />
                 </div>
 
@@ -927,25 +1175,37 @@ export default function ProductSearch({
                           setShowDropdown(true);
                         }
                       }}
+                      onBlur={() => {
+                        setShowDropdown(false);
+                        setActiveIndex(-1);
+                      }}
                       onChange={(event) =>
                         handleProductSearch(event.target.value)
                       }
-                      onKeyDown={(event) => {
-                        if (event.key === "Escape") {
-                          setShowDropdown(false);
-                        }
-                      }}
+                      onKeyDown={handleSearchKeyDown}
                       role="combobox"
                       aria-autocomplete="list"
-                      aria-expanded={Boolean(
-                        showDropdown &&
-                          productQuery.trim() &&
-                          !selectedProduct &&
-                          filteredProducts.length > 0
-                      )}
+                      aria-expanded={listOpen}
                       aria-controls="forecast-product-results"
+                      aria-activedescendant={
+                        listOpen && activeIndex >= 0
+                          ? `forecast-product-option-${activeIndex}`
+                          : undefined
+                      }
                     />
                   </div>
+
+                  {/* Result count for screen readers as the list changes. */}
+                  <p className="sr-only" aria-live="polite">
+                    {showDropdown &&
+                    productQuery.trim() &&
+                    !selectedProduct &&
+                    !loadingProducts
+                      ? filteredProducts.length === 0
+                        ? "No matching products."
+                        : `${filteredProducts.length} matching products. Use the up and down arrows to choose one.`
+                      : ""}
+                  </p>
 
                   {loadingProducts && (
                     <p
@@ -985,43 +1245,53 @@ export default function ProductSearch({
                       </p>
                     )}
 
-                  {showDropdown &&
-                    productQuery.trim() &&
-                    !selectedProduct &&
-                    filteredProducts.length > 0 && (
+                  {listOpen && (
                       <ul
                         id="forecast-product-results"
                         role="listbox"
                         aria-label="Matching products"
                         className="absolute z-20 mt-2 max-h-72 w-full overflow-y-auto border border-ink bg-card shadow-offset"
                       >
-                        {filteredProducts.map((product) => (
+                        {filteredProducts.map((product, index) => (
                           <li
                             key={product.product_id}
+                            id={`forecast-product-option-${index}`}
                             role="option"
-                            aria-selected={false}
-                          >
-                            <button
-                              type="button"
-                              className="w-full border-b border-border px-5 py-4 text-left transition-colors hover:bg-[#F8EEE0]"
-                              onClick={() =>
-                                handleSelectProduct(product)
+                            aria-selected={index === activeIndex}
+                            // mousedown would blur the input (closing the
+                            // list) before click lands; keep focus put.
+                            onMouseDown={(event) =>
+                              event.preventDefault()
+                            }
+                            onClick={() =>
+                              handleSelectProduct(product)
+                            }
+                            onMouseEnter={() => setActiveIndex(index)}
+                            ref={(node) => {
+                              if (node && index === activeIndex) {
+                                node.scrollIntoView({ block: "nearest" });
                               }
-                            >
-                              <span className="block text-sm font-medium">
-                                {product.product_name}
-                              </span>
+                            }}
+                            className={
+                              "cursor-pointer border-b border-border px-5 py-4 text-left transition-colors " +
+                              (index === activeIndex
+                                ? "bg-[#F8EEE0] outline-2 -outline-offset-2 outline-primary"
+                                : "")
+                            }
+                          >
+                            <span className="block text-sm font-medium">
+                              {product.product_name}
+                            </span>
 
-                              <span className="mt-1 block font-mono text-xs text-muted-foreground">
-                                ID: {product.product_id}
-                              </span>
+                            <span className="mt-1 block font-mono text-xs text-muted-foreground">
+                              ID: {product.product_id}
+                            </span>
 
-                              {product.us_category && (
-                                <span className="mt-1 block text-xs text-muted-foreground">
-                                  {product.us_category}
-                                </span>
-                              )}
-                            </button>
+                            {product.us_category && (
+                              <span className="mt-1 block text-xs text-muted-foreground">
+                                {product.us_category}
+                              </span>
+                            )}
                           </li>
                         ))}
                       </ul>
@@ -1079,12 +1349,15 @@ export default function ProductSearch({
                 </div>
 
                 <Field
+                  name="existing-product_id"
                   label="Product ID"
                   placeholder="e.g. B07JW9H4J1"
                   value={productId}
                   onChange={handleManualProductId}
                   disabled={loading}
+                  required
                   hint="Selecting a catalogue product automatically fills this field."
+                  error={fieldErrors["existing-product_id"]}
                 />
 
                 <Note>
