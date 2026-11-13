@@ -171,8 +171,12 @@
 
 @utility font-display {
   font-family: var(--font-display);
-  font-variation-settings: "opsz" 144, "SOFT" 30;
-  letter-spacing: -0.025em;
+  /* opsz is left to font-optical-sizing (it tracks font size), so 24px
+     headings get Fraunces' text cut rather than the 144pt display cut,
+     which ran letters together once the font actually loaded. */
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 30;
+  letter-spacing: -0.015em;
 }
 
 @utility tabular {
