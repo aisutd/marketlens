@@ -1,12 +1,14 @@
 
-@import "tailwindcss";
+@import "./lovable-reference.css";
 
 :root {
-  font-family: Inter, Arial, sans-serif;
+  font-family: var(--font-sans);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
@@ -14,6 +16,9 @@ body {
   min-width: 320px;
 }
 
-* {
-  box-sizing: border-box;
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }

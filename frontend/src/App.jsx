@@ -151,7 +151,10 @@ function saveStoredAnalysis(analysis) {
 function AppHeader() {
   const location = useLocation();
 
-  // Landing page has its own navigation.
+  // LandingPage has its own navigation.
+  // Do not display the dashboard header
+  // on the landing page.
+
   if (location.pathname === "/") {
     return null;
   }
@@ -164,15 +167,23 @@ function AppHeader() {
 // ========================================
 
 function Footer() {
+  const location = useLocation();
+
+  // LandingPage renders its own footer, the same way it renders its own
+  // header; this one would stack underneath it.
+  if (location.pathname === "/") {
+    return null;
+  }
+
   return (
-    <footer className="mt-auto border-t border-[#D7E0EB] bg-white/50 px-6 py-6">
+    <footer className="mt-auto border-t border-border bg-white/50 px-6 py-6">
       <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-center gap-2 text-center">
-        <p className="text-sm font-medium text-[#61738B]">
+        <p className="text-sm font-medium text-muted-foreground">
           © {new Date().getFullYear()} MarketLens.
           All rights reserved.
         </p>
 
-        <p className="text-xs text-[#94A3B8]">
+        <p className="text-xs text-muted-foreground">
           AI-Powered Product Intelligence
         </p>
       </div>
@@ -233,15 +244,11 @@ export default function App() {
   // OVERVIEW ROUTING
   // ========================================
 
-  let overviewDestination = "/product-overview";
-
-  if (forecast?.type === "existing") {
-    overviewDestination =
-      "/sales-forecast-overview";
-  } else if (forecast?.type === "launch") {
-    overviewDestination =
-      "/launch-forecast-overview";
-  }
+  const overviewDestination =
+    forecast?.type === "existing" ||
+    forecast?.type === "launch"
+      ? "/sales-forecast-overview"
+      : "/product-overview";
 
   // ========================================
   // APPLICATION LAYOUT
@@ -251,19 +258,26 @@ export default function App() {
     <BrowserRouter>
       <div className="flex min-h-screen flex-col bg-gradient-to-b from-[#F8FAFC] to-[#DCE3EA]">
 
-        {/* NAVIGATION */}
+        {/* CONDITIONAL NAVIGATION */}
         <AppHeader />
 
+        {/* PAGE CONTENT */}
         <div className="w-full flex-1">
           <Routes>
 
-            {/* LANDING PAGE */}
+            {/* ========================================
+                LANDING PAGE
+            ======================================== */}
+
             <Route
               path="/"
               element={<LandingPage />}
             />
 
-            {/* DISCOVER PRODUCTS */}
+            {/* ========================================
+                DISCOVER PRODUCTS
+            ======================================== */}
+
             <Route
               path="/discover"
               element={
@@ -276,7 +290,10 @@ export default function App() {
               }
             />
 
-            {/* OPPORTUNITY ANALYSIS */}
+            {/* ========================================
+                PRODUCT OPPORTUNITY ANALYSIS
+            ======================================== */}
+
             <Route
               path="/product-overview"
               element={
@@ -288,27 +305,30 @@ export default function App() {
               }
             />
 
-            {/* EXISTING PRODUCT FORECAST */}
+            {/* ========================================
+                SALES FORECASTING
+                NEW PRODUCT + EXISTING PRODUCT
+            ======================================== */}
+
             <Route
               path="/sales-forecast-overview"
               element={
-                <SalesForecastOverview
-                  forecast={forecast}
-                />
+                forecast?.type === "launch" ? (
+                  <LaunchForecastOverview
+                    forecast={forecast}
+                  />
+                ) : (
+                  <SalesForecastOverview
+                    forecast={forecast}
+                  />
+                )
               }
             />
 
-            {/* NEW PRODUCT LAUNCH FORECAST */}
-            <Route
-              path="/launch-forecast-overview"
-              element={
-                <LaunchForecastOverview
-                  forecast={forecast}
-                />
-              }
-            />
+            {/* ========================================
+                LEGACY OVERVIEW REDIRECT
+            ======================================== */}
 
-            {/* LEGACY OVERVIEW REDIRECT */}
             <Route
               path="/overview"
               element={
@@ -319,7 +339,10 @@ export default function App() {
               }
             />
 
-            {/* OPPORTUNITY SCORE DETAILS */}
+            {/* ========================================
+                SCORE EXPLANATIONS
+            ======================================== */}
+
             <Route
               path="/score-details"
               element={
@@ -330,7 +353,10 @@ export default function App() {
               }
             />
 
-            {/* OPPORTUNITY WHAT-IF SIMULATOR */}
+            {/* ========================================
+                WHAT-IF PRICE SIMULATOR
+            ======================================== */}
+
             <Route
               path="/launch-feasibility"
               element={
@@ -346,7 +372,10 @@ export default function App() {
               }
             />
 
-            {/* FALLBACK */}
+            {/* ========================================
+                FALLBACK ROUTE
+            ======================================== */}
+
             <Route
               path="*"
               element={
@@ -360,7 +389,9 @@ export default function App() {
           </Routes>
         </div>
 
+        {/* GLOBAL COPYRIGHT FOOTER */}
         <Footer />
+
       </div>
     </BrowserRouter>
   );
