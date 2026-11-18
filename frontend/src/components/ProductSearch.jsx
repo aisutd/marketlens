@@ -1,5 +1,5 @@
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   Check,
@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 
+import ApiErrorNotice from "./ApiErrorNotice";
 import { FORECAST_CATEGORIES } from "../constants/forecastCategoryMap";
 import { categoryUsesReviews } from "../constants/reviewCategories";
 import { getForecastProducts } from "../services/forecastingApi";
@@ -324,7 +325,9 @@ export default function ProductSearch({
   categories = [],
   loading = false,
   onAnalyze,
+  submitError = null,
 }) {
+  const formRef = useRef(null);
   const [model, setModel] = useState("opportunity");
 
   const [forecastWorkflow, setForecastWorkflow] =
@@ -819,7 +822,12 @@ export default function ProductSearch({
   return (
     // noValidate: the browser's min/max/step bubbles would block submit
     // before handleSubmit could show the per-field messages below.
-    <form onSubmit={handleSubmit} noValidate className="space-y-12">
+    <form
+      ref={formRef}
+      onSubmit={handleSubmit}
+      noValidate
+      className="space-y-12"
+    >
       <section>
         <SectionHeading
           number="01"
@@ -1385,6 +1393,15 @@ export default function ProductSearch({
           </p>
         </div>
       )}
+
+      {/* Retry re-submits the form as it is now, so it re-checks the
+          fields and never resends details the person has since changed. */}
+      <ApiErrorNotice
+        title="Unable to complete analysis"
+        error={submitError}
+        onRetry={() => formRef.current?.requestSubmit()}
+        retrying={loading}
+      />
 
       <div className="border-t border-ink pt-8">
         <button

@@ -1,5 +1,6 @@
 
 import { categoryUsesReviews } from "../constants/reviewCategories";
+import { ApiError, requestJson } from "./apiClient";
 import { auth } from "./firebase";
 
 const API_BASE_URL = "/api";
@@ -37,79 +38,54 @@ function buildProductPayload(product) {
   return payload;
 }
 
+// FastAPI puts the reason in `detail`: a string, or a list of
+// validation errors each with a `msg`.
+function readDetail(body) {
+  if (typeof body.detail === "string") {
+    return body.detail;
+  }
+
+  if (Array.isArray(body.detail)) {
+    return body.detail
+      .map((item) => item?.msg)
+      .filter(Boolean)
+      .join("; ");
+  }
+
+  return "";
+}
+
 // ========================================
 // API REQUEST WITH FIREBASE AUTHENTICATION
 // ========================================
 
+// Every endpoint but /categories needs the signed-in user's Firebase ID
+// token; requestJson then handles the timeout and error messages.
 async function apiRequest(endpoint, options = {}) {
-  let response;
-
-  // ========================================
-  // GET FIREBASE AUTHENTICATION TOKEN
-  // ========================================
-
-  const user = auth.currentUser;
-
   const headers = new Headers(options.headers);
 
   if (endpoint !== "/categories") {
+    const user = auth.currentUser;
+
     if (!user) {
-      throw new Error(
-        "You must be logged in to use MarketLens."
+      throw new ApiError(
+        "You must be logged in to use MarketLens.",
+        { kind: "auth", retryable: false }
       );
     }
 
-    const token = await user.getIdToken();
-
     headers.set(
       "Authorization",
-      `Bearer ${token}`
+      `Bearer ${await user.getIdToken()}`
     );
   }
 
-  // ========================================
-  // SEND REQUEST TO FASTAPI
-  // ========================================
-
-  try {
-    response = await fetch(
-      `${API_BASE_URL}${endpoint}`,
-      {
-        ...options,
-        headers,
-      }
-    );
-  } catch {
-    throw new Error(
-      "Unable to connect to the MarketLens backend."
-    );
-  }
-
-  // ========================================
-  // HANDLE API ERRORS
-  // ========================================
-
-  if (!response.ok) {
-    let message = `Request failed (${response.status})`;
-
-    try {
-      const error = await response.json();
-
-      if (Array.isArray(error.detail)) {
-        message = error.detail
-          .map((item) => item.msg)
-          .join("; ");
-      } else if (typeof error.detail === "string") {
-        message = error.detail;
-      }
-    } catch {
-      // Keep the HTTP error message.
-    }
-
-    throw new Error(message);
-  }
-
-  return response.json();
+  return requestJson(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    headers,
+    service: "scoring service",
+    readError: readDetail,
+  });
 }
 
 // ========================================

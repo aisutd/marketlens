@@ -107,7 +107,7 @@ const benefits = [
     icon: CircleDollarSign,
     title: "Forecast financial outcomes",
     description:
-      "Explore projected sales, revenue, profitability, and other financial indicators.",
+      "Explore projected sales, revenue, and other financial indicators.",
   },
   {
     number: "06",

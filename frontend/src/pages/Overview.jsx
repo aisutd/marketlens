@@ -16,6 +16,11 @@ import { getPredictionReasons } from "../services/marketlensApi";
 import { getScoreBand } from "../constants/scoreBands";
 import InfoDialog from "../components/InfoDialog";
 import OpportunityGauge from "../components/OpportunityGauge";
+import {
+  factorInfo,
+  isCategoryWide,
+  rankFactors,
+} from "../constants/scoreFactors";
 
 // ========================================
 // FORMATTING
@@ -60,13 +65,14 @@ function formattedNumber(value) {
     : numberFormatter.format(amount);
 }
 
-function sortedFactors(factors) {
-  if (!Array.isArray(factors)) return [];
+// Largest first, category-wide factors last (see constants/scoreFactors.js).
+const sortedFactors = rankFactors;
 
-  return [...factors].sort(
-    (a, b) =>
-      Math.abs(numeric(b?.impact) ?? 0) -
-      Math.abs(numeric(a?.impact) ?? 0)
+// Factors that say something about rank within the category: summaries
+// (the hero chips, the recommended next step) leave category-wide ones out.
+function rankingFactors(factors) {
+  return rankFactors(factors).filter(
+    (factor) => !isCategoryWide(factor)
   );
 }
 
@@ -179,129 +185,16 @@ function SectionHeading({
 // FRIENDLY FACTOR EXPLANATIONS
 // ========================================
 
-const FACTOR_GUIDANCE = {
-  title_words: {
-    positive: "Your product title is a positive factor",
-    negative: "Review the length of your product title",
-    description:
-      "The length of your product title was associated with this evaluation.",
-    consideration:
-      "Make sure your title is clear, easy to read, and includes the details shoppers need.",
-  },
-
-  title_score: {
-    positive: "Your product wording is a positive factor",
-    negative: "Review how your product is described",
-    description:
-      "Patterns in your product title's wording influenced the evaluation. This does not identify specific words as the cause.",
-    consideration:
-      "Ask whether a shopper could quickly understand what your product is, what it does, and who it is for.",
-  },
-
-  brand_size_log: {
-    positive: "Brand presence is a positive factor",
-    negative: "Brand presence deserves a closer look",
-    description:
-      "A characteristic associated with the brand's presence contributed to the evaluation.",
-    consideration:
-      "Look at competing brands and consider how customers would discover and recognize your product.",
-  },
-
-  brand_cat_rate: {
-    positive: "Brand experience in this category is a positive factor",
-    negative: "Review the competitive landscape",
-    description:
-      "A pattern associated with the brand's track record in this product category contributed to the evaluation.",
-    consideration:
-      "Research established competitors and identify customer needs that might not be fully addressed.",
-  },
-
-  title_caps_ratio: {
-    positive: "Title formatting is a positive factor",
-    negative: "Review your product title formatting",
-    description:
-      "Capitalization patterns in the title contributed to the evaluation.",
-    consideration:
-      "Use clear, consistent capitalization and prioritize readability for customers.",
-  },
-};
-
+// Names and explanations live in constants/scoreFactors.js so this page
+// and Score Details explain each factor the same way.
 function factorInterpretation(reason, positive) {
-  const feature = String(reason?.feature || "");
-  const guidance = FACTOR_GUIDANCE[feature];
-
-  if (guidance) {
-    return {
-      title: positive
-        ? guidance.positive
-        : guidance.negative,
-      description: guidance.description,
-      consideration: guidance.consideration,
-    };
-  }
-
-  if (feature.startsWith("title_emb_")) {
-    return {
-      title: positive
-        ? "Your product description is a positive factor"
-        : "Review how clearly your product is described",
-      description:
-        "A pattern related to the meaning of your product title contributed to the evaluation. It does not establish that any particular keyword is responsible.",
-      consideration:
-        "Check whether your title accurately communicates the product's purpose and important features.",
-    };
-  }
-
-  if (feature === "price") {
-    return {
-      title: positive
-        ? "Your price is a positive factor"
-        : "Review your proposed selling price",
-      description:
-        "Your selling price was one of the characteristics associated with this evaluation.",
-      consideration:
-        "Compare the prices of similar products and estimate your costs to determine whether your pricing is competitive and sustainable.",
-    };
-  }
-
-  if (
-    feature === "list_price" ||
-    feature === "discount_pct"
-  ) {
-    return {
-      title: positive
-        ? "Your pricing details are a positive factor"
-        : "Review your pricing strategy",
-      description:
-        "The relationship between your selling price and listed price contributed to the evaluation.",
-      consideration:
-        "Check your pricing against comparable products and make sure discounts fit your business goals.",
-    };
-  }
-
-  if (feature === "category") {
-    return {
-      title: positive
-        ? "Your product category is a positive factor"
-        : "Research your product category",
-      description:
-        "The category associated with your product contributed to its evaluation.",
-      consideration:
-        "Explore the types of products already sold in this category and consider how your offering could stand out.",
-    };
-  }
+  const info = factorInfo(reason, positive);
 
   return {
-    title:
-      reason?.label ||
-      (positive
-        ? "Another factor looks promising"
-        : "Another area deserves attention"),
-    description: positive
-      ? "This product characteristic contributed positively to the evaluation."
-      : "This product characteristic contributed negatively to the evaluation.",
-    consideration:
-      "Consider this finding alongside customer needs, competing products, costs, and other business information.",
+    title: info.name,
+    description: info.means,
+    effect: info.effect,
+    consideration: info.action,
   };
 }
 
@@ -310,7 +203,7 @@ function factorInterpretation(reason, positive) {
 // ========================================
 
 function getRecommendedAction(reasons, fallback) {
-  const watchouts = sortedFactors(
+  const watchouts = rankingFactors(
     reasons?.reasons_down
   );
 
@@ -342,11 +235,11 @@ function ScoreHero({
   const band = getScoreBand(score);
   const message = getOpportunityMessage(score);
 
-  const positive = sortedFactors(
+  const positive = rankingFactors(
     reasons?.reasons_up
   ).slice(0, 2);
 
-  const negative = sortedFactors(
+  const negative = rankingFactors(
     reasons?.reasons_down
   ).slice(0, 2);
 
@@ -604,9 +497,11 @@ function InsightCard({
           </p>
 
           <p className="mt-2 text-xs text-muted-foreground">
-            {positive
-              ? "What looks promising"
-              : "What to look into"}
+            {isCategoryWide(reason)
+              ? "Same for every product in this category"
+              : positive
+                ? "What looks promising"
+                : "What to look into"}
           </p>
         </div>
 
@@ -626,11 +521,19 @@ function InsightCard({
       {expanded && (
         <div className="border-t border-border px-5 pb-6 pt-5 sm:px-6">
           <h4 className="text-sm font-semibold">
-            Why this matters
+            What it measures
           </h4>
 
-          <p className="mt-3 text-sm leading-7 text-muted-foreground">
+          <p className="mt-2 text-sm leading-7 text-muted-foreground">
             {guidance.description}
+          </p>
+
+          <h4 className="mt-5 text-sm font-semibold">
+            How it affected your score
+          </h4>
+
+          <p className="mt-2 text-sm leading-7 text-muted-foreground">
+            {guidance.effect}
           </p>
 
           <div className="mt-5 border-l-2 border-primary bg-[#F8EEE0] p-4">

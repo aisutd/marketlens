@@ -1,23 +1,18 @@
 
+import { requestJson } from "./apiClient";
+
 const BASE_URL = "/api/forecasting/api/v1";
 
 async function request(endpoint, options = {}) {
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
+  const result = await requestJson(`${BASE_URL}${endpoint}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
       ...options.headers,
     },
+    service: "forecasting service",
+    readError: (body) => body?.error?.message || "",
   });
-
-  const result = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    throw new Error(
-      result?.error?.message ||
-        `Forecasting request failed (${response.status})`
-    );
-  }
 
   return result?.data ?? result;
 }

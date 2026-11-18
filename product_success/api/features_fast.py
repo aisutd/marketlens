@@ -6,7 +6,7 @@ MarketLens: features and score for ONE product without the dev CSV, identical to
     E = OnnxEmbedder("models/minilm-onnx").encode([title])[0]           # cacheable per title
     product = {"title": title, "price": 89.99, "list_price": 119.99, "category": "Suitcases"}
     out = score_one(product, bundle, tables, E)        # model, probability, opportunity_score (~70 ms)
-    why = reasons_one(product, bundle, tables, E)      # the SHAP reasons string (~0.5 s on the launch model)
+    why = reasons_one(product, bundle, tables, E, baselines)   # SHAP reasons vs the category (~0.5 s, launch)
 
 predict.featurize appends the product to all 1.25M dev rows and rebuilds the features over the whole frame.
 Here the product becomes a 1-row frame with the CSV's dtypes, build_features and listing_features run on that
@@ -31,7 +31,6 @@ import os
 
 import numpy as np
 import pandas as pd
-import xgboost as xgb
 
 import joblib  # noqa: E402
 
@@ -190,15 +189,15 @@ def score_one(product, bundle, tables, embedding, features=None):
             "opportunity_score": round(100 * (peers < p).mean()), "p_raw": p, "category_id": cid}
 
 
-def reasons_one(product, bundle, tables, embedding, features=None):
+def reasons_one(product, bundle, tables, embedding, baselines, features=None):
     """predict.main's reasons for one product: the same pred_contribs (exact TreeSHAP) call and grouping, so
     they are identical. Kept apart from score_one because SHAP on the launch-time model's 3,864 trees takes
     ~0.5 s while the score takes ~70 ms."""
     X = featurize_one(product, bundle, tables, embedding) if features is None else features
     m = _model_of(X, bundle)
-    contrib = m["xgb"].get_booster().predict(xgb.DMatrix(X, enable_categorical=True), pred_contribs=True)
+    contrib = predict.shap_contribs(m, X)
     contrib = pd.Series(contrib[0, :-1], index=m["feature_cols"])
-    c = contrib.groupby(lambda f: predict.FRIENDLY.get(f, f)).sum().sort_values()
+    c = predict.reason_groups(contrib, baselines, X.attrs["model"], X["category_id"].iloc[0])
     up = [f"+ {k}" for k, v in c[::-1].head(3).items() if v > 0]
     down = [f"- {k}" for k, v in c.head(3).items() if v < 0]
     return "; ".join(up + down)

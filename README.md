@@ -48,7 +48,7 @@ Setup, training, the CLI, running the API locally, tests, deployment and results
 
 ## Contributing
 
-- Branch off `main`, using a name like `<area>-<what>` (for example `frontend-score-page`).
+- Branch off `main`, using a name like `<type>/<what>` (for example `feature/frontend-score-page`).
 - Open a pull request into `main`. Don't push to `main` directly.
 - Never commit data or model files (`.csv`, `.joblib`, `.npy`, `.onnx`, `.parquet`, `data/`,
   `product_success/models/`). The root `.gitignore` blocks them; ask before adding an exception.

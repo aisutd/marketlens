@@ -15,6 +15,7 @@ import {
 } from "../services/marketlensApi";
 
 import { categoryUsesReviews } from "../constants/reviewCategories";
+import { factorName } from "../constants/scoreFactors";
 
 const PRESETS = [
   {
@@ -94,11 +95,7 @@ function normalizeReasons(items) {
       feature: String(
         item?.feature || `factor-${index}`
       ),
-      label: String(
-        item?.label ||
-        item?.feature ||
-        "Model factor"
-      ),
+      label: factorName(item),
       impact: Number(item?.impact),
     }))
     .filter((item) =>

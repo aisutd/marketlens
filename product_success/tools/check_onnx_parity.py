@@ -110,6 +110,8 @@ def main():
     from training import embeddings
 
     bundle = joblib.load(args.model)
+    from predict import BASELINES_FILE, load_baselines
+    baselines = load_baselines(os.path.join(os.path.dirname(args.model), BASELINES_FILE), args.model)
     name, pca = bundle["title_emb"]["model"], bundle["title_emb"]["pca"]
     print(f"bundle data_path: {bundle['data_path']}")
     if "holdout" in bundle["data_path"].lower():
@@ -176,7 +178,7 @@ def main():
     for label, encode in engines.items():
         predict_path.use_embedder(encode)
         t = time.perf_counter()
-        out[label] = predict_path.score(bundle, dev, new)
+        out[label] = predict_path.score(bundle, dev, new, baselines)
         print(f"  {label} pass {time.perf_counter() - t:.0f}s")
     predict_path.use_embedder(None)
     print(f"  models used: {out['pytorch']['model'].value_counts().to_dict()}")

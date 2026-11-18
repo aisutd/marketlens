@@ -23,6 +23,7 @@
 /models/*
 !/models/embed_model.joblib
 !/models/reference_tables.joblib
+!/models/category_baselines.joblib
 !/models/minilm-onnx/
 
 # Never, even if a rule above would let them in
