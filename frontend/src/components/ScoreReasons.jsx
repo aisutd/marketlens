@@ -1,3 +1,4 @@
+import { factorName } from "../constants/scoreFactors";
 
 const MAX_PER_SIDE = 3;
 
@@ -7,7 +8,7 @@ function Chips({ items, sign, className }) {
       key={`${sign}${reason.label}`}
       className={`rounded-full border px-3 py-1 text-xs font-medium ${className}`}
     >
-      {sign} {reason.label}
+      {sign} {factorName(reason)}
     </span>
   ));
 }
