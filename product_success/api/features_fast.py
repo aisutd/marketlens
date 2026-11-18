@@ -31,7 +31,6 @@ import os
 
 import numpy as np
 import pandas as pd
-import xgboost as xgb
 
 import joblib  # noqa: E402
 
@@ -196,7 +195,7 @@ def reasons_one(product, bundle, tables, embedding, features=None):
     ~0.5 s while the score takes ~70 ms."""
     X = featurize_one(product, bundle, tables, embedding) if features is None else features
     m = _model_of(X, bundle)
-    contrib = m["xgb"].get_booster().predict(xgb.DMatrix(X, enable_categorical=True), pred_contribs=True)
+    contrib = predict.shap_contribs(m, X)
     contrib = pd.Series(contrib[0, :-1], index=m["feature_cols"])
     c = contrib.groupby(lambda f: predict.FRIENDLY.get(f, f)).sum().sort_values()
     up = [f"+ {k}" for k, v in c[::-1].head(3).items() if v > 0]

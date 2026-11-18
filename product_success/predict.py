@@ -116,6 +116,15 @@ def fill_typical(new, ref):
     return new
 
 
+def shap_contribs(m, X):
+    """Exact TreeSHAP (pred_contribs) over the trees predict_proba uses. Both models were trained with early
+    stopping, and the scikit-learn wrapper predicts with the best iteration's trees only; the booster's own
+    predict uses every tree unless told otherwise, which would explain a slightly different model."""
+    best = getattr(m["xgb"], "best_iteration", None)
+    return m["xgb"].get_booster().predict(xgb.DMatrix(X, enable_categorical=True), pred_contribs=True,
+                                          iteration_range=(0, best + 1) if best is not None else (0, 0))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default=os.path.join(MODELS_DIR, "embed_model.joblib"),
@@ -159,8 +168,7 @@ def main():
             continue
         Xm = X.iloc[rows][m["feature_cols"]]
         p = m["xgb"].predict_proba(Xm)[:, 1]
-        contrib = m["xgb"].get_booster().predict(xgb.DMatrix(Xm, enable_categorical=True),
-                                                 pred_contribs=True)
+        contrib = shap_contribs(m, Xm)
         contrib = pd.DataFrame(contrib[:, :-1], columns=m["feature_cols"])
         ref_p = m["reference"]
         for j, (i, pi) in enumerate(zip(rows, p)):

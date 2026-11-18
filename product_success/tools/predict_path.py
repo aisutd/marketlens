@@ -14,7 +14,6 @@ import os
 
 import numpy as np
 import pandas as pd
-import xgboost as xgb
 
 from training import embeddings  # noqa: E402
 import predict  # noqa: E402
@@ -54,8 +53,7 @@ def score(bundle, ref, new, categories_file=CATEGORIES_FILE, as_is=False):
             continue
         Xm = X.iloc[rows][m["feature_cols"]]
         p = m["xgb"].predict_proba(Xm)[:, 1]
-        contrib = m["xgb"].get_booster().predict(xgb.DMatrix(Xm, enable_categorical=True),
-                                                 pred_contribs=True)
+        contrib = predict.shap_contribs(m, Xm)
         contrib = pd.DataFrame(contrib[:, :-1], columns=m["feature_cols"])
         ref_p = m["reference"]
         for j, (i, pi) in enumerate(zip(rows, p)):

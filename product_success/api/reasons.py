@@ -14,7 +14,6 @@ selection as reasons_one, so the labels and their order are identical to it (api
               ("title meaning" sums 32 title_emb_pca_* columns, "title length" title_len and title_words)
 """
 import pandas as pd
-import xgboost as xgb
 
 import predict
 from api.features_fast import _model_of, featurize_one
@@ -23,7 +22,7 @@ from api.features_fast import _model_of, featurize_one
 def reasons_detail(product, bundle, tables, embedding, features=None):
     X = featurize_one(product, bundle, tables, embedding) if features is None else features
     m = _model_of(X, bundle)
-    contrib = m["xgb"].get_booster().predict(xgb.DMatrix(X, enable_categorical=True), pred_contribs=True)
+    contrib = predict.shap_contribs(m, X)
     contrib = pd.Series(contrib[0, :-1], index=m["feature_cols"])
     c = contrib.groupby(lambda f: predict.FRIENDLY.get(f, f)).sum().sort_values()
     labels = contrib.index.map(lambda f: predict.FRIENDLY.get(f, f))
