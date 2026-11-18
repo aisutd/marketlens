@@ -35,6 +35,7 @@ function normalizeGroup(items, positive) {
         id: `${positive ? "positive" : "negative"}-${index}`,
         impact,
         positive,
+        categoryWide: info.categoryWide,
         title: info.name,
         means: info.means,
         effect: info.effect,
@@ -44,6 +45,7 @@ function normalizeGroup(items, positive) {
     .filter(Boolean)
     .sort(
       (a, b) =>
+        a.categoryWide - b.categoryWide ||
         Math.abs(b.impact) - Math.abs(a.impact)
     );
 }
@@ -195,12 +197,16 @@ function FindingCard({
       ? (Math.abs(factor.impact) / maxImpact) * 100
       : 0;
 
-  const strengthLabel =
-    relativeStrength >= 70
-      ? "Larger influence"
-      : relativeStrength >= 35
-        ? "Moderate influence"
-        : "Smaller influence";
+  // Category-wide factors get no size: their push is shared by every
+  // product the score compares against, so a big bar would mislead.
+  const strengthLabel = factor.categoryWide
+    ? "Same for every product in this category"
+    : (relativeStrength >= 70
+        ? "Larger influence"
+        : relativeStrength >= 35
+          ? "Moderate influence"
+          : "Smaller influence") +
+      " among the findings shown";
 
   return (
     <article className="border border-ink bg-card">
@@ -240,7 +246,7 @@ function FindingCard({
             </h3>
 
             <p className="mt-2 text-xs text-muted-foreground">
-              {strengthLabel} among the findings shown
+              {strengthLabel}
             </p>
           </div>
 
@@ -257,22 +263,24 @@ function FindingCard({
           )}
         </div>
 
-        <div
-          className="mt-6 h-2 overflow-hidden bg-secondary"
-          aria-hidden="true"
-        >
+        {!factor.categoryWide && (
           <div
-            className={
-              "h-full transition-[width] duration-300 " +
-              (factor.positive
-                ? "bg-[#47866B]"
-                : "bg-primary")
-            }
-            style={{
-              width: `${relativeStrength}%`,
-            }}
-          />
-        </div>
+            className="mt-6 h-2 overflow-hidden bg-secondary"
+            aria-hidden="true"
+          >
+            <div
+              className={
+                "h-full transition-[width] duration-300 " +
+                (factor.positive
+                  ? "bg-[#47866B]"
+                  : "bg-primary")
+              }
+              style={{
+                width: `${Math.min(relativeStrength, 100)}%`,
+              }}
+            />
+          </div>
+        )}
 
         <p className="mt-3 text-xs text-muted-foreground">
           {expanded
@@ -534,6 +542,7 @@ export default function ScoreDetails({
     0,
     ...positiveFactors
       .concat(negativeFactors)
+      .filter((factor) => !factor.categoryWide)
       .map((factor) => Math.abs(factor.impact))
   );
 
@@ -680,6 +689,9 @@ export default function ScoreDetails({
                     in your category shares, such as the
                     category itself, can show a large push
                     and still barely change where you rank.
+                    Those findings are marked "Same for
+                    every product in this category" and
+                    left out of the checklist below.
                   </p>
 
                   <p className="mt-2">
@@ -724,7 +736,9 @@ export default function ScoreDetails({
 
         {!loading && !error && reasons && (
           <NextSteps
-            concerns={negativeFactors}
+            concerns={negativeFactors.filter(
+              (factor) => !factor.categoryWide
+            )}
             hasFindings
           />
         )}

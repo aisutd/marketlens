@@ -16,7 +16,11 @@ import { getPredictionReasons } from "../services/marketlensApi";
 import { getScoreBand } from "../constants/scoreBands";
 import InfoDialog from "../components/InfoDialog";
 import OpportunityGauge from "../components/OpportunityGauge";
-import { factorInfo } from "../constants/scoreFactors";
+import {
+  factorInfo,
+  isCategoryWide,
+  rankFactors,
+} from "../constants/scoreFactors";
 
 // ========================================
 // FORMATTING
@@ -61,13 +65,14 @@ function formattedNumber(value) {
     : numberFormatter.format(amount);
 }
 
-function sortedFactors(factors) {
-  if (!Array.isArray(factors)) return [];
+// Largest first, category-wide factors last (see constants/scoreFactors.js).
+const sortedFactors = rankFactors;
 
-  return [...factors].sort(
-    (a, b) =>
-      Math.abs(numeric(b?.impact) ?? 0) -
-      Math.abs(numeric(a?.impact) ?? 0)
+// Factors that say something about rank within the category: summaries
+// (the hero chips, the recommended next step) leave category-wide ones out.
+function rankingFactors(factors) {
+  return rankFactors(factors).filter(
+    (factor) => !isCategoryWide(factor)
   );
 }
 
@@ -198,7 +203,7 @@ function factorInterpretation(reason, positive) {
 // ========================================
 
 function getRecommendedAction(reasons, fallback) {
-  const watchouts = sortedFactors(
+  const watchouts = rankingFactors(
     reasons?.reasons_down
   );
 
@@ -230,11 +235,11 @@ function ScoreHero({
   const band = getScoreBand(score);
   const message = getOpportunityMessage(score);
 
-  const positive = sortedFactors(
+  const positive = rankingFactors(
     reasons?.reasons_up
   ).slice(0, 2);
 
-  const negative = sortedFactors(
+  const negative = rankingFactors(
     reasons?.reasons_down
   ).slice(0, 2);
 
@@ -492,9 +497,11 @@ function InsightCard({
           </p>
 
           <p className="mt-2 text-xs text-muted-foreground">
-            {positive
-              ? "What looks promising"
-              : "What to look into"}
+            {isCategoryWide(reason)
+              ? "Same for every product in this category"
+              : positive
+                ? "What looks promising"
+                : "What to look into"}
           </p>
         </div>
 

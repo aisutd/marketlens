@@ -15,6 +15,13 @@
 //   up       how it raised this score (factor pushed the score up)
 //   down     how it lowered this score
 //   action   what to look into next
+//   categoryWide  true when every product in a category has the same
+//            value (the category itself, its size, its typical review
+//            count). The score ranks a product only against its own
+//            category, but /reasons measures factors against all
+//            products, so these can be large and barely move the rank.
+//            Pages mark them and leave them out of summaries. Issue #28
+//            would make the API measure against the category instead.
 
 export const SCORE_FACTORS = {
   "title wording": {
@@ -129,8 +136,9 @@ export const SCORE_FACTORS = {
     name: "Category",
     means:
       "The product category you chose. Some categories are harder to stand out in than others.",
-    up: "Products like yours do comparatively well in this category, so it raised your score.",
-    down: "Products like yours find it harder to stand out in this category, so it lowered your score.",
+    up: "Products in this category get a higher rating from the model than products in general. Every product in the category gets this boost, so it says little about how you rank against them.",
+    down: "Products in this category get a lower rating from the model than products in general. Every product in the category shares this, so it says little about how you rank against them.",
+    categoryWide: true,
     action:
       "Check the category is the one shoppers would browse for this product, and look at how the top sellers there stand out.",
   },
@@ -138,8 +146,9 @@ export const SCORE_FACTORS = {
     name: "Category size",
     means:
       "How many products are listed in your category, which shows how crowded it is.",
-    up: "The size of your category works in your favour, so it raised your score.",
-    down: "The size of your category works against you, for example because it is crowded, so it lowered your score.",
+    up: "The size of your category raised the model's rating. Every product in the category has the same category size, so it says little about how you rank against them.",
+    down: "The size of your category lowered the model's rating, for example because it is crowded. Every product in the category has the same category size, so it says little about how you rank against them.",
+    categoryWide: true,
     action:
       "In a crowded category, find a clear angle that sets the product apart from the many alternatives.",
   },
@@ -147,8 +156,9 @@ export const SCORE_FACTORS = {
     name: "Typical review count in the category",
     means:
       "How many reviews products in your category usually have, which shows how established the competition is.",
-    up: "How established the competition in your category is works in your favour, so it raised your score.",
-    down: "Products in your category usually have many reviews, which makes it harder for a newcomer, so it lowered your score.",
+    up: "The typical review count in your category raised the model's rating. Every product in the category shares this, so it says little about how you rank against them.",
+    down: "Products in your category usually have many reviews, which lowered the model's rating. Every product in the category shares this, so it says little about how you rank against them.",
+    categoryWide: true,
     action:
       "Plan how you will collect early reviews, since shoppers compare them with well-reviewed competitors.",
   },
@@ -255,6 +265,24 @@ export function factorInfo(reason, positive) {
 
   return {
     ...entry,
+    categoryWide: Boolean(entry.categoryWide),
     effect: positive ? entry.up : entry.down,
   };
+}
+
+export function isCategoryWide(reason) {
+  return Boolean(SCORE_FACTORS[factorKey(reason)]?.categoryWide);
+}
+
+// Largest first, with category-wide factors after the rest: they say
+// least about where the product ranks in its category.
+export function rankFactors(factors) {
+  if (!Array.isArray(factors)) return [];
+
+  const size = (factor) => Math.abs(Number(factor?.impact) || 0);
+
+  return [...factors].sort(
+    (a, b) =>
+      isCategoryWide(a) - isCategoryWide(b) || size(b) - size(a)
+  );
 }
