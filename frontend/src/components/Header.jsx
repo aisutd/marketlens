@@ -1,6 +1,14 @@
 
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+
+import { signOut } from "firebase/auth";
+import { auth } from "../services/firebase";
+
 import {
   Bookmark,
   ChevronDown,
@@ -35,6 +43,7 @@ export default function Header() {
   const toggleRef = useRef(null);
 
   const location = useLocation();
+  const navigate = useNavigate();
 
   const isDiscover =
     location.pathname === "/discover";
@@ -55,6 +64,29 @@ export default function Header() {
 
   function handlePlaceholder(feature) {
     setNotice(`${feature} is coming soon.`);
+  }
+
+  // ========================================
+  // HANDLE USER LOGOUT
+  // ========================================
+
+  async function handleLogout() {
+    try {
+      await signOut(auth);
+
+      closeMenu();
+
+      navigate("/login", {
+        replace: true,
+      });
+
+    } catch (error) {
+      console.error("Logout failed:", error);
+
+      setNotice(
+        "Unable to log out. Please try again."
+      );
+    }
   }
 
   // ========================================
@@ -302,9 +334,7 @@ export default function Header() {
               <div className="mt-2 border-t border-border pt-2">
                 <button
                   type="button"
-                  onClick={() =>
-                    handlePlaceholder("Log Out")
-                  }
+                  onClick={handleLogout}
                   className={
                     menuItemStyle +
                     " text-[#B04435] hover:bg-secondary"

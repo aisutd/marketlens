@@ -1,7 +1,12 @@
 
 import { categoryUsesReviews } from "../constants/reviewCategories";
+import { auth } from "./firebase";
 
 const API_BASE_URL = "/api";
+
+// ========================================
+// BUILD PRODUCT PAYLOAD
+// ========================================
 
 function buildProductPayload(product) {
   const payload = {
@@ -18,6 +23,7 @@ function buildProductPayload(product) {
   // alone would reach the full model as "N reviews, 0 stars". Without
   // the pair, the launch-time model scores it as a new product idea. The
   // same goes for categories with no reviews in the scorer's training data.
+
   if (
     categoryUsesReviews(product.category) &&
     Number.isSafeInteger(product.reviews) &&
@@ -31,16 +37,57 @@ function buildProductPayload(product) {
   return payload;
 }
 
+// ========================================
+// API REQUEST WITH FIREBASE AUTHENTICATION
+// ========================================
+
 async function apiRequest(endpoint, options = {}) {
   let response;
 
+  // ========================================
+  // GET FIREBASE AUTHENTICATION TOKEN
+  // ========================================
+
+  const user = auth.currentUser;
+
+  const headers = new Headers(options.headers);
+
+  if (endpoint !== "/categories") {
+    if (!user) {
+      throw new Error(
+        "You must be logged in to use MarketLens."
+      );
+    }
+
+    const token = await user.getIdToken();
+
+    headers.set(
+      "Authorization",
+      `Bearer ${token}`
+    );
+  }
+
+  // ========================================
+  // SEND REQUEST TO FASTAPI
+  // ========================================
+
   try {
-    response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+    response = await fetch(
+      `${API_BASE_URL}${endpoint}`,
+      {
+        ...options,
+        headers,
+      }
+    );
   } catch {
     throw new Error(
       "Unable to connect to the MarketLens backend."
     );
   }
+
+  // ========================================
+  // HANDLE API ERRORS
+  // ========================================
 
   if (!response.ok) {
     let message = `Request failed (${response.status})`;
@@ -65,6 +112,10 @@ async function apiRequest(endpoint, options = {}) {
   return response.json();
 }
 
+// ========================================
+// JSON REQUEST OPTIONS
+// ========================================
+
 function jsonOptions(payload) {
   return {
     method: "POST",
@@ -75,9 +126,17 @@ function jsonOptions(payload) {
   };
 }
 
+// ========================================
+// GET PRODUCT CATEGORIES
+// ========================================
+
 export async function getCategories() {
   return apiRequest("/categories");
 }
+
+// ========================================
+// PREDICT PRODUCT OPPORTUNITY
+// ========================================
 
 export async function predictProduct(product) {
   return apiRequest(
@@ -86,12 +145,20 @@ export async function predictProduct(product) {
   );
 }
 
+// ========================================
+// GET PREDICTION REASONS
+// ========================================
+
 export async function getPredictionReasons(product) {
   return apiRequest(
     "/reasons",
     jsonOptions(buildProductPayload(product))
   );
 }
+
+// ========================================
+// RESCORE PRODUCT
+// ========================================
 
 export async function rescoreProduct(product, changes) {
   return apiRequest(
@@ -102,6 +169,10 @@ export async function rescoreProduct(product, changes) {
     })
   );
 }
+
+// ========================================
+// SIMULATE PRODUCT PRICES
+// ========================================
 
 export async function simulatePrices(product, prices) {
   if (

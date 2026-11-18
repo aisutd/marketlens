@@ -14,6 +14,7 @@ import {
 // ========================================
 
 import Header from "./components/Header";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // ========================================
 // PAGES
@@ -26,6 +27,8 @@ import SalesForecastOverview from "./pages/SalesForecastOverview";
 import LaunchForecastOverview from "./pages/LaunchForecastOverview";
 import ScoreDetails from "./pages/ScoreDetails";
 import LaunchFeasibility from "./pages/LaunchFeasibility";
+import SignUp from "./pages/SignUp";
+import Login from "./pages/Login";
 
 // ========================================
 // LOCAL STORAGE
@@ -151,15 +154,17 @@ function saveStoredAnalysis(analysis) {
 function AppHeader() {
   const location = useLocation();
 
-  // LandingPage has its own navigation.
-  // Do not display the dashboard header
-  // on the landing page.
+  const publicPages = ["/", "/signup", "/login"];
 
-  if (location.pathname === "/") {
+  if (publicPages.includes(location.pathname)) {
     return null;
   }
 
-  return <Header />;
+  return (
+    <ProtectedRoute>
+      <Header />
+    </ProtectedRoute>
+  );
 }
 
 // ========================================
@@ -169,8 +174,8 @@ function AppHeader() {
 function Footer() {
   const location = useLocation();
 
-  // LandingPage renders its own footer, the same way it renders its own
-  // header; this one would stack underneath it.
+  // LandingPage renders its own footer.
+
   if (location.pathname === "/") {
     return null;
   }
@@ -178,6 +183,7 @@ function Footer() {
   return (
     <footer className="mt-auto border-t border-border bg-white/50 px-6 py-6">
       <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-center gap-2 text-center">
+
         <p className="text-sm font-medium text-muted-foreground">
           © {new Date().getFullYear()} MarketLens.
           All rights reserved.
@@ -186,6 +192,7 @@ function Footer() {
         <p className="text-xs text-muted-foreground">
           AI-Powered Product Intelligence
         </p>
+
       </div>
     </footer>
   );
@@ -275,18 +282,38 @@ export default function App() {
             />
 
             {/* ========================================
+                USER SIGN UP
+            ======================================== */}
+
+            <Route
+              path="/signup"
+              element={<SignUp />}
+            />
+
+            {/* ========================================
+                USER LOGIN
+            ======================================== */}
+
+            <Route
+              path="/login"
+              element={<Login />}
+            />
+
+            {/* ========================================
                 DISCOVER PRODUCTS
             ======================================== */}
 
             <Route
               path="/discover"
               element={
-                <Discover
-                  setProduct={setProduct}
-                  setPrediction={setPrediction}
-                  setScoredProduct={setScoredProduct}
-                  setForecast={setForecast}
-                />
+                <ProtectedRoute>
+                  <Discover
+                    setProduct={setProduct}
+                    setPrediction={setPrediction}
+                    setScoredProduct={setScoredProduct}
+                    setForecast={setForecast}
+                  />
+                </ProtectedRoute>
               }
             />
 
@@ -297,11 +324,13 @@ export default function App() {
             <Route
               path="/product-overview"
               element={
-                <Overview
-                  product={scoredProduct}
-                  prediction={prediction}
-                  forecast={forecast}
-                />
+                <ProtectedRoute>
+                  <Overview
+                    product={scoredProduct}
+                    prediction={prediction}
+                    forecast={forecast}
+                  />
+                </ProtectedRoute>
               }
             />
 
@@ -313,15 +342,17 @@ export default function App() {
             <Route
               path="/sales-forecast-overview"
               element={
-                forecast?.type === "launch" ? (
-                  <LaunchForecastOverview
-                    forecast={forecast}
-                  />
-                ) : (
-                  <SalesForecastOverview
-                    forecast={forecast}
-                  />
-                )
+                <ProtectedRoute>
+                  {forecast?.type === "launch" ? (
+                    <LaunchForecastOverview
+                      forecast={forecast}
+                    />
+                  ) : (
+                    <SalesForecastOverview
+                      forecast={forecast}
+                    />
+                  )}
+                </ProtectedRoute>
               }
             />
 
@@ -332,10 +363,12 @@ export default function App() {
             <Route
               path="/overview"
               element={
-                <Navigate
-                  to={overviewDestination}
-                  replace
-                />
+                <ProtectedRoute>
+                  <Navigate
+                    to={overviewDestination}
+                    replace
+                  />
+                </ProtectedRoute>
               }
             />
 
@@ -346,10 +379,12 @@ export default function App() {
             <Route
               path="/score-details"
               element={
-                <ScoreDetails
-                  product={scoredProduct}
-                  prediction={prediction}
-                />
+                <ProtectedRoute>
+                  <ScoreDetails
+                    product={scoredProduct}
+                    prediction={prediction}
+                  />
+                </ProtectedRoute>
               }
             />
 
@@ -360,15 +395,17 @@ export default function App() {
             <Route
               path="/launch-feasibility"
               element={
-                <LaunchFeasibility
-                  key={
-                    scoredProduct
-                      ? JSON.stringify(scoredProduct)
-                      : "no-product"
-                  }
-                  product={scoredProduct}
-                  prediction={prediction}
-                />
+                <ProtectedRoute>
+                  <LaunchFeasibility
+                    key={
+                      scoredProduct
+                        ? JSON.stringify(scoredProduct)
+                        : "no-product"
+                    }
+                    product={scoredProduct}
+                    prediction={prediction}
+                  />
+                </ProtectedRoute>
               }
             />
 
