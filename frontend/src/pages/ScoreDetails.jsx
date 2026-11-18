@@ -16,106 +16,7 @@ import {
 import { getPredictionReasons } from "../services/marketlensApi";
 import { getScoreBand } from "../constants/scoreBands";
 import OpportunityGauge from "../components/OpportunityGauge";
-
-// ========================================
-// BUSINESS-FRIENDLY EXPLANATIONS
-// ========================================
-
-const FEATURE_DETAILS = {
-  title_words: {
-    title: "Product title length",
-    explanation:
-      "The length of your product title was associated with this evaluation.",
-    action:
-      "Make your title easy to scan. Include the information shoppers need without adding unnecessary words.",
-  },
-  title_score: {
-    title: "How your product is described",
-    explanation:
-      "Patterns in the wording of your product title influenced the evaluation. This does not identify individual words as the cause.",
-    action:
-      "Check whether a customer can quickly understand what the product is, what it does, and who it is for.",
-  },
-  title_caps_ratio: {
-    title: "Product title formatting",
-    explanation:
-      "Capitalization patterns in your product title were associated with the evaluation.",
-    action:
-      "Use consistent capitalization and prioritize readability over unnecessary emphasis.",
-  },
-  brand_size_log: {
-    title: "Brand presence",
-    explanation:
-      "A characteristic associated with the brand's presence contributed to this evaluation.",
-    action:
-      "Research competing brands and consider how customers would discover and recognize your product.",
-  },
-  brand_cat_rate: {
-    title: "Brand experience in this category",
-    explanation:
-      "A pattern associated with the brand's track record in this product category influenced the evaluation.",
-    action:
-      "Study established competitors and look for customer needs that may not be fully addressed.",
-  },
-  category: {
-    title: "Product category",
-    explanation:
-      "Your product's category was one of the characteristics associated with its evaluation.",
-    action:
-      "Explore the types of products already sold in this category and consider how yours could stand out.",
-  },
-  price: {
-    title: "Your selling price",
-    explanation:
-      "Your proposed selling price contributed to the evaluation. This alone does not establish whether the price is too high or too low.",
-    action:
-      "Compare similar products and estimate your costs before deciding whether your price is competitive and profitable.",
-  },
-  list_price: {
-    title: "Your pricing details",
-    explanation:
-      "The listed price was one of the characteristics considered in this evaluation.",
-    action:
-      "Check whether your listed price and selling price make sense compared with competing products.",
-  },
-  discount_pct: {
-    title: "Your pricing strategy",
-    explanation:
-      "The relationship between your listed price and selling price contributed to the evaluation.",
-    action:
-      "Review similar products' pricing and make sure any discount leaves enough room to cover your costs.",
-  },
-};
-
-function getExplanation(factor) {
-  const feature = String(factor?.feature || "");
-
-  if (FEATURE_DETAILS[feature]) {
-    return FEATURE_DETAILS[feature];
-  }
-
-  if (feature.startsWith("title_emb_")) {
-    return {
-      title: "The meaning of your product title",
-      explanation:
-        "A pattern related to the meaning of your product title was associated with this evaluation. It does not identify a specific keyword problem.",
-      action:
-        "Make sure the title accurately describes the product and its most important features.",
-    };
-  }
-
-  return {
-    title:
-      factor?.label &&
-      !/[_\d]/.test(String(factor.label))
-        ? String(factor.label)
-        : "Another product characteristic",
-    explanation:
-      "This product characteristic contributed to the evaluation, but a more specific business interpretation is not available.",
-    action:
-      "Research customer needs, competing products, and potential costs before drawing conclusions from this finding.",
-  };
-}
+import { factorInfo } from "../constants/scoreFactors";
 
 function normalizeGroup(items, positive) {
   if (!Array.isArray(items)) return [];
@@ -128,21 +29,23 @@ function normalizeGroup(items, positive) {
         return null;
       }
 
-      const factor = {
-        ...item,
-        feature: item?.feature || "",
-      };
+      const info = factorInfo(item, positive);
 
       return {
         id: `${positive ? "positive" : "negative"}-${index}`,
         impact,
         positive,
-        ...getExplanation(factor),
+        categoryWide: info.categoryWide,
+        title: info.name,
+        means: info.means,
+        effect: info.effect,
+        action: info.action,
       };
     })
     .filter(Boolean)
     .sort(
       (a, b) =>
+        a.categoryWide - b.categoryWide ||
         Math.abs(b.impact) - Math.abs(a.impact)
     );
 }
@@ -294,12 +197,16 @@ function FindingCard({
       ? (Math.abs(factor.impact) / maxImpact) * 100
       : 0;
 
-  const strengthLabel =
-    relativeStrength >= 70
-      ? "Larger influence"
-      : relativeStrength >= 35
-        ? "Moderate influence"
-        : "Smaller influence";
+  // Category-wide factors get no size: their push is shared by every
+  // product the score compares against, so a big bar would mislead.
+  const strengthLabel = factor.categoryWide
+    ? "Same for every product in this category"
+    : (relativeStrength >= 70
+        ? "Larger influence"
+        : relativeStrength >= 35
+          ? "Moderate influence"
+          : "Smaller influence") +
+      " among the findings shown";
 
   return (
     <article className="border border-ink bg-card">
@@ -339,7 +246,7 @@ function FindingCard({
             </h3>
 
             <p className="mt-2 text-xs text-muted-foreground">
-              {strengthLabel} among the findings shown
+              {strengthLabel}
             </p>
           </div>
 
@@ -356,22 +263,24 @@ function FindingCard({
           )}
         </div>
 
-        <div
-          className="mt-6 h-2 overflow-hidden bg-secondary"
-          aria-hidden="true"
-        >
+        {!factor.categoryWide && (
           <div
-            className={
-              "h-full transition-[width] duration-300 " +
-              (factor.positive
-                ? "bg-[#47866B]"
-                : "bg-primary")
-            }
-            style={{
-              width: `${relativeStrength}%`,
-            }}
-          />
-        </div>
+            className="mt-6 h-2 overflow-hidden bg-secondary"
+            aria-hidden="true"
+          >
+            <div
+              className={
+                "h-full transition-[width] duration-300 " +
+                (factor.positive
+                  ? "bg-[#47866B]"
+                  : "bg-primary")
+              }
+              style={{
+                width: `${Math.min(relativeStrength, 100)}%`,
+              }}
+            />
+          </div>
+        )}
 
         <p className="mt-3 text-xs text-muted-foreground">
           {expanded
@@ -383,11 +292,19 @@ function FindingCard({
       {expanded && (
         <div className="border-t border-border px-5 pb-6 pt-5 sm:px-6">
           <h4 className="text-sm font-semibold">
-            Why this matters
+            What it measures
           </h4>
 
-          <p className="mt-3 text-sm leading-7 text-muted-foreground">
-            {factor.explanation}
+          <p className="mt-2 text-sm leading-7 text-muted-foreground">
+            {factor.means}
+          </p>
+
+          <h4 className="mt-5 text-sm font-semibold">
+            How it affected your score
+          </h4>
+
+          <p className="mt-2 text-sm leading-7 text-muted-foreground">
+            {factor.effect}
           </p>
 
           <div className="mt-5 border-l-2 border-primary bg-[#F8EEE0] p-4">
@@ -625,6 +542,7 @@ export default function ScoreDetails({
     0,
     ...positiveFactors
       .concat(negativeFactors)
+      .filter((factor) => !factor.categoryWide)
       .map((factor) => Math.abs(factor.impact))
   );
 
@@ -701,7 +619,7 @@ export default function ScoreDetails({
             number="01"
             eyebrow="Your product findings"
             title="What stands out?"
-            description="Explore the characteristics associated with your evaluation. Select any finding to understand it in more detail."
+            description="The factors that moved your score most. Select any finding to see what it measures and how it affected your score."
           />
 
           {loading && (
@@ -746,10 +664,58 @@ export default function ScoreDetails({
 
           {!loading && !error && reasons && (
             <>
+              <div className="mt-7 flex items-start gap-3 border border-ink bg-card p-5">
+                <Info
+                  size={18}
+                  className="mt-0.5 shrink-0 text-primary"
+                  aria-hidden="true"
+                />
+
+                <div className="text-sm leading-7 text-muted-foreground">
+                  <h3 className="font-semibold text-foreground">
+                    How these factors affect your score
+                  </h3>
+
+                  <p className="mt-1">
+                    Your score compares your product only
+                    with other products in the same
+                    category: {score} means the model
+                    rates it above {score}% of them. The
+                    findings are measured differently.
+                    Each one shows how far a detail moved
+                    the model's rating away from its
+                    average across all products, in every
+                    category. A detail that every product
+                    in your category shares, such as the
+                    category itself, can show a large push
+                    and still barely change where you rank.
+                    Those findings are marked "Same for
+                    every product in this category" and
+                    left out of the checklist below.
+                  </p>
+
+                  <p className="mt-2">
+                    Only the largest findings are shown.
+                    The bar on a finding shows how large
+                    its push was next to the others shown,
+                    not a number of points or a share of
+                    sales.
+                  </p>
+
+                  <p className="mt-2">
+                    The findings describe how the model
+                    reached this score. They are
+                    patterns from past products, not
+                    proof that changing one detail will
+                    change your sales.
+                  </p>
+                </div>
+              </div>
+
               <div className="mt-7 grid items-start gap-8 lg:grid-cols-2">
                 <FindingsColumn
                   title="What looks promising?"
-                  subtitle="Characteristics that contributed positively to your evaluation."
+                  subtitle="Factors that raised your score."
                   factors={positiveFactors}
                   positive
                   maxImpact={maxImpact}
@@ -757,34 +723,22 @@ export default function ScoreDetails({
 
                 <FindingsColumn
                   title="What deserves attention?"
-                  subtitle="Characteristics that may warrant additional research."
+                  subtitle="Factors that lowered your score and may deserve a closer look."
                   factors={negativeFactors}
                   positive={false}
                   maxImpact={maxImpact}
                 />
               </div>
 
-              <div className="mt-7 flex items-start gap-3 border border-ink bg-card p-5">
-                <Info
-                  size={18}
-                  className="mt-0.5 shrink-0 text-primary"
-                />
-
-                <p className="text-sm leading-7 text-muted-foreground">
-                  The bars compare the relative influence
-                  of the findings shown. They do not
-                  represent sales percentages, changes
-                  to your opportunity score, or guaranteed
-                  business outcomes.
-                </p>
-              </div>
             </>
           )}
         </section>
 
         {!loading && !error && reasons && (
           <NextSteps
-            concerns={negativeFactors}
+            concerns={negativeFactors.filter(
+              (factor) => !factor.categoryWide
+            )}
             hasFindings
           />
         )}

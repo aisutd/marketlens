@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "check:categories": "node scripts/check-category-map.mjs",
+    "check:score-factors": "node scripts/check-score-factors.mjs",
     "generate:review-categories": "node scripts/generate-review-categories.mjs"
   },
   "dependencies": {
