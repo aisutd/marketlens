@@ -20,6 +20,7 @@ import {
   YAxis,
 } from "recharts";
 
+import ApiErrorNotice from "../components/ApiErrorNotice";
 import {
   rescoreProduct,
   simulatePrices,
@@ -1073,14 +1074,13 @@ function AIPriceSimulation({
           </button>
         </div>
 
-        {error && (
-          <div
-            role="alert"
-            className="mt-6 border border-red-600 bg-red-50 p-4 text-sm text-red-700"
-          >
-            {error}
-          </div>
-        )}
+        <ApiErrorNotice
+          title="Price simulation unavailable"
+          error={error}
+          onRetry={onRun}
+          retrying={loading}
+          className="mt-6"
+        />
 
         {rescore && (
           <div className="mt-7 grid gap-4 md:grid-cols-3">
@@ -1332,7 +1332,7 @@ export default function LaunchFeasibility({
   const [rescore, setRescore] = useState(null);
   const [simulations, setSimulations] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(null);
 
   const requestVersion = useRef(0);
 
@@ -1352,7 +1352,7 @@ export default function LaunchFeasibility({
     setRescore(null);
     setSimulations([]);
     setLoading(false);
-    setError("");
+    setError(null);
   }
 
   function updateField(field, value) {
@@ -1465,7 +1465,7 @@ export default function LaunchFeasibility({
     const version = ++requestVersion.current;
 
     setLoading(true);
-    setError("");
+    setError(null);
     setRescore(null);
     setSimulations([]);
 
@@ -1511,8 +1511,11 @@ export default function LaunchFeasibility({
       }
 
       setError(
-        err?.message ||
-          "Unable to complete the price simulation."
+        err instanceof Error
+          ? err
+          : new Error(
+              "Unable to complete the price simulation."
+            )
       );
     } finally {
       if (version === requestVersion.current) {

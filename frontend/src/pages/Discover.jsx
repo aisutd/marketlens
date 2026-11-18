@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import ApiErrorNotice from "../components/ApiErrorNotice";
 import ProductSearch from "../components/ProductSearch";
 
 import {
@@ -25,14 +26,19 @@ export default function Discover({
 
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [categoriesError, setCategoriesError] = useState("");
+  const [error, setError] = useState(null);
+  const [categoriesError, setCategoriesError] = useState(null);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [categoriesAttempt, setCategoriesAttempt] = useState(0);
 
   // Load categories used by Opportunity Analysis.
   useEffect(() => {
     let active = true;
 
     async function loadCategories() {
+      setCategoriesLoading(true);
+      setCategoriesError(null);
+
       try {
         const result = await getCategories();
 
@@ -43,9 +49,11 @@ export default function Discover({
         }
       } catch (err) {
         if (active) {
-          setCategoriesError(
-            err.message || "Unable to load categories."
-          );
+          setCategoriesError(err);
+        }
+      } finally {
+        if (active) {
+          setCategoriesLoading(false);
         }
       }
     }
@@ -55,13 +63,13 @@ export default function Discover({
     return () => {
       active = false;
     };
-  }, []);
+  }, [categoriesAttempt]);
 
   async function handleAnalyze(search) {
     if (loading) return;
 
     setLoading(true);
-    setError("");
+    setError(null);
 
     try {
       // ----------------------------------------
@@ -124,10 +132,20 @@ export default function Discover({
             ? yearlyResult.value
             : null;
 
+        // Both failed: pass on the real reason (not found, offline,
+        // timed out) rather than a generic one.
         if (monthly === null && yearly === null) {
-          throw new Error(
-            "No forecasts were returned for this Product ID."
-          );
+          const failure =
+            monthlyResult.status === "rejected"
+              ? monthlyResult.reason
+              : yearlyResult.status === "rejected"
+                ? yearlyResult.reason
+                : null;
+
+          throw failure ||
+            new Error(
+              "No forecasts were returned for this Product ID."
+            );
         }
 
         setProduct(null);
@@ -194,8 +212,9 @@ export default function Discover({
       }
     } catch (err) {
       setError(
-        err.message ||
-          "Unable to analyze this product."
+        err instanceof Error
+          ? err
+          : new Error("Unable to analyze this product.")
       );
     } finally {
       setLoading(false);
@@ -226,40 +245,21 @@ export default function Discover({
           </p>
         </header>
 
-        {categoriesError && (
-          <div
-            role="alert"
-            className="mb-6 border border-primary bg-card p-5 text-sm text-foreground shadow-offset-sm"
-          >
-            <p className="font-semibold">
-              Categories unavailable
-            </p>
-
-            <p className="mt-1 text-muted-foreground">
-              {categoriesError}
-            </p>
-          </div>
-        )}
-
-        {error && (
-          <div
-            role="alert"
-            className="mb-6 border border-destructive bg-card p-5 text-sm text-foreground shadow-offset-sm"
-          >
-            <p className="font-semibold">
-              Unable to complete analysis
-            </p>
-
-            <p className="mt-1 text-muted-foreground">
-              {error}
-            </p>
-          </div>
-        )}
+        <ApiErrorNotice
+          title="Categories unavailable"
+          error={categoriesError}
+          onRetry={() =>
+            setCategoriesAttempt((previous) => previous + 1)
+          }
+          retrying={categoriesLoading}
+          className="mb-6"
+        />
 
         <ProductSearch
           categories={categories}
           loading={loading}
           onAnalyze={handleAnalyze}
+          submitError={error}
         />
       </div>
     </main>

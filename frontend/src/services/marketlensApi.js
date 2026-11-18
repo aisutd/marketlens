@@ -1,5 +1,6 @@
 
 import { categoryUsesReviews } from "../constants/reviewCategories";
+import { requestJson } from "./apiClient";
 
 const API_BASE_URL = "/api";
 
@@ -31,38 +32,29 @@ function buildProductPayload(product) {
   return payload;
 }
 
-async function apiRequest(endpoint, options = {}) {
-  let response;
-
-  try {
-    response = await fetch(`${API_BASE_URL}${endpoint}`, options);
-  } catch {
-    throw new Error(
-      "Unable to connect to the MarketLens backend."
-    );
+// FastAPI puts the reason in `detail`: a string, or a list of
+// validation errors each with a `msg`.
+function readDetail(body) {
+  if (typeof body.detail === "string") {
+    return body.detail;
   }
 
-  if (!response.ok) {
-    let message = `Request failed (${response.status})`;
-
-    try {
-      const error = await response.json();
-
-      if (Array.isArray(error.detail)) {
-        message = error.detail
-          .map((item) => item.msg)
-          .join("; ");
-      } else if (typeof error.detail === "string") {
-        message = error.detail;
-      }
-    } catch {
-      // Keep the HTTP error message.
-    }
-
-    throw new Error(message);
+  if (Array.isArray(body.detail)) {
+    return body.detail
+      .map((item) => item?.msg)
+      .filter(Boolean)
+      .join("; ");
   }
 
-  return response.json();
+  return "";
+}
+
+function apiRequest(endpoint, options = {}) {
+  return requestJson(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    service: "scoring service",
+    readError: readDetail,
+  });
 }
 
 function jsonOptions(payload) {
