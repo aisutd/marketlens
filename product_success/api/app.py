@@ -4,7 +4,8 @@ MarketLens scoring API (FastAPI), for Cloud Run: one vCPU, one worker, CPU only.
     uvicorn api.app:app --port 8080 --workers 1
 
 Everything is loaded once at start-up from MODEL_DIR (default product_success/models): embed_model.joblib, the reference
-tables (tools/build_reference_tables.py) and the MiniLM ONNX model (tools/export_minilm_onnx.py). Scoring is
+tables (tools/build_reference_tables.py), the per-category reason baselines (tools/build_category_baselines.py) and
+the MiniLM ONNX model (tools/export_minilm_onnx.py). Scoring is
 api/features_fast.py (score_one, featurize_one) and api/reasons.py, which give exactly what predict.py gives
 for one product. Title embeddings are cached (LRU, 1,000 titles), so an edit that keeps the title skips MiniLM.
 
@@ -13,7 +14,9 @@ for one product. Title embeddings are cached (LRU, 1,000 titles), so an edit tha
     POST /predict      product -> opportunity_score, probability, model_used, model_version
     POST /rescore      {product, changes} -> /predict of the edited product + previous_score, score_change,
                        changed_fields (stateless: both are scored)
-    POST /reasons      product -> reasons_up, reasons_down (up to 3 each: feature, label, impact)
+    POST /reasons      product -> reasons_up, reasons_down (up to 3 each: feature, label, impact), baseline
+                       (impact is measured against the products the score ranks against: "category", or
+                       "all_products" for a category with fewer than 30 reference products)
     POST /what-if      {product, prices} -> [{price, opportunity_score, probability}], 1 to 20 prices
 
 Missing list_price, stars and reviews become 0 as in predict.load_new, so the API and the CLI build the same
@@ -47,6 +50,7 @@ from api.embed_onnx import OnnxEmbedder  # noqa: E402
 from api.features_fast import featurize_one, load_tables, resolve_category, score_one  # noqa: E402
 from api.reasons import reasons_detail  # noqa: E402
 from paths import MODELS_DIR  # noqa: E402
+from predict import BASELINES_FILE, baseline_of, load_baselines  # noqa: E402
 
 log = logging.getLogger("marketlens.api")
 
@@ -61,6 +65,7 @@ MAX_WHAT_IF = 20
 class State:
     bundle = None
     tables = None
+    baselines = None
     embedder = None
     categories = None
     model_version = None
@@ -150,6 +155,7 @@ class Reason(BaseModel):
 class Reasons(BaseModel):
     reasons_up: list[Reason]
     reasons_down: list[Reason]
+    baseline: str
     model_used: str
     model_version: str
 
@@ -194,6 +200,7 @@ async def lifespan(app):
             m["xgb"].set_params(n_jobs=1)
     STATE.bundle = bundle
     STATE.tables = load_tables(os.path.join(model_dir, TABLES_FILE), bundle)
+    STATE.baselines = load_baselines(os.path.join(model_dir, BASELINES_FILE), bundle_path)
     STATE.embedder = OnnxEmbedder(os.path.join(model_dir, ONNX_DIR), threads=1)
     with open(CATEGORIES_FILE, encoding="utf-8") as f:
         STATE.categories = json.load(f)
@@ -258,8 +265,9 @@ def reasons(product: Product):
         _category_id(product)
         d = product.model_dump()
         X = featurize_one(d, STATE.bundle, STATE.tables, embed(d["title"]))
-        up, down = reasons_detail(d, STATE.bundle, STATE.tables, None, features=X)
+        up, down = reasons_detail(d, STATE.bundle, STATE.tables, None, STATE.baselines, features=X)
     return {"reasons_up": up, "reasons_down": down,
+            "baseline": baseline_of(STATE.baselines, X.attrs["model"], X["category_id"].iloc[0]),
             "model_used": "launch" if X.attrs["model"] == "launch-time" else "full",
             "model_version": STATE.model_version}
 

@@ -94,7 +94,7 @@ def product_dict(r):
             "reviews": r["reviews"], "category": r["category"]}
 
 
-def run_slow(bundle, tables, onnx, cache=CACHE, limit=None):
+def run_slow(bundle, tables, onnx, baselines, cache=CACHE, limit=None):
     from tools import predict_path
     dev = pd.read_csv(bundle["data_path"])
     P = build_products(dev, tables)
@@ -114,7 +114,7 @@ def run_slow(bundle, tables, onnx, cache=CACHE, limit=None):
         d = product_dict(r)
         new = predict_path.new_frame(d["title"], d["price"], d["list_price"], d["stars"], d["reviews"],
                                      d["category"])
-        out = predict_path.score(bundle, dev, new).iloc[0]
+        out = predict_path.score(bundle, dev, new, baselines).iloc[0]
         X = captured["X"].copy()
         X.insert(0, "out_model", out["model"])
         X.insert(1, "out_p", out["p_raw"])
@@ -132,7 +132,7 @@ def run_slow(bundle, tables, onnx, cache=CACHE, limit=None):
     print(f"saved {cache} ({len(S)} products)")
 
 
-def compare(bundle, tables, onnx, cache=CACHE):
+def compare(bundle, tables, onnx, baselines, cache=CACHE):
     from api.features_fast import featurize_one, reasons_one, score_one
     S = pd.read_parquet(cache)
     feats = bundle["feature_cols"]
@@ -145,7 +145,7 @@ def compare(bundle, tables, onnx, cache=CACHE):
         X = featurize_one(d, bundle, tables, E, all_columns=True)
         out = score_one(d, bundle, tables, E)
         t_fast.append(time.perf_counter() - t)
-        out["reasons"] = reasons_one(d, bundle, tables, E)
+        out["reasons"] = reasons_one(d, bundle, tables, E, baselines)
         for f in feats:
             a, b = s[f], X[f].iloc[0]
             if isinstance(X[f].dtype, pd.CategoricalDtype):
@@ -192,6 +192,7 @@ def main():
     ap.add_argument("--model", default=os.path.join(MODELS_DIR, "embed_model.joblib"))
     ap.add_argument("--tables", default=os.path.join(MODELS_DIR, "reference_tables.joblib"))
     ap.add_argument("--onnx-dir", default=os.path.join(MODELS_DIR, "minilm-onnx"))
+    ap.add_argument("--baselines", default=os.path.join(MODELS_DIR, "category_baselines.joblib"))
     ap.add_argument("--cache", default=CACHE)
     ap.add_argument("--limit", type=int, default=None, help="smoke test: first and last N products only")
     args = ap.parse_args()
@@ -201,10 +202,12 @@ def main():
     if "holdout" in bundle["data_path"].lower():
         raise SystemExit("refusing: the bundle points at the holdout set")
     tables = load_tables(args.tables, bundle)
+    from predict import load_baselines
+    baselines = load_baselines(args.baselines, args.model)
     onnx = OnnxEmbedder(args.onnx_dir)
     if args.slow or not os.path.exists(args.cache):
-        run_slow(bundle, tables, onnx, args.cache, args.limit)
-    sys.exit(0 if compare(bundle, tables, onnx, args.cache) else 1)
+        run_slow(bundle, tables, onnx, baselines, args.cache, args.limit)
+    sys.exit(0 if compare(bundle, tables, onnx, baselines, args.cache) else 1)
 
 
 if __name__ == "__main__":

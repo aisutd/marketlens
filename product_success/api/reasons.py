@@ -1,17 +1,21 @@
 """
 MarketLens: the reasons of features_fast.reasons_one as data instead of a string.
 
-    up, down = reasons_detail(product, bundle, tables, E)
+    up, down = reasons_detail(product, bundle, tables, E, baselines)
     # up   = [{"feature": "stars", "label": "star rating", "impact": 0.41}, ...]   at most 3, largest first
-    # down = [{"feature": "category_id", "label": "category", "impact": -0.22}, ...]
+    # down = [{"feature": "title_score", "label": "title wording", "impact": -0.22}, ...]
 
-The same pred_contribs (exact TreeSHAP) call, the same grouping by predict.FRIENDLY and the same top-3
-selection as reasons_one, so the labels and their order are identical to it (api/tests check that, and that
-"; ".join of "+ label" / "- label" gives reasons_one's string). On top of the label it returns:
+The same pred_contribs (exact TreeSHAP) call, the same predict.reason_groups and the same top-3 selection as
+reasons_one, so the labels and their order are identical to it (api/tests check that, and that "; ".join of
+"+ label" / "- label" gives reasons_one's string). On top of the label it returns:
 
-    impact    the label's summed SHAP contribution, in log-odds (what reasons_one sorts by)
-    feature   the raw feature in that label's group with the largest contribution in the same direction
-              ("title meaning" sums 32 title_emb_pca_* columns, "title length" title_len and title_words)
+    impact    the label's summed SHAP contribution minus its mean over the category's reference products, in
+              log-odds (what reasons_one sorts by). It says how this product differs from the products its
+              0-100 score is ranked against; categories with too few reference products use all of them,
+              as the score does (predict.baseline_of names which one applied).
+    feature   the raw feature in that label's group with the largest contribution in the same direction,
+              before the category's mean is subtracted ("title meaning" sums 32 title_emb_pca_* columns,
+              "title length" title_len and title_words)
 """
 import pandas as pd
 
@@ -19,12 +23,12 @@ import predict
 from api.features_fast import _model_of, featurize_one
 
 
-def reasons_detail(product, bundle, tables, embedding, features=None):
+def reasons_detail(product, bundle, tables, embedding, baselines, features=None):
     X = featurize_one(product, bundle, tables, embedding) if features is None else features
     m = _model_of(X, bundle)
     contrib = predict.shap_contribs(m, X)
     contrib = pd.Series(contrib[0, :-1], index=m["feature_cols"])
-    c = contrib.groupby(lambda f: predict.FRIENDLY.get(f, f)).sum().sort_values()
+    c = predict.reason_groups(contrib, baselines, X.attrs["model"], X["category_id"].iloc[0])
     labels = contrib.index.map(lambda f: predict.FRIENDLY.get(f, f))
 
     def item(label, v):

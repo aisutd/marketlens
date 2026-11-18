@@ -15,6 +15,7 @@ api/requirements-dev.txt
 
 !models/embed_model.joblib
 !models/reference_tables.joblib
+!models/category_baselines.joblib
 !models/minilm-onnx
 
 **/data

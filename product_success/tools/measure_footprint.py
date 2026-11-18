@@ -69,6 +69,9 @@ t = mark("2 import numpy, pandas, xgboost, sklearn", t)
 
 bundle = joblib.load(args.model)
 t = mark("3 joblib.load(embed_model.joblib)", t)
+from predict import BASELINES_FILE, load_baselines  # noqa: E402
+baselines = load_baselines(os.path.join(os.path.dirname(args.model), BASELINES_FILE), args.model)
+t = mark("3a load category_baselines.joblib", t)
 
 if args.fast:
     tables = features_fast.load_tables(args.tables, bundle, verify_csv=False)   # as on a server without the CSV
@@ -105,7 +108,7 @@ else:
     new = predict_path.new_frame(d["title"], d["price"], d["list_price"], d["stars"], d["reviews"], d["category"])
 
     def score():
-        return predict_path.score(bundle, ref, new).iloc[0]
+        return predict_path.score(bundle, ref, new, baselines).iloc[0]
 
 out = score()
 t = mark("5 score demo product once", t)
@@ -122,9 +125,12 @@ if args.fast:
     full_product = dict(product, stars=4.5, reviews=1200)   # the predict.py docstring example: full model
     E = emb.encode([product["title"]])[0]
     paths = {}
+    def reasons(prod, bundle, tables, E):
+        return features_fast.reasons_one(prod, bundle, tables, E, baselines)
+
     for label, prod, fn in (("score, full model", full_product, features_fast.score_one),
-                            ("reasons, launch-time model", product, features_fast.reasons_one),
-                            ("reasons, full model", full_product, features_fast.reasons_one)):
+                            ("reasons, launch-time model", product, reasons),
+                            ("reasons, full model", full_product, reasons)):
         fn(prod, bundle, tables, E)
         ts = []
         for _ in range(args.repeats):
@@ -142,7 +148,7 @@ if args.fast:
     for label, ts in paths.items():
         print(f"median {label} over {args.repeats}: {1000 * statistics.median(ts):.0f} ms "
               f"(min {1000 * min(ts):.0f}, max {1000 * max(ts):.0f}; title embedding not included)")
-    print(f"demo reasons: {features_fast.reasons_one(product, bundle, tables, E)}")
+    print(f"demo reasons: {features_fast.reasons_one(product, bundle, tables, E, baselines)}")
     print(f"{args.tables}: {os.path.getsize(args.tables) / 2**20:.1f} MB on disk")
 else:
     print(f"reference frame in memory: {ref_mb:.0f} MB ({len(ref):,} rows x {ref.shape[1]} cols)")

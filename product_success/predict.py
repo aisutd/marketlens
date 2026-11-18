@@ -20,6 +20,7 @@ Output per product:
     reasons             the 3 features pushing the score up and down the most (SHAP)
 """
 import argparse
+import hashlib
 import os
 
 import joblib
@@ -125,11 +126,58 @@ def shap_contribs(m, X):
                                           iteration_range=(0, best + 1) if best is not None else (0, 0))
 
 
+BASELINES_FILE = "category_baselines.joblib"   # tools/build_category_baselines.py
+BASELINES_VERSION = 1
+
+
+def sha256(path, block=1 << 20):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        while chunk := f.read(block):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def load_baselines(path, bundle_path):
+    """The per-category mean reason contributions, checked against the bundle they were built from."""
+    if not os.path.exists(path):
+        raise SystemExit(f"{path} missing: run python -m product_success.tools.build_category_baselines")
+    baselines = joblib.load(path)
+    if baselines.get("version") != BASELINES_VERSION:
+        raise SystemExit(f"{path}: version {baselines.get('version')}, expected {BASELINES_VERSION}; rebuild it")
+    if baselines["source"]["bundle_sha256"] != sha256(bundle_path):
+        raise SystemExit(f"{path} was built from a different {os.path.basename(bundle_path)}; rebuild it")
+    return baselines
+
+
+def reason_groups(contrib, baselines, model, category_id):
+    """One product's SHAP contributions (a Series indexed by feature) summed by FRIENDLY label and measured
+    against its category, sorted ascending. The 0-100 score ranks the product only among its category's
+    reference products, so each group's mean contribution over those products is subtracted: what is left
+    sums to (this product's log-odds - the category's mean log-odds) and says how the product differs from
+    its peers. Categories with fewer reference products than the score needs use the all-product mean, as
+    the score does."""
+    c = contrib.groupby(lambda f: FRIENDLY.get(f, f)).sum()
+    b = baselines["models"][model]
+    mean = pd.Series(b["by_category"].get(int(category_id), b["overall"]), index=b["groups"])
+    if set(mean.index) != set(c.index):
+        raise ValueError(f"baselines for the {model} model have other reason groups than the model")
+    return (c - mean.loc[c.index]).sort_values()
+
+
+def baseline_of(baselines, model, category_id):
+    """What reason_groups measured against: "category", or "all_products" for a category with too few
+    reference products (the score then ranks against all of them too)."""
+    return "category" if int(category_id) in baselines["models"][model]["by_category"] else "all_products"
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default=os.path.join(MODELS_DIR, "embed_model.joblib"),
                     help="saved model; models\\combined_model.joblib is the previous one (no title embedding)")
     ap.add_argument("--categories-file", default=os.path.join(DATA_DIR, "amazon_categories.csv"))
+    ap.add_argument("--baselines", default=None,
+                    help=f"per-category reason baselines; default {BASELINES_FILE} next to --model")
     ap.add_argument("--csv")
     ap.add_argument("--out")
     ap.add_argument("--title")
@@ -146,6 +194,8 @@ def main():
         ap.error("give --csv, or at least --title, --price and --category")
 
     bundle = joblib.load(args.model)
+    baselines = load_baselines(args.baselines or os.path.join(os.path.dirname(args.model), BASELINES_FILE),
+                               args.model)
     print("loading reference products (a few seconds)...")
     ref = pd.read_csv(bundle["data_path"])
     new = load_new(args)
@@ -174,7 +224,7 @@ def main():
         for j, (i, pi) in enumerate(zip(rows, p)):
             peers = ref_p.loc[ref_p["category_id"] == new["category_id"].iloc[i], "p"]
             peers = peers if len(peers) >= 30 else ref_p["p"]   # too few peers: compare with everything
-            c = contrib.iloc[j].groupby(lambda f: FRIENDLY.get(f, f)).sum().sort_values()
+            c = reason_groups(contrib.iloc[j], baselines, name, new["category_id"].iloc[i])
             up = [f"+ {k}" for k, v in c[::-1].head(3).items() if v > 0]
             down = [f"- {k}" for k, v in c.head(3).items() if v < 0]
             out.iloc[i, out.columns.get_indexer(["model", "probability", "opportunity_score", "reasons"])] = [

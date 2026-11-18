@@ -31,7 +31,7 @@ def new_frame(title, price, list_price=0, stars=0, reviews=0, category=None, csv
     return predict.load_new(args)
 
 
-def score(bundle, ref, new, categories_file=CATEGORIES_FILE, as_is=False):
+def score(bundle, ref, new, baselines, categories_file=CATEGORIES_FILE, as_is=False):
     """predict.main from resolve_categories to the output frame (same columns, same rounding)."""
     new = new.copy()
     new["category_id"] = predict.resolve_categories(new, ref, categories_file)
@@ -59,7 +59,7 @@ def score(bundle, ref, new, categories_file=CATEGORIES_FILE, as_is=False):
         for j, (i, pi) in enumerate(zip(rows, p)):
             peers = ref_p.loc[ref_p["category_id"] == new["category_id"].iloc[i], "p"]
             peers = peers if len(peers) >= 30 else ref_p["p"]
-            c = contrib.iloc[j].groupby(lambda f: predict.FRIENDLY.get(f, f)).sum().sort_values()
+            c = predict.reason_groups(contrib.iloc[j], baselines, name, new["category_id"].iloc[i])
             up = [f"+ {k}" for k, v in c[::-1].head(3).items() if v > 0]
             down = [f"- {k}" for k, v in c.head(3).items() if v < 0]
             out.iloc[i, out.columns.get_indexer(["model", "probability", "opportunity_score", "reasons", "p_raw"])] = [

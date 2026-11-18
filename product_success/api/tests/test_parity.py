@@ -64,6 +64,6 @@ def test_reasons_detail_matches_reasons_one(slow):
         if not p["title"]:
             continue
         E = embed(p["title"])
-        up, down = reasons_detail(p, STATE.bundle, STATE.tables, E)
+        up, down = reasons_detail(p, STATE.bundle, STATE.tables, E, STATE.baselines)
         assert reasons_string({"reasons_up": up, "reasons_down": down}) == \
-            reasons_one(p, STATE.bundle, STATE.tables, E), s["in_case"]
+            reasons_one(p, STATE.bundle, STATE.tables, E, STATE.baselines), s["in_case"]
