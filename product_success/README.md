@@ -111,6 +111,14 @@ The saved model stores the absolute path of the data file it was trained on (`da
 `predict.py` reads that file to compare new products with real ones. Keep `data\products_dev.csv`
 in place after training.
 
+After training, build the two files the API and `predict.py` read next to the model:
+`python -m product_success.tools.build_reference_tables` and
+`python -m product_success.tools.build_category_baselines`. The second stores each category's
+average contribution for every reason, so reasons say how a product differs from the products its
+score is ranked against, not from all products. It recreates the training split's held-out rows and
+stops unless their predicted probabilities match the saved reference ones. `predict.py` and the API
+refuse a baselines file built from a different model, so rebuild it after every retrain.
+
 Until this layout is merged into `main`, retrain only from `C:\Projects\MarketLens`, so the stored
 `data_path` stays `C:\Projects\MarketLens\data\products_dev.csv` and matches the reference tables.
 
@@ -153,7 +161,7 @@ http://localhost:8080/docs.
 | `GET /categories` | The categories the model can score |
 | `POST /predict` | Product -> `opportunity_score`, `probability`, `model_used` |
 | `POST /rescore` | Product and changes -> the new score and the change |
-| `POST /reasons` | Product -> up to three reasons up and three down |
+| `POST /reasons` | Product -> up to three reasons up and three down, measured against the product's category (`baseline`) |
 | `POST /what-if` | Product and 1 to 20 prices -> the score at each price |
 
 ## Test
@@ -162,7 +170,7 @@ http://localhost:8080/docs.
 pytest product_success\api\tests
 ```
 
-55 tests. They check that the API gives exactly the same probability, score and reasons as
+60 tests. They check that the API gives exactly the same probability, score and reasons as
 `predict.py` on 117 products. With `API_BASE_URL` set, the same tests run against a deployed
 service. The parity checks behind them:
 
@@ -175,8 +183,8 @@ python -m product_success.tools.check_onnx_parity      # ONNX vs PyTorch embeddi
 
 The API runs on Google Cloud Run from the `Dockerfile` in this folder: one vCPU, 2 GiB of memory,
 one uvicorn worker, CPU only. `.gcloudignore` uploads only the Dockerfile, `api\`, `predict.py`,
-`paths.py`, the three training modules the API imports and three model items (`embed_model.joblib`,
-`reference_tables.joblib`, `minilm-onnx\`). From the repo root:
+`paths.py`, the three training modules the API imports and four model items (`embed_model.joblib`,
+`reference_tables.joblib`, `category_baselines.joblib`, `minilm-onnx\`). From the repo root:
 
 ```
 gcloud run deploy marketlens-api --source product_success --region us-central1 --cpu 1 --memory 2Gi --max-instances 1 --allow-unauthenticated --set-env-vars ALLOWED_ORIGINS=http://localhost:3000

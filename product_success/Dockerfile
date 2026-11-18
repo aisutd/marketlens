@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir -r api/requirements-api.txt
 COPY predict.py paths.py ./
 COPY training/__init__.py training/compare_models.py training/improve_xgb.py training/optional_features.py training/
 COPY api/ api/
-COPY models/embed_model.joblib models/reference_tables.joblib models/
+COPY models/embed_model.joblib models/reference_tables.joblib models/category_baselines.joblib models/
 COPY models/minilm-onnx/ models/minilm-onnx/
 
 RUN useradd --no-create-home --uid 10001 app
