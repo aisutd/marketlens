@@ -18,9 +18,7 @@ PROTECTED = [
 def real_auth(client, monkeypatch):
     """The app with its real token check: the client fixture's test-user override removed for one test.
 
-    firebase_admin builds its auth client from Application Default Credentials, which a test machine may not have
-    (then every check raises DefaultCredentialsError, a 500). Checking an ID token needs only Google's public keys, so
-    the app's credential is swapped for anonymous credentials and the real verifier still runs."""
+    Use anonymous credentials so the real verifier runs on machines without ADC."""
     import firebase_admin
     from google.auth.credentials import AnonymousCredentials
 
@@ -48,6 +46,48 @@ def test_malformed_token_is_401(real_auth, path, body, header):
     r = real_auth.post(path, json=body, headers={"Authorization": header})
     assert r.status_code == 401, r.text
     assert r.json() == {"detail": "Invalid or expired authentication token"}
+
+
+@in_process
+@pytest.mark.parametrize("contents", [None, "invalid JSON", "[]"])
+def test_unusable_adc_is_sanitized(real_auth, monkeypatch, tmp_path, caplog, contents):
+    import firebase_admin
+    from firebase_admin.credentials import ApplicationDefault
+
+    credential_path = tmp_path / "private-adc.json"
+    if contents is not None:
+        credential_path.write_text(contents, encoding="utf-8")
+    monkeypatch.setenv("GOOGLE_APPLICATION_CREDENTIALS", str(credential_path))
+    monkeypatch.setattr(
+        firebase_admin.get_app().credential,
+        "get_credential",
+        ApplicationDefault().get_credential,
+    )
+
+    r = real_auth.post("/predict", json=DEMO, headers={"Authorization": "Bearer private-token"})
+    assert r.status_code == 503, r.text
+    assert r.json() == {"detail": "Authentication service unavailable"}
+    assert "Check Application Default Credentials" in caplog.text
+    assert "private-adc.json" not in caplog.text
+    assert "private-token" not in caplog.text
+    assert real_auth.get("/health").status_code == 200
+    assert real_auth.get("/categories").status_code == 200
+
+
+@in_process
+def test_certificate_fetch_failure_is_sanitized(real_auth, monkeypatch, caplog):
+    from firebase_admin import auth
+
+    def unavailable(*args, **kwargs):
+        raise auth.CertificateFetchError("private upstream failure", cause=None)
+
+    monkeypatch.setattr(auth, "verify_id_token", unavailable)
+    r = real_auth.post("/predict", json=DEMO, headers={"Authorization": "Bearer private-token"})
+    assert r.status_code == 503, r.text
+    assert r.json() == {"detail": "Authentication service unavailable"}
+    assert "Check Firebase verification credentials" in caplog.text
+    assert "private upstream failure" not in caplog.text
+    assert "private-token" not in caplog.text
 
 
 @in_process
