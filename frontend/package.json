@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "check:categories": "node scripts/check-category-map.mjs",
     "check:score-factors": "node scripts/check-score-factors.mjs",
-    "generate:review-categories": "node scripts/generate-review-categories.mjs"
+    "generate:review-categories": "node scripts/generate-review-categories.mjs",
+    "test:price-history": "node --test tests/suggested-price-history.test.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -34,6 +35,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
     "globals": "^17.13.0",
+    "playwright": "^1.65.1",
     "vite": "^8.3.5"
   }
 }

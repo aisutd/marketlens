@@ -1352,6 +1352,7 @@ function AIPriceSimulation({
 export default function LaunchFeasibility({
   product,
   prediction,
+  suggestedPrices,
 }) {
   const location = useLocation();
 
@@ -1359,9 +1360,11 @@ export default function LaunchFeasibility({
     product?.price
   );
 
-  const suggestedPrice = validSuggestedPrice(
-    location.state?.suggestedPrice
-  );
+  const suggestedPriceId = location.state?.suggestedPriceId;
+  const suggestedPrice = typeof suggestedPriceId === "string"
+    && Object.hasOwn(suggestedPrices, suggestedPriceId)
+    ? validSuggestedPrice(suggestedPrices[suggestedPriceId])
+    : null;
 
   const startingPrice =
     suggestedPrice ?? originalPrice;
