@@ -42,6 +42,8 @@ const STORAGE_KEY =
 
 const STORAGE_VERSION = 1;
 
+const MAX_SUGGESTED_PRICES = 20;
+
 const EMPTY_ANALYSIS = {
   product: null,
   prediction: null,
@@ -323,10 +325,15 @@ export default function App() {
   function saveSuggestedPrice(price) {
     // History keeps the ID, while the price follows the account-owned analysis.
     const id = crypto.getRandomValues(new Uint32Array(4)).join("-");
-    updateAnalysisField("suggestedPrices", (previous) => ({
-      ...previous,
-      [id]: price,
-    }));
+    // Keep only the most recent few, so repeated clicks on one product don't
+    // grow the saved analysis without bound. Older history entries then fall
+    // back to the product's own price.
+    updateAnalysisField("suggestedPrices", (previous) =>
+      Object.fromEntries([
+        ...Object.entries(previous).slice(-(MAX_SUGGESTED_PRICES - 1)),
+        [id, price],
+      ])
+    );
     return id;
   }
 

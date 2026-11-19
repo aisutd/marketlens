@@ -134,6 +134,21 @@ test("suggested prices survive same-account history navigation and stay isolated
     await page.goForward();
     await openScenario("30");
     await expectScenarioPrice("30");
+
+    // Repeated suggestions keep only the most recent 20, newest last.
+    for (let i = 1; i <= 25; i += 1) {
+      await page.getByRole("link", { name: "Back to Product Overview" }).click();
+      await openScenario(String(i));
+      await expectScenarioPrice(String(i));
+    }
+    const stored = await page.evaluate(
+      (key) => JSON.parse(localStorage.getItem(key)).analysis.suggestedPrices,
+      storageKey,
+    );
+    assert.deepEqual(
+      Object.values(stored),
+      Array.from({ length: 20 }, (_, i) => i + 6),
+    );
   } finally {
     await browser?.close();
     await server?.close();
