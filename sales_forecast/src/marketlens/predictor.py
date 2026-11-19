@@ -95,6 +95,23 @@ def _set_relative(metric: dict, value: float, error_source: dict) -> None:
     _set_value(metric, value, plus_minus=rel * abs(value))
 
 
+def _break_even_month(capital: float, profit_12m: float, profit_24m: float) -> float:
+    """Months until cumulative profit covers the capital invested, following the typical monthly profit curve
+    (slow first months, steadier second year); past 24 months the second-year pace continues. Capped at 36 ("36+")."""
+    cap = config.BREAK_EVEN_CAP_MONTHS
+    cum = np.r_[profit_12m * np.array(config.LAUNCH_PROFIT_CURVE_Y1),
+                profit_12m + (profit_24m - profit_12m) * np.array(config.LAUNCH_PROFIT_CURVE_Y2)]
+    hit = np.flatnonzero(cum >= capital)
+    if hit.size:
+        i = int(hit[0])
+        prev = cum[i - 1] if i else 0.0
+        month = i + (capital - prev) / (cum[i] - prev) if cum[i] > prev else i + 1.0
+    else:
+        pace = (profit_24m - profit_12m) / 12
+        month = 24 + (capital - cum[-1]) / pace if pace > 0 else cap
+    return float(min(max(month, 1.0), cap))
+
+
 def _direction(change_pct: float) -> str:
     return "increase" if change_pct > 2 else "decrease" if change_pct < -2 else "stable"
 
@@ -150,20 +167,27 @@ class MarketLensPredictor:
             product = ProductInput(**product)
         X = build_product_features(product, self.ref, self.encoders)
         preds = self._format("product", LAUNCH_METRICS, X)
-        self._consistent_launch(preds)
+        x = X.iloc[0]
+        capital = self._consistent_launch(preds, product.price, x)
         be = preds["break_even_months"]
         be["display"] = (f"{config.BREAK_EVEN_CAP_MONTHS}+ months" if be["value"] >= config.BREAK_EVEN_CAP_MONTHS - 0.5
                          else f"~{be['value']:.0f} months")
         risk = float(predict_target(self.bundles, "product", "never_breaks_even", X)[0])
+        # the payback risk can't contradict the break-even forecast
+        year2_profit = preds["profit_24m"]["value"] - preds["profit_12m"]["value"]
+        if be["value"] <= 24:
+            risk = min(risk, 0.15)
+        elif be["value"] >= config.BREAK_EVEN_CAP_MONTHS - 0.5:
+            risk = max(risk, 0.8 if year2_profit <= 0 else 0.2)
         preds["never_breaks_even"] = {"label": "Chance it never pays back", "value": round(risk * 100, 1), "unit": "%",
                                       "risk_level": "low" if risk < 0.2 else "medium" if risk < 0.5 else "high"}
-        x = X.iloc[0]
         return {
             "type": "launch",
             "input": product.__dict__,
             "unit_economics": {"fba_fee": float(x.fba_fee_unit), "referral_fee": float(x.referral_fee_unit),
                                "landed_cost": float(x.landed_cost_unit), "est_weight_lb": float(x.ship_weight_lb), "size_tier": x.size_tier,
-                               "launch_fixed_cost": float(x.launch_fixed_cost), "pre_ad_unit_margin_pct": float(x.unit_margin_pct)},
+                               "launch_fixed_cost": float(x.launch_fixed_cost), "capital_invested": round(capital, 2),
+                               "pre_ad_unit_margin_pct": float(x.unit_margin_pct)},
             "predictions": preds,
             "notes": ["Estimates are based on simulated U.S. market data; plus_minus is the model's typical error on unseen test data."],
         }
@@ -203,18 +227,56 @@ class MarketLensPredictor:
                 "predictions": preds, "demand_trend": trend, "notes": []}
 
     @staticmethod
-    def _consistent_launch(preds: dict) -> None:
-        """Units are derived from the revenue and price models (units = revenue / price), and the rest follows.
-        On held-out data this scores 68% for 12-month units, vs 66% for the units model."""
-        if preds["revenue_24m"]["value"] < preds["revenue_12m"]["value"]:
-            _set_relative(preds["revenue_24m"], preds["revenue_12m"]["value"], preds["revenue_24m"])
-        price = preds["avg_price_12m"]["value"]
-        if price > 0:
-            for h in ("12m", "24m"):
-                _set_relative(preds[f"units_sold_{h}"], preds[f"revenue_{h}"]["value"] / price, preds[f"units_sold_{h}"])
-        _demand_at_least_units(preds, "units_sold_12m", "demand_units_12m")
+    def _consistent_launch(preds: dict, price: float, x: pd.Series) -> float:
+        """Make the launch numbers agree with each other. Kept from the models: first-year revenue, average price,
+        demand and margins. Everything else follows from them:
+          - average price stays close to the planned price; units = revenue / price; demand >= units
+          - 24-month revenue is 1.75-2.45x the 12-month revenue (the range seen in the data), so year two isn't empty
+          - profit = revenue x margin; ROI = profit / capital invested, with the same capital for 12 and 24 months
+          - break-even is the month cumulative profit covers that capital, so it agrees with profit and ROI
+        Returns the capital invested (launch costs + opening inventory)."""
+        lo, hi = config.LAUNCH_AVG_PRICE_VS_PLANNED
+        avg_price = float(np.clip(preds["avg_price_12m"]["value"], lo * price, hi * price))
+        _set_relative(preds["avg_price_12m"], avg_price, preds["avg_price_12m"])
+
+        rev12 = preds["revenue_12m"]["value"]
+        lo, hi = config.LAUNCH_REVENUE_24M_VS_12M
+        ratio = float(np.clip(preds["revenue_24m"]["value"] / rev12, lo, hi)) if rev12 > 0 else lo
+        _set_relative(preds["revenue_24m"], rev12 * ratio, preds["revenue_24m"])
+        for h in ("12m", "24m"):
+            _set_relative(preds[f"units_sold_{h}"], preds[f"revenue_{h}"]["value"] / avg_price, preds[f"units_sold_{h}"])
+
+        units12 = preds["units_sold_12m"]["value"]
+        if preds["demand_units_12m"]["value"] < units12:
+            _set_relative(preds["demand_units_12m"], units12 / config.LAUNCH_SELL_THROUGH, preds["demand_units_12m"])
         _set_relative(preds["avg_monthly_demand_12m"], preds["demand_units_12m"]["value"] / 12, preds["avg_monthly_demand_12m"])
-        # profit_12m / profit_24m are already revenue × margin
+        market = float(x.cat_market_size_12m)
+        if market > 0:                                   # share = this product's monthly demand / the category's
+            share = preds["avg_monthly_demand_12m"]["value"] / market * 100
+            _set_relative(preds["demand_share_pct_12m"], share, preds["demand_share_pct_12m"])
+            m = preds["demand_share_pct_12m"]                # small shares: keep 4 decimals so they don't read as 0
+            err = m["plus_minus"] / max(m["value"], 1e-9) * share if m["plus_minus"] else 0.0
+            m.update(value=round(share, 4), plus_minus=round(err, 4), range=[round(max(share - err, 0.0), 4), round(share + err, 4)])
+
+        m12 = preds["margin_pct_12m"]["value"]
+        lo, hi = config.LAUNCH_MARGIN_24M_MINUS_12M
+        _set_value(preds["margin_pct_24m"], m12 + float(np.clip(preds["margin_pct_24m"]["value"] - m12, lo, hi)), signed=True)
+        for h in ("12m", "24m"):
+            rel = (preds[f"profit_{h}"]["plus_minus"] or 0) / abs(preds[f"profit_{h}"]["value"] or 1)
+            profit = preds[f"revenue_{h}"]["value"] * preds[f"margin_pct_{h}"]["value"] / 100
+            _set_value(preds[f"profit_{h}"], profit, signed=True, plus_minus=rel * abs(profit))
+
+        capital = float(x.launch_fixed_cost) + config.LAUNCH_INVENTORY_SHARE * units12 * float(x.landed_cost_unit)
+        for h in ("12m", "24m"):
+            p = preds[f"profit_{h}"]
+            _set_value(preds[f"roi_pct_{h}"], p["value"] / capital * 100, signed=True, plus_minus=(p["plus_minus"] or 0) / capital * 100)
+
+        p12, p24 = preds["profit_12m"], preds["profit_24m"]
+        be = _break_even_month(capital, p12["value"], p24["value"])
+        slow = _break_even_month(capital, p12["range"][0], p24["range"][0])     # lower profit -> later break-even
+        fast = _break_even_month(capital, p12["range"][1], p24["range"][1])
+        preds["break_even_months"].update(value=round(be, 2), plus_minus=round((slow - fast) / 2, 2), range=[round(fast, 2), round(slow, 2)])
+        return capital
 
     @staticmethod
     def _consistent_month(preds: dict, X: pd.DataFrame) -> None:
