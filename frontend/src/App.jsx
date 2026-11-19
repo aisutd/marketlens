@@ -217,14 +217,51 @@ function Footer() {
   );
 }
 
+// ========================================
+// APPLICATION BACKGROUND
+// ========================================
+
+function AppLayout({ children }) {
+  const location = useLocation();
+
+  const isAuthPage =
+    location.pathname === "/login" ||
+    location.pathname === "/signup";
+
+  const backgroundClass = isAuthPage
+    ? "bg-background text-foreground"
+    : "bg-gradient-to-b from-[#F8FAFC] to-[#DCE3EA]";
+
+  return (
+    <div
+      className={`flex min-h-screen flex-col ${backgroundClass}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ========================================
+// FIREBASE SETUP NOTICE
+// ========================================
+
 function FirebaseSetupNotice() {
   return (
     <main className="mx-auto max-w-lg px-6 py-16">
-      <div role="alert" className="rounded-lg border border-border bg-card p-6">
-        <h1 className="mb-3 text-xl font-semibold">Firebase setup required</h1>
+      <div
+        role="alert"
+        className="rounded-lg border border-border bg-card p-6"
+      >
+        <h1 className="mb-3 text-xl font-semibold">
+          Firebase setup required
+        </h1>
         <p>{firebaseSetupMessage}</p>
       </div>
-      <Link to="/#try" className="mt-4 inline-block font-medium underline">
+
+      <Link
+        to="/#try"
+        className="mt-4 inline-block font-medium underline"
+      >
         Try the demo without an account
       </Link>
     </main>
@@ -237,28 +274,41 @@ function FirebaseSetupNotice() {
 
 export default function App() {
   const activeSession = useRef(null);
+
   const [{ session, analysis }, setAnalysisState] = useState({
     session: null,
     analysis: EMPTY_ANALYSIS,
   });
+
   const userId = auth ? session?.userId : null;
 
   useEffect(() => {
     if (!auth) return;
 
     function updateSession(user) {
-      const nextSession = { userId: user?.uid ?? null };
+      const nextSession = {
+        userId: user?.uid ?? null,
+      };
+
       activeSession.current = nextSession;
+
       setAnalysisState({
         session: nextSession,
         analysis: loadStoredAnalysis(nextSession.userId),
       });
     }
 
-    return onAuthStateChanged(auth, updateSession, (error) => {
-      console.error("Authentication check failed:", error);
-      updateSession(null);
-    });
+    return onAuthStateChanged(
+      auth,
+      updateSession,
+      (error) => {
+        console.error(
+          "Authentication check failed:",
+          error
+        );
+        updateSession(null);
+      }
+    );
   }, []);
 
   const {
@@ -287,7 +337,8 @@ export default function App() {
   // ========================================
 
   function updateAnalysisField(field, value) {
-    // A request started in a previous session may finish after sign-out.
+    // A request started in a previous session may
+    // finish after sign-out.
     if (
       !userId ||
       session !== activeSession.current ||
@@ -297,13 +348,17 @@ export default function App() {
     }
 
     setAnalysisState((previous) => {
-      if (previous.session !== session) return previous;
+      if (previous.session !== session) {
+        return previous;
+      }
 
       return {
         session,
         analysis: {
           ...previous.analysis,
-          ...(field === "scoredProduct" ? { suggestedPrices: {} } : {}),
+          ...(field === "scoredProduct"
+            ? { suggestedPrices: {} }
+            : {}),
           [field]:
             typeof value === "function"
               ? value(previous.analysis[field])
@@ -323,17 +378,27 @@ export default function App() {
     updateAnalysisField("scoredProduct", value);
 
   function saveSuggestedPrice(price) {
-    // History keeps the ID, while the price follows the account-owned analysis.
-    const id = crypto.getRandomValues(new Uint32Array(4)).join("-");
-    // Keep only the most recent few, so repeated clicks on one product don't
-    // grow the saved analysis without bound. Older history entries then fall
+    // History keeps the ID, while the price follows
+    // the account-owned analysis.
+    const id = crypto
+      .getRandomValues(new Uint32Array(4))
+      .join("-");
+
+    // Keep only the most recent few, so repeated clicks
+    // on one product don't grow the saved analysis
+    // without bound. Older history entries then fall
     // back to the product's own price.
-    updateAnalysisField("suggestedPrices", (previous) =>
-      Object.fromEntries([
-        ...Object.entries(previous).slice(-(MAX_SUGGESTED_PRICES - 1)),
-        [id, price],
-      ])
+    updateAnalysisField(
+      "suggestedPrices",
+      (previous) =>
+        Object.fromEntries([
+          ...Object.entries(previous).slice(
+            -(MAX_SUGGESTED_PRICES - 1)
+          ),
+          [id, price],
+        ])
     );
+
     return id;
   }
 
@@ -356,7 +421,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div className="flex min-h-screen flex-col bg-gradient-to-b from-[#F8FAFC] to-[#DCE3EA]">
+      <AppLayout>
 
         {/* CONDITIONAL NAVIGATION */}
         <AppHeader userId={userId} />
@@ -380,7 +445,13 @@ export default function App() {
 
             <Route
               path="/signup"
-              element={auth ? <SignUp /> : <FirebaseSetupNotice />}
+              element={
+                auth ? (
+                  <SignUp />
+                ) : (
+                  <FirebaseSetupNotice />
+                )
+              }
             />
 
             {/* ========================================
@@ -389,7 +460,13 @@ export default function App() {
 
             <Route
               path="/login"
-              element={auth ? <Login /> : <FirebaseSetupNotice />}
+              element={
+                auth ? (
+                  <Login />
+                ) : (
+                  <FirebaseSetupNotice />
+                )
+              }
             />
 
             {/* ========================================
@@ -524,7 +601,7 @@ export default function App() {
         {/* GLOBAL COPYRIGHT FOOTER */}
         <Footer />
 
-      </div>
+      </AppLayout>
     </BrowserRouter>
   );
 }

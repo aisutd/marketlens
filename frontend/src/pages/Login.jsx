@@ -78,20 +78,20 @@ export default function Login() {
   // ========================================
 
   return (
-    <div className="flex min-h-[75vh] items-center justify-center px-6 py-16">
-      <div className="w-full max-w-md border border-[#2B211B] bg-[#FAF6EE] p-8 shadow-[5px_5px_0px_#2B211B]">
+    <main className="flex min-h-[80vh] items-center justify-center bg-background px-6 py-16 text-foreground">
+      <div className="w-full max-w-md border border-ink bg-card p-8 shadow-offset sm:p-10">
 
         {/* PAGE HEADING */}
         <div className="mb-8 text-center">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#C52D08]">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
             MARKETLENS ACCOUNT
           </p>
 
-          <h1 className="font-serif text-4xl text-[#201711]">
+          <h1 className="font-display text-4xl text-foreground">
             Welcome back.
           </h1>
 
-          <p className="mt-3 text-sm text-[#756B63]">
+          <p className="mt-3 text-sm text-muted-foreground">
             Sign in to continue to MarketLens.
           </p>
         </div>
@@ -103,7 +103,7 @@ export default function Login() {
           <div>
             <label
               htmlFor="login-email"
-              className="mb-2 block text-sm font-medium text-[#201711]"
+              className="mb-2 block text-sm font-medium text-foreground"
             >
               Email address
             </label>
@@ -118,7 +118,7 @@ export default function Login() {
                 setEmail(event.target.value)
               }
               placeholder="you@example.com"
-              className="w-full border border-[#BDB3A7] bg-white px-4 py-3 text-[#201711] outline-none focus:border-[#C52D08]"
+              className="w-full border border-input bg-background px-4 py-3 text-foreground outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
 
@@ -126,7 +126,7 @@ export default function Login() {
           <div>
             <label
               htmlFor="login-password"
-              className="mb-2 block text-sm font-medium text-[#201711]"
+              className="mb-2 block text-sm font-medium text-foreground"
             >
               Password
             </label>
@@ -141,7 +141,7 @@ export default function Login() {
                 setPassword(event.target.value)
               }
               placeholder="Enter your password"
-              className="w-full border border-[#BDB3A7] bg-white px-4 py-3 text-[#201711] outline-none focus:border-[#C52D08]"
+              className="w-full border border-input bg-background px-4 py-3 text-foreground outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
 
@@ -149,7 +149,7 @@ export default function Login() {
           {error && (
             <p
               role="alert"
-              className="border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700"
+              className="border border-destructive bg-background px-4 py-3 text-sm text-destructive"
             >
               {error}
             </p>
@@ -159,7 +159,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#C52D08] px-5 py-3 font-medium text-white transition-colors hover:bg-[#A92507] disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-md border border-ink bg-primary px-5 py-3 font-medium text-primary-foreground shadow-offset-sm transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Signing in..." : "Sign In"}
           </button>
@@ -167,17 +167,27 @@ export default function Login() {
         </form>
 
         {/* SIGNUP LINK */}
-        <p className="mt-7 text-center text-sm text-[#756B63]">
+        <p className="mt-7 text-center text-sm text-muted-foreground">
           Don't have an account?{" "}
           <Link
             to="/signup"
-            className="font-semibold text-[#C52D08] hover:underline"
+            className="font-semibold text-primary underline-offset-4 hover:underline"
           >
             Create an account
           </Link>
         </p>
 
+        {/* RETURN TO LANDING PAGE */}
+        <div className="mt-6 text-center">
+          <Link
+            to="/"
+            className="text-sm text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+          >
+            Back to home
+          </Link>
+        </div>
+
       </div>
-    </div>
+    </main>
   );
 }

@@ -153,7 +153,8 @@ const decisionSteps = [
   {
     icon: CircleDollarSign,
     title: "Forecast",
-    description: "Evaluate potential financial outcomes.",
+    description:
+      "Evaluate potential financial outcomes.",
   },
   {
     icon: Target,
@@ -261,15 +262,6 @@ function SiteHeader({ userId }) {
         </nav>
 
         <div className="hidden items-center gap-5 md:flex">
-          {loggedOut && (
-            <Link
-              to="/login"
-              className="inline-flex min-h-10 items-center px-1 text-sm font-medium text-foreground underline-offset-4 hover:underline"
-            >
-              Log in
-            </Link>
-          )}
-
           <Link
             to={startHref}
             className="inline-flex items-center gap-2 rounded-md border border-ink bg-ink px-4 py-2 text-sm font-medium text-ink-foreground shadow-offset-sm transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
@@ -306,16 +298,6 @@ function SiteHeader({ userId }) {
               {label}
             </a>
           ))}
-
-          {loggedOut && (
-            <Link
-              to="/login"
-              onClick={() => setMenuOpen(false)}
-              className="border-t border-border pt-4 font-medium"
-            >
-              Log in
-            </Link>
-          )}
 
           <Link
             to={startHref}
