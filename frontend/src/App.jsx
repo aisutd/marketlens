@@ -348,7 +348,7 @@ export default function App() {
 
             <Route
               path="/"
-              element={<LandingPage />}
+              element={<LandingPage userId={userId} />}
             />
 
             {/* ========================================
