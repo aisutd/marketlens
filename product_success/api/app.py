@@ -18,13 +18,22 @@ for one product. Title embeddings are cached (LRU, 1,000 titles), so an edit tha
                        (impact is measured against the products the score ranks against: "category", or
                        "all_products" for a category with fewer than 30 reference products)
     POST /what-if      {product, prices} -> [{price, opportunity_score, probability}], 1 to 20 prices
+    POST /demo/predict, /demo/reasons, /demo/what-if
+                       the same as /predict, /reasons and /what-if with no token, for the landing page's
+                       "Try it live" demo
+
+/predict, /rescore, /reasons and /what-if need a Firebase ID token (Authorization: Bearer <token>, see
+api/firebase_auth.py): 401 without a valid one, 503 if the server cannot check tokens. /health, /categories and
+/demo/* are public.
 
 Missing list_price, stars and reviews become 0 as in predict.load_new, so the API and the CLI build the same
 features. No stars and no reviews (or both 0) means a product idea: the launch-time model scores it.
 probability is the model's raw output, unrounded (the CLI prints it rounded to 4 places).
 
-Env: MODEL_DIR, ALLOWED_ORIGINS (comma-separated, default http://localhost:3000). OMP_NUM_THREADS is set to 1
-here if unset, and both XGBoost models and ONNX Runtime run on one thread.
+Env: MODEL_DIR, ALLOWED_ORIGINS (comma-separated, default http://localhost:3000), FIREBASE_PROJECT_ID (the project
+that issues the frontend's tokens), AUTH_ONLY_DEV=1 (skip loading the models, to work on sign-in locally; scoring
+then answers 503). OMP_NUM_THREADS is set to 1 here if unset, and both XGBoost models and ONNX Runtime run on one
+thread.
 """
 import os
 
@@ -40,7 +49,7 @@ from typing import Annotated  # noqa: E402
 
 import joblib  # noqa: E402
 import numpy as np  # noqa: E402
-from fastapi import FastAPI, HTTPException, Request  # noqa: E402
+from fastapi import Depends, FastAPI, HTTPException, Request  # noqa: E402
 from fastapi.exceptions import RequestValidationError  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.responses import JSONResponse  # noqa: E402
@@ -48,6 +57,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError  # noqa: E402
 
 from api.embed_onnx import OnnxEmbedder  # noqa: E402
 from api.features_fast import featurize_one, load_tables, resolve_category, score_one  # noqa: E402
+from api.firebase_auth import verify_firebase_token  # noqa: E402
 from api.reasons import reasons_detail  # noqa: E402
 from paths import MODELS_DIR  # noqa: E402
 from predict import BASELINES_FILE, baseline_of, load_baselines  # noqa: E402
@@ -176,7 +186,13 @@ def _category_id(product):
                                  f"ids and names (names match in any case).") from None
 
 
+def _require_models():
+    if STATE.bundle is None or STATE.tables is None or STATE.embedder is None:
+        raise HTTPException(503, "ML models are unavailable in authentication-only development mode")
+
+
 def _score(product):
+    _require_models()
     _category_id(product)
     d = product.model_dump()
     out = score_one(d, STATE.bundle, STATE.tables, embed(d["title"]))
@@ -192,6 +208,12 @@ def _model_version(path):
 
 @asynccontextmanager
 async def lifespan(app):
+    if os.environ.get("AUTH_ONLY_DEV") == "1":
+        log.warning("AUTH_ONLY_DEV enabled: ML models are not loaded")
+        with open(CATEGORIES_FILE, encoding="utf-8") as f:
+            STATE.categories = json.load(f)
+        yield
+        return
     model_dir = os.environ.get("MODEL_DIR", MODELS_DIR)
     bundle_path = os.path.join(model_dir, BUNDLE_FILE)
     bundle = joblib.load(bundle_path)
@@ -216,7 +238,7 @@ app.add_middleware(
     allow_origins=[o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
                    if o.strip()],
     allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 
@@ -228,7 +250,8 @@ async def internal_error(request: Request, exc: Exception):
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "model_version": STATE.model_version, "tables_rows": STATE.tables["source"]["rows"]}
+    rows = STATE.tables["source"]["rows"] if STATE.tables is not None else None   # None in AUTH_ONLY_DEV
+    return {"status": "ok", "model_version": STATE.model_version, "tables_rows": rows}
 
 
 @app.get("/categories")
@@ -236,13 +259,16 @@ def categories():
     return STATE.categories
 
 
-@app.post("/predict", response_model=Score)
+PROTECTED = [Depends(verify_firebase_token), Depends(_require_models)]
+
+
+@app.post("/predict", response_model=Score, dependencies=PROTECTED)
 def predict_endpoint(product: Product):
     with _lock:
         return _score(product)
 
 
-@app.post("/rescore", response_model=Rescore)
+@app.post("/rescore", response_model=Rescore, dependencies=PROTECTED)
 def rescore(req: RescoreRequest):
     changes = req.changes.model_dump(exclude_unset=True)
     try:
@@ -259,7 +285,7 @@ def rescore(req: RescoreRequest):
             "score_change": after["opportunity_score"] - before["opportunity_score"], "changed_fields": changed}
 
 
-@app.post("/reasons", response_model=Reasons)
+@app.post("/reasons", response_model=Reasons, dependencies=PROTECTED)
 def reasons(product: Product):
     with _lock:
         _category_id(product)
@@ -272,7 +298,7 @@ def reasons(product: Product):
             "model_version": STATE.model_version}
 
 
-@app.post("/what-if", response_model=list[WhatIfPoint])
+@app.post("/what-if", response_model=list[WhatIfPoint], dependencies=PROTECTED)
 def what_if(req: WhatIfRequest):
     """Each price is scored as its own one-product request (n + 1 rows), through score_one; the title is
     embedded once (cached)."""
@@ -283,3 +309,11 @@ def what_if(req: WhatIfRequest):
             out.append({"price": price, "opportunity_score": s["opportunity_score"],
                         "probability": s["probability"]})
     return out
+
+
+# The landing page's "Try it live" demo scores without an account: the same handlers as /predict, /reasons and
+# /what-if, with no token check. The app's own pages use the protected routes. The demo does not use /rescore.
+for _path, _endpoint, _model in (("/demo/predict", predict_endpoint, Score),
+                                 ("/demo/reasons", reasons, Reasons),
+                                 ("/demo/what-if", what_if, list[WhatIfPoint])):
+    app.post(_path, response_model=_model, dependencies=[Depends(_require_models)])(_endpoint)

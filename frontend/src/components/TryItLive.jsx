@@ -17,6 +17,8 @@ import {
 import { categoryUsesReviews } from "../constants/reviewCategories";
 import { factorName } from "../constants/scoreFactors";
 
+const DEMO = { demo: true };
+
 const PRESETS = [
   {
     label: "Silicone food bags",
@@ -651,8 +653,11 @@ export default function TryItLive() {
     setResult(null);
 
     try {
+      // The demo is for visitors without an account: it scores through
+      // the public /demo/* routes.
       const prediction = await predictProduct(
-        product
+        product,
+        DEMO
       );
 
       const score = Number(
@@ -671,10 +676,11 @@ export default function TryItLive() {
 
       const [reasonsResponse, curveResponse] =
         await Promise.allSettled([
-          getPredictionReasons(product),
+          getPredictionReasons(product, DEMO),
           simulatePrices(
             product,
-            makePriceSweep(sellingPrice)
+            makePriceSweep(sellingPrice),
+            DEMO
           ),
         ]);
 

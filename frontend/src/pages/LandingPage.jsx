@@ -213,8 +213,13 @@ function PrimaryButton({
   );
 }
 
-function SiteHeader() {
+// userId comes from App's auth check: null when logged out, undefined
+// while the check is still running (then nothing extra is shown).
+function SiteHeader({ userId }) {
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const loggedOut = userId === null;
+  const startHref = loggedOut ? "/signup" : "/discover";
 
   const navigation = [
     ["How it works", "#how"],
@@ -255,13 +260,24 @@ function SiteHeader() {
           ))}
         </nav>
 
-        <Link
-          to="/discover"
-          className="hidden items-center gap-2 rounded-md border border-ink bg-ink px-4 py-2 text-sm font-medium text-ink-foreground shadow-offset-sm transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none md:inline-flex"
-        >
-          Get Started
-          <ArrowRight size={16} />
-        </Link>
+        <div className="hidden items-center gap-5 md:flex">
+          {loggedOut && (
+            <Link
+              to="/login"
+              className="inline-flex min-h-10 items-center px-1 text-sm font-medium text-foreground underline-offset-4 hover:underline"
+            >
+              Log in
+            </Link>
+          )}
+
+          <Link
+            to={startHref}
+            className="inline-flex items-center gap-2 rounded-md border border-ink bg-ink px-4 py-2 text-sm font-medium text-ink-foreground shadow-offset-sm transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+          >
+            Get Started
+            <ArrowRight size={16} />
+          </Link>
+        </div>
 
         <button
           type="button"
@@ -291,10 +307,23 @@ function SiteHeader() {
             </a>
           ))}
 
+          {loggedOut && (
+            <Link
+              to="/login"
+              onClick={() => setMenuOpen(false)}
+              className="border-t border-border pt-4 font-medium"
+            >
+              Log in
+            </Link>
+          )}
+
           <Link
-            to="/discover"
+            to={startHref}
             onClick={() => setMenuOpen(false)}
-            className="inline-flex items-center gap-2 border-t border-border pt-4 font-medium text-primary"
+            className={
+              "inline-flex items-center gap-2 font-medium text-primary " +
+              (loggedOut ? "" : "border-t border-border pt-4")
+            }
           >
             Get Started
             <ArrowRight size={16} />
@@ -957,10 +986,10 @@ function LandingFooter() {
   );
 }
 
-export default function LandingPage() {
+export default function LandingPage({ userId }) {
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <SiteHeader />
+      <SiteHeader userId={userId} />
       <HeroSection />
       <TechnicalTicker />
       <HowItWorks />

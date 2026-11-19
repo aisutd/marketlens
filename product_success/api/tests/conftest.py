@@ -4,6 +4,9 @@ server when API_BASE_URL is set, e.g. a container:
 
     pytest api/tests                                        # in-process, from product_success/
     API_BASE_URL=http://localhost:8080 pytest api/tests     # a running server; in-process-only tests are skipped
+
+The scoring endpoints need a Firebase ID token: in-process the check is replaced by a test user, and against a
+server API_ID_TOKEN=<a signed-in user's ID token> is sent as the Bearer token.
 """
 import math
 import os
@@ -19,17 +22,29 @@ SLOW = os.path.join(MODELS_DIR, "fast_check_slow.parquet")   # tools/check_fast_
 in_process = pytest.mark.skipif(bool(BASE_URL), reason="needs the app in-process (API_BASE_URL is set)")
 
 
+TEST_USER = {"uid": "test-user"}
+
+
 @pytest.fixture(scope="session")
 def client():
+    """The scoring endpoints need a Firebase ID token. In-process, the token check is replaced by a fixed test user
+    (test_auth.py removes the override to test the check itself); against a server, API_ID_TOKEN is sent if set."""
     if BASE_URL:
         import httpx
-        with httpx.Client(base_url=BASE_URL, timeout=60) as c:
+        token = os.environ.get("API_ID_TOKEN")
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+        with httpx.Client(base_url=BASE_URL, timeout=60, headers=headers) as c:
             yield c
     else:
         from fastapi.testclient import TestClient
         from api.app import app
-        with TestClient(app) as c:
-            yield c
+        from api.firebase_auth import verify_firebase_token
+        app.dependency_overrides[verify_firebase_token] = lambda: TEST_USER
+        try:
+            with TestClient(app) as c:
+                yield c
+        finally:
+            app.dependency_overrides.pop(verify_firebase_token, None)
 
 
 @pytest.fixture(scope="session")
