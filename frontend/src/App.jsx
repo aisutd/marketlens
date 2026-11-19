@@ -1,10 +1,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "./services/firebase";
+import { auth, firebaseSetupMessage } from "./services/firebase";
 
 import {
   BrowserRouter,
+  Link,
   Navigate,
   Route,
   Routes,
@@ -210,6 +211,20 @@ function Footer() {
   );
 }
 
+function FirebaseSetupNotice() {
+  return (
+    <main className="mx-auto max-w-lg px-6 py-16">
+      <div role="alert" className="rounded-lg border border-border bg-card p-6">
+        <h1 className="mb-3 text-xl font-semibold">Firebase setup required</h1>
+        <p>{firebaseSetupMessage}</p>
+      </div>
+      <Link to="/#try" className="mt-4 inline-block font-medium underline">
+        Try the demo without an account
+      </Link>
+    </main>
+  );
+}
+
 // ========================================
 // MAIN APPLICATION
 // ========================================
@@ -220,9 +235,11 @@ export default function App() {
     session: null,
     analysis: EMPTY_ANALYSIS,
   });
-  const userId = session?.userId;
+  const userId = auth ? session?.userId : null;
 
   useEffect(() => {
+    if (!auth) return;
+
     function updateSession(user) {
       const nextSession = { userId: user?.uid ?? null };
       activeSession.current = nextSession;
@@ -340,7 +357,7 @@ export default function App() {
 
             <Route
               path="/signup"
-              element={<SignUp />}
+              element={auth ? <SignUp /> : <FirebaseSetupNotice />}
             />
 
             {/* ========================================
@@ -349,7 +366,7 @@ export default function App() {
 
             <Route
               path="/login"
-              element={<Login />}
+              element={auth ? <Login /> : <FirebaseSetupNotice />}
             />
 
             {/* ========================================

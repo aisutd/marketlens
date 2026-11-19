@@ -74,7 +74,7 @@ async function apiRequest(endpoint, options = {}) {
   const headers = new Headers(options.headers);
 
   if (!isPublic(endpoint)) {
-    const user = auth.currentUser;
+    const user = auth?.currentUser;
 
     if (!user) {
       throw new ApiError(

@@ -3,7 +3,11 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 
-import { auth } from "../services/firebase";
+import {
+  auth,
+  firebaseSetupMessage,
+  isFirebaseSetupError,
+} from "../services/firebase";
 
 // ========================================
 // LOGIN PAGE
@@ -44,7 +48,9 @@ export default function Login() {
     } catch (error) {
       console.error("Login failed:", error.code);
 
-      if (
+      if (isFirebaseSetupError(error.code)) {
+        setError(firebaseSetupMessage);
+      } else if (
         error.code === "auth/invalid-credential" ||
         error.code === "auth/wrong-password" ||
         error.code === "auth/user-not-found"
