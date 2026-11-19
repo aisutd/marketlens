@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
+
 import {
   auth,
   firebaseSetupMessage,
@@ -16,6 +17,10 @@ export default function SignUp() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // ========================================
+  // HANDLE SIGN UP
+  // ========================================
 
   async function handleSignUp(event) {
     event.preventDefault();
@@ -58,38 +63,62 @@ export default function SignUp() {
     }
   }
 
+  // ========================================
+  // SIGN UP FORM
+  // ========================================
+
   return (
-    <div className="flex min-h-[80vh] items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 shadow-lg">
-        <h1 className="mb-2 text-center text-3xl font-bold">
-          Create your account
-        </h1>
+    <main className="flex min-h-[80vh] items-center justify-center bg-background px-6 py-16 text-foreground">
+      <div className="w-full max-w-md border border-ink bg-card p-8 shadow-offset sm:p-10">
 
-        <p className="mb-8 text-center text-gray-500">
-          Get started with MarketLens
-        </p>
+        {/* PAGE HEADING */}
+        <div className="mb-8 text-center">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+            MARKETLENS ACCOUNT
+          </p>
 
+          <h1 className="font-display text-4xl text-foreground">
+            Create your account.
+          </h1>
+
+          <p className="mt-3 text-sm text-muted-foreground">
+            Get started with MarketLens.
+          </p>
+        </div>
+
+        {/* SIGN UP FORM */}
         <form onSubmit={handleSignUp} className="space-y-5">
+
+          {/* EMAIL */}
           <div>
-            <label htmlFor="signup-email" className="mb-2 block text-sm font-medium">
+            <label
+              htmlFor="signup-email"
+              className="mb-2 block text-sm font-medium text-foreground"
+            >
               Email address
             </label>
+
             <input
               id="signup-email"
               type="email"
               required
               autoComplete="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3"
+              onChange={(event) => setEmail(event.target.value)}
               placeholder="you@example.com"
+              className="w-full border border-input bg-background px-4 py-3 text-foreground outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
 
+          {/* PASSWORD */}
           <div>
-            <label htmlFor="signup-password" className="mb-2 block text-sm font-medium">
+            <label
+              htmlFor="signup-password"
+              className="mb-2 block text-sm font-medium text-foreground"
+            >
               Password
             </label>
+
             <input
               id="signup-password"
               type="password"
@@ -97,50 +126,77 @@ export default function SignUp() {
               minLength={6}
               autoComplete="new-password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3"
+              onChange={(event) => setPassword(event.target.value)}
               placeholder="At least 6 characters"
+              className="w-full border border-input bg-background px-4 py-3 text-foreground outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
 
+          {/* CONFIRM PASSWORD */}
           <div>
-            <label htmlFor="signup-confirm-password" className="mb-2 block text-sm font-medium">
+            <label
+              htmlFor="signup-confirm-password"
+              className="mb-2 block text-sm font-medium text-foreground"
+            >
               Confirm password
             </label>
+
             <input
               id="signup-confirm-password"
               type="password"
               required
               autoComplete="new-password"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3"
+              onChange={(event) =>
+                setConfirmPassword(event.target.value)
+              }
               placeholder="Confirm your password"
+              className="w-full border border-input bg-background px-4 py-3 text-foreground outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
 
+          {/* ERROR MESSAGE */}
           {error && (
-            <p role="alert" className="text-sm text-red-600">
+            <p
+              role="alert"
+              className="border border-destructive bg-background px-4 py-3 text-sm text-destructive"
+            >
               {error}
             </p>
           )}
 
+          {/* CREATE ACCOUNT BUTTON */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+            className="w-full rounded-md border border-ink bg-primary px-5 py-3 font-medium text-primary-foreground shadow-offset-sm transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Creating account..." : "Create Account"}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-gray-500">
+        {/* LOGIN LINK */}
+        <p className="mt-7 text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link to="/login" className="font-semibold text-blue-600">
-            Sign in
+          <Link
+            to="/login"
+            className="font-semibold text-primary underline-offset-4 hover:underline"
+          >
+            Log In
           </Link>
         </p>
+
+        {/* RETURN TO LANDING PAGE */}
+        <div className="mt-6 text-center">
+          <Link
+            to="/"
+            className="text-sm text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+          >
+            Back to home
+          </Link>
+        </div>
+
       </div>
-    </div>
+    </main>
   );
 }
