@@ -59,12 +59,21 @@ function readDetail(body) {
 // API REQUEST WITH FIREBASE AUTHENTICATION
 // ========================================
 
-// Every endpoint but /categories needs the signed-in user's Firebase ID
-// token; requestJson then handles the timeout and error messages.
+// Endpoints that answer without a token: the category list, and the
+// /demo/* routes the landing page's "Try it live" demo scores through.
+function isPublic(endpoint) {
+  return (
+    endpoint === "/categories" ||
+    endpoint.startsWith("/demo/")
+  );
+}
+
+// Every other endpoint needs the signed-in user's Firebase ID token;
+// requestJson then handles the timeout and error messages.
 async function apiRequest(endpoint, options = {}) {
   const headers = new Headers(options.headers);
 
-  if (endpoint !== "/categories") {
+  if (!isPublic(endpoint)) {
     const user = auth.currentUser;
 
     if (!user) {
@@ -86,6 +95,12 @@ async function apiRequest(endpoint, options = {}) {
     service: "scoring service",
     readError: readDetail,
   });
+}
+
+// `demo: true` sends a request to the public /demo/* route, for the
+// landing page, which visitors use without an account.
+function route(endpoint, demo) {
+  return demo ? `/demo${endpoint}` : endpoint;
 }
 
 // ========================================
@@ -114,9 +129,12 @@ export async function getCategories() {
 // PREDICT PRODUCT OPPORTUNITY
 // ========================================
 
-export async function predictProduct(product) {
+export async function predictProduct(
+  product,
+  { demo = false } = {}
+) {
   return apiRequest(
-    "/predict",
+    route("/predict", demo),
     jsonOptions(buildProductPayload(product))
   );
 }
@@ -125,9 +143,12 @@ export async function predictProduct(product) {
 // GET PREDICTION REASONS
 // ========================================
 
-export async function getPredictionReasons(product) {
+export async function getPredictionReasons(
+  product,
+  { demo = false } = {}
+) {
   return apiRequest(
-    "/reasons",
+    route("/reasons", demo),
     jsonOptions(buildProductPayload(product))
   );
 }
@@ -150,7 +171,11 @@ export async function rescoreProduct(product, changes) {
 // SIMULATE PRODUCT PRICES
 // ========================================
 
-export async function simulatePrices(product, prices) {
+export async function simulatePrices(
+  product,
+  prices,
+  { demo = false } = {}
+) {
   if (
     !Array.isArray(prices) ||
     prices.length < 1 ||
@@ -168,7 +193,7 @@ export async function simulatePrices(product, prices) {
   }
 
   return apiRequest(
-    "/what-if",
+    route("/what-if", demo),
     jsonOptions({
       product: buildProductPayload(product),
       prices,

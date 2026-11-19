@@ -26,8 +26,12 @@ the title skips MiniLM.
                        category with fewer than 30 reference products)
     POST /what-if      {product, prices} -> scores for 1 to 20 prices
 
+    POST /demo/predict, /demo/reasons, /demo/what-if
+                       the same as /predict, /reasons and /what-if, with no
+                       token: the landing page's "Try it live" demo
+
 Firebase Authentication:
-    /health and /categories are public.
+    /health, /categories and /demo/* are public.
     /predict, /rescore, /reasons and /what-if require a valid Firebase ID token.
 
 Env:
@@ -661,3 +665,23 @@ def what_if(req: WhatIfRequest):
                 "probability": s["probability"],
             })
     return out
+
+# ========================================
+# PUBLIC DEMO ENDPOINTS
+# ========================================
+
+# The landing page's "Try it live" demo scores products without an
+# account. These routes run the same handlers as /predict, /reasons and
+# /what-if, with no token check; the app's own pages use the protected
+# routes. /rescore has no demo route because the demo does not use it.
+
+for _path, _endpoint, _model in (
+    ("/demo/predict", predict_endpoint, Score),
+    ("/demo/reasons", reasons, Reasons),
+    ("/demo/what-if", what_if, list[WhatIfPoint]),
+):
+    app.post(
+        _path,
+        response_model=_model,
+        dependencies=[Depends(_require_models)],
+    )(_endpoint)
