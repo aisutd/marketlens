@@ -1,46 +1,19 @@
 
-import { useEffect, useState } from "react";
+import { Fragment } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { onAuthStateChanged } from "firebase/auth";
-
-import { auth } from "../services/firebase";
 
 // ========================================
 // PROTECTED ROUTE
 // ========================================
 
-export default function ProtectedRoute({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
+export default function ProtectedRoute({ userId, children }) {
   const location = useLocation();
-
-  // ========================================
-  // CHECK FIREBASE AUTHENTICATION
-  // ========================================
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      (currentUser) => {
-        setUser(currentUser);
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Authentication check failed:", error);
-        setUser(null);
-        setLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
-  }, []);
 
   // ========================================
   // WAIT FOR AUTHENTICATION CHECK
   // ========================================
 
-  if (loading) {
+  if (userId === undefined) {
     return (
       <div
         role="status"
@@ -57,7 +30,7 @@ export default function ProtectedRoute({ children }) {
   // REDIRECT UNAUTHENTICATED USERS
   // ========================================
 
-  if (!user) {
+  if (!userId) {
     return (
       <Navigate
         to="/login"
@@ -71,5 +44,5 @@ export default function ProtectedRoute({ children }) {
   // ALLOW AUTHENTICATED USERS
   // ========================================
 
-  return children;
+  return <Fragment key={userId}>{children}</Fragment>;
 }

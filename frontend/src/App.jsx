@@ -1,5 +1,7 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "./services/firebase";
 
 import {
   BrowserRouter,
@@ -50,8 +52,13 @@ const EMPTY_ANALYSIS = {
 // RESTORE PREVIOUS ANALYSIS
 // ========================================
 
-function loadStoredAnalysis() {
+function loadStoredAnalysis(userId) {
   try {
+    if (!userId) {
+      localStorage.removeItem(STORAGE_KEY);
+      return EMPTY_ANALYSIS;
+    }
+
     const savedData = localStorage.getItem(
       STORAGE_KEY
     );
@@ -62,8 +69,12 @@ function loadStoredAnalysis() {
 
     const stored = JSON.parse(savedData);
 
+    if (stored?.userId !== userId) {
+      localStorage.removeItem(STORAGE_KEY);
+      return EMPTY_ANALYSIS;
+    }
+
     if (
-      !stored ||
       stored.version !== STORAGE_VERSION ||
       !stored.analysis ||
       typeof stored.analysis !== "object" ||
@@ -116,7 +127,7 @@ function loadStoredAnalysis() {
 // SAVE CURRENT ANALYSIS
 // ========================================
 
-function saveStoredAnalysis(analysis) {
+function saveStoredAnalysis(userId, analysis) {
   try {
     const hasResult = Boolean(
       analysis.product ||
@@ -132,6 +143,7 @@ function saveStoredAnalysis(analysis) {
 
     const payload = {
       version: STORAGE_VERSION,
+      userId,
       analysis,
     };
 
@@ -151,7 +163,7 @@ function saveStoredAnalysis(analysis) {
 // CONDITIONAL APPLICATION HEADER
 // ========================================
 
-function AppHeader() {
+function AppHeader({ userId }) {
   const location = useLocation();
 
   const publicPages = ["/", "/signup", "/login"];
@@ -161,7 +173,7 @@ function AppHeader() {
   }
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute userId={userId}>
       <Header />
     </ProtectedRoute>
   );
@@ -203,9 +215,28 @@ function Footer() {
 // ========================================
 
 export default function App() {
-  const [analysis, setAnalysis] = useState(
-    loadStoredAnalysis
-  );
+  const activeSession = useRef(null);
+  const [{ session, analysis }, setAnalysisState] = useState({
+    session: null,
+    analysis: EMPTY_ANALYSIS,
+  });
+  const userId = session?.userId;
+
+  useEffect(() => {
+    function updateSession(user) {
+      const nextSession = { userId: user?.uid ?? null };
+      activeSession.current = nextSession;
+      setAnalysisState({
+        session: nextSession,
+        analysis: loadStoredAnalysis(nextSession.userId),
+      });
+    }
+
+    return onAuthStateChanged(auth, updateSession, (error) => {
+      console.error("Authentication check failed:", error);
+      updateSession(null);
+    });
+  }, []);
 
   const {
     prediction,
@@ -218,21 +249,43 @@ export default function App() {
   // ========================================
 
   useEffect(() => {
-    saveStoredAnalysis(analysis);
-  }, [analysis]);
+    if (
+      userId &&
+      session === activeSession.current &&
+      auth.currentUser?.uid === userId
+    ) {
+      saveStoredAnalysis(userId, analysis);
+    }
+  }, [analysis, session, userId]);
 
   // ========================================
   // UPDATE ANALYSIS STATE
   // ========================================
 
   function updateAnalysisField(field, value) {
-    setAnalysis((previous) => ({
-      ...previous,
-      [field]:
-        typeof value === "function"
-          ? value(previous[field])
-          : value,
-    }));
+    // A request started in a previous session may finish after sign-out.
+    if (
+      !userId ||
+      session !== activeSession.current ||
+      auth.currentUser?.uid !== userId
+    ) {
+      return;
+    }
+
+    setAnalysisState((previous) => {
+      if (previous.session !== session) return previous;
+
+      return {
+        session,
+        analysis: {
+          ...previous.analysis,
+          [field]:
+            typeof value === "function"
+              ? value(previous.analysis[field])
+              : value,
+        },
+      };
+    });
   }
 
   const setProduct = (value) =>
@@ -266,7 +319,7 @@ export default function App() {
       <div className="flex min-h-screen flex-col bg-gradient-to-b from-[#F8FAFC] to-[#DCE3EA]">
 
         {/* CONDITIONAL NAVIGATION */}
-        <AppHeader />
+        <AppHeader userId={userId} />
 
         {/* PAGE CONTENT */}
         <div className="w-full flex-1">
@@ -306,7 +359,7 @@ export default function App() {
             <Route
               path="/discover"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute userId={userId}>
                   <Discover
                     setProduct={setProduct}
                     setPrediction={setPrediction}
@@ -324,7 +377,7 @@ export default function App() {
             <Route
               path="/product-overview"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute userId={userId}>
                   <Overview
                     product={scoredProduct}
                     prediction={prediction}
@@ -342,7 +395,7 @@ export default function App() {
             <Route
               path="/sales-forecast-overview"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute userId={userId}>
                   {forecast?.type === "launch" ? (
                     <LaunchForecastOverview
                       forecast={forecast}
@@ -363,7 +416,7 @@ export default function App() {
             <Route
               path="/overview"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute userId={userId}>
                   <Navigate
                     to={overviewDestination}
                     replace
@@ -379,7 +432,7 @@ export default function App() {
             <Route
               path="/score-details"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute userId={userId}>
                   <ScoreDetails
                     product={scoredProduct}
                     prediction={prediction}
@@ -395,7 +448,7 @@ export default function App() {
             <Route
               path="/launch-feasibility"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute userId={userId}>
                   <LaunchFeasibility
                     key={
                       scoredProduct
