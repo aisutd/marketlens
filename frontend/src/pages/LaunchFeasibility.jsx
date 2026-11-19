@@ -1020,7 +1020,6 @@ function AIPriceSimulation({
         .map((item) => ({
           price: numeric(item.price),
           score: numeric(item.opportunity_score),
-          probability: numeric(item.probability),
         }))
         .filter(
           (item) =>
@@ -1231,20 +1230,20 @@ function AIPriceSimulation({
               </ResponsiveContainer>
             </div>
 
+            {/* Score only: the model's raw probability is a relative number,
+                not a chance of success, and next to the score (a rank among
+                the category's products) it read as a contradiction, e.g.
+                "92/100" beside "0.7%". */}
             <div className="mt-5 overflow-x-auto">
-              <table className="w-full min-w-[430px] text-left text-sm">
+              <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-ink text-muted-foreground">
                     <th className="py-3 pr-4 font-semibold">
                       Price
                     </th>
 
-                    <th className="py-3 pr-4 font-semibold">
-                      Score
-                    </th>
-
                     <th className="py-3 font-semibold">
-                      Model probability
+                      Score
                     </th>
                   </tr>
                 </thead>
@@ -1259,18 +1258,8 @@ function AIPriceSimulation({
                         {formatMoney(item.price)}
                       </td>
 
-                      <td className="py-4 pr-4 font-semibold">
+                      <td className="py-4 font-semibold">
                         {item.score}/100
-                      </td>
-
-                      <td className="py-4">
-                        {item.probability !== null &&
-                        item.probability >= 0 &&
-                        item.probability <= 1
-                          ? formatPercent(
-                              item.probability * 100
-                            )
-                          : "—"}
                       </td>
                     </tr>
                   ))}
