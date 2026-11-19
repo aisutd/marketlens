@@ -121,3 +121,16 @@ def test_money_identities_hold(predictor, power_bank):
         assert approx(y["units_sold"]["value"] * y["avg_price"]["value"], y["gross_revenue"]["value"])
         assert approx(y["gross_revenue"]["value"] * y["profit_margin_pct"]["value"] / 100, y["net_profit"]["value"])
         assert y["demand_units"]["value"] >= y["units_sold"]["value"]
+
+
+def test_launch_numbers_agree_across_periods(predictor):
+    """Year two isn't empty, ROI uses one capital figure, and break-even matches profit vs that capital."""
+    r = predictor.predict_launch({"category": "Cell Phones & Accessories", "price": 651, "review_count": 0, "months_on_market": 0})
+    p, capital = r["predictions"], r["unit_economics"]["capital_invested"]
+    assert 1.75 <= p["revenue_24m"]["value"] / p["revenue_12m"]["value"] <= 2.45
+    assert 0.85 * 651 <= p["avg_price_12m"]["value"] <= 651
+    for h in ("12m", "24m"):
+        assert p[f"roi_pct_{h}"]["value"] == pytest.approx(p[f"profit_{h}"]["value"] / capital * 100, abs=0.05)
+    assert (p["break_even_months"]["value"] <= 12) == (p["profit_12m"]["value"] >= capital)
+    assert p["break_even_months"]["range"][0] <= p["break_even_months"]["value"] <= p["break_even_months"]["range"][1]
+    assert p["demand_share_pct_12m"]["value"] > 0
