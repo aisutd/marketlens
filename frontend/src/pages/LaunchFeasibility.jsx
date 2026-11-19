@@ -50,6 +50,16 @@ const DEFAULT_COSTS = {
   advertising: "3.00",
 };
 
+// How far either side of the scenario price the simulation reaches. The
+// score ranks a product among its category's products, so a small price
+// change often leaves the rank where it was; the wider ranges show where
+// it starts to move.
+const PRICE_RANGES = [0.1, 0.25, 0.5];
+const DEFAULT_PRICE_RANGE = 0.1;
+
+// Five prices, evenly spaced, with the scenario price in the middle.
+const PRICE_STEPS = [-1, -0.5, 0, 0.5, 1];
+
 const COST_FIELDS = [
   {
     id: "manufacturing",
@@ -1001,8 +1011,12 @@ function AIPriceSimulation({
   error,
   rescore,
   simulations,
+  priceRange,
+  onPriceRangeChange,
   onRun,
 }) {
+  const rangePercent = Math.round(priceRange * 100);
+
   const initialScore = numeric(
     prediction?.opportunity_score
   );
@@ -1020,7 +1034,6 @@ function AIPriceSimulation({
         .map((item) => ({
           price: numeric(item.price),
           score: numeric(item.opportunity_score),
-          probability: numeric(item.probability),
         }))
         .filter(
           (item) =>
@@ -1046,10 +1059,52 @@ function AIPriceSimulation({
             </p>
 
             <p className="mt-3 text-sm leading-7 text-muted-foreground">
-              Evaluate prices approximately 10%
-              below, equal to, and 10% above your
-              selected scenario price.
+              Evaluate five prices, from{" "}
+              {rangePercent}% below to{" "}
+              {rangePercent}% above your selected
+              scenario price.
             </p>
+
+            {/* Native radios (visually hidden) keep arrow-key movement
+                and the group's name for screen readers; the label is the
+                visible, clickable chip. */}
+            <fieldset className="mt-5" disabled={loading}>
+              <legend className="text-sm font-semibold">
+                Price range
+              </legend>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {PRICE_RANGES.map((range) => (
+                  <label
+                    key={range}
+                    className={
+                      "inline-flex min-h-10 cursor-pointer items-center " +
+                      "rounded-md border border-ink bg-background px-4 py-2 " +
+                      "font-mono text-sm transition-colors " +
+                      "hover:bg-secondary " +
+                      "has-checked:bg-ink has-checked:text-ink-foreground " +
+                      "has-focus-visible:outline-2 " +
+                      "has-focus-visible:outline-offset-2 " +
+                      "has-focus-visible:outline-primary " +
+                      "has-disabled:cursor-not-allowed " +
+                      "has-disabled:opacity-50"
+                    }
+                  >
+                    <input
+                      type="radio"
+                      name="price-range"
+                      value={range}
+                      checked={priceRange === range}
+                      onChange={() =>
+                        onPriceRangeChange(range)
+                      }
+                      className="sr-only"
+                    />
+                    ±{Math.round(range * 100)}%
+                  </label>
+                ))}
+              </div>
+            </fieldset>
           </div>
 
           <button
@@ -1231,20 +1286,20 @@ function AIPriceSimulation({
               </ResponsiveContainer>
             </div>
 
+            {/* Score only: the model's raw probability is a relative number,
+                not a chance of success, and next to the score (a rank among
+                the category's products) it read as a contradiction, e.g.
+                "92/100" beside "0.7%". */}
             <div className="mt-5 overflow-x-auto">
-              <table className="w-full min-w-[430px] text-left text-sm">
+              <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-ink text-muted-foreground">
                     <th className="py-3 pr-4 font-semibold">
                       Price
                     </th>
 
-                    <th className="py-3 pr-4 font-semibold">
-                      Score
-                    </th>
-
                     <th className="py-3 font-semibold">
-                      Model probability
+                      Score
                     </th>
                   </tr>
                 </thead>
@@ -1259,18 +1314,8 @@ function AIPriceSimulation({
                         {formatMoney(item.price)}
                       </td>
 
-                      <td className="py-4 pr-4 font-semibold">
+                      <td className="py-4 font-semibold">
                         {item.score}/100
-                      </td>
-
-                      <td className="py-4">
-                        {item.probability !== null &&
-                        item.probability >= 0 &&
-                        item.probability <= 1
-                          ? formatPercent(
-                              item.probability * 100
-                            )
-                          : "—"}
                       </td>
                     </tr>
                   ))}
@@ -1331,6 +1376,9 @@ export default function LaunchFeasibility({
 
   const [rescore, setRescore] = useState(null);
   const [simulations, setSimulations] = useState([]);
+  const [priceRange, setPriceRange] = useState(
+    DEFAULT_PRICE_RANGE
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -1471,11 +1519,9 @@ export default function LaunchFeasibility({
 
     const selectedPrice = values.price;
 
-    const prices = [
-      selectedPrice * 0.9,
-      selectedPrice,
-      selectedPrice * 1.1,
-    ].map((price) =>
+    const prices = PRICE_STEPS.map(
+      (step) => selectedPrice * (1 + step * priceRange)
+    ).map((price) =>
       Math.min(
         100000,
         Math.max(
@@ -1885,6 +1931,11 @@ export default function LaunchFeasibility({
           error={error}
           rescore={rescore}
           simulations={simulations}
+          priceRange={priceRange}
+          onPriceRangeChange={(range) => {
+            setPriceRange(range);
+            resetResults();
+          }}
           onRun={runSimulation}
         />
 
