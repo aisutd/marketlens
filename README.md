@@ -1,55 +1,217 @@
-# MarketLens
+ <h1 align="center">MarketLens</h1>
 
-## Description
+<p align="center">
+  Product intelligence and financial forecasting for Amazon sellers.
+</p>
 
-MarketLens is an AI-powered product intelligence platform for Amazon entrepreneurs. It analyzes demand, competition, pricing, reviews, keywords, profitability, seasonality, and risk to help users evaluate product opportunities and make data-driven launch decisions.
+<p align="center">
+  <a href="#overview">Overview</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#technology">Technology</a> ·
+  <a href="#getting-started">Getting Started</a> ·
+  <a href="#contributing">Contributing</a>
+</p>
 
-## Planned Technologies
+![MarketLens landing page](docs/screenshots/landing.png)
 
-- Python and JavaScript
-- React or Streamlit with Plotly
-- FastAPI, Pandas, NumPy, and scikit-learn
-- NLP, forecasting, recommendation systems, and PostgreSQL or MongoDB
+## Overview
 
-## Docker Setup
+MarketLens helps Amazon sellers evaluate product opportunities before investing in inventory.
 
-Make sure Docker Desktop is installed and running.
+The platform combines machine learning, opportunity scoring, and financial forecasting to help users assess product potential, understand market factors, and estimate launch performance.
+
+## Features
+
+### Product Opportunity Scoring
+
+Evaluate product ideas with an opportunity score from 0 to 100, compared against other products in the same category.
+
+MarketLens highlights factors that contribute positively or negatively to a product's score, helping users understand the evaluation.
+
+<p align="center">
+  <img src="docs/screenshots/opportunity-score.png" width="85%" alt="MarketLens product opportunity scoring">
+</p>
+
+### Financial Forecasting
+
+Estimate potential revenue, profit, margins, ROI, and break-even performance before launching a product.
+
+Explore launch forecasts and compare financial projections across 12-month and 24-month periods.
+
+<p align="center">
+  <img src="docs/screenshots/forecasting.png" width="85%" alt="MarketLens financial forecasting">
+</p>
+
+### Other Features
+
+- **Product Discovery** — Browse supported products and explore potential opportunities.
+- **Score Explanations** — Understand the product characteristics influencing an opportunity score.
+- **Launch Feasibility** — Evaluate estimated financial performance and launch considerations.
+- **Monthly and Yearly Forecasts** — Explore financial predictions for supported catalogue products.
+- **User Authentication** — Create an account and sign in with Firebase Authentication.
+
+## Technology
+
+| Component | Technologies |
+| --- | --- |
+| Frontend | React, JavaScript, Vite, Tailwind CSS |
+| UI | React Router, Recharts, Lucide React, Motion |
+| Authentication | Firebase Authentication |
+| Backend | Python, FastAPI |
+| Machine Learning | XGBoost, scikit-learn, Pandas, NumPy |
+| Model Serving | ONNX Runtime, Google Cloud Run |
+
+## Getting Started
+
+### Prerequisites
+
+- Git
+- Node.js and npm
+- Python for local backend development
+
+### Installation
+
+Clone the repository.
 
 ```bash
-docker compose up -d
-docker compose down
-docker compose ps
+git clone https://github.com/aisutd/marketlens.git
+cd marketlens
 ```
 
-This is a generic starter configuration. The team can add project-specific dependencies and startup commands later.
+Install the frontend dependencies.
 
-## Repository layout
+```bash
+cd frontend
+npm install
+```
 
-Each team keeps its code in its own top-level folder, self-contained: its own README,
-requirements and (if it deploys) its own Dockerfile.
+### Environment Configuration
 
-| Folder | What it is |
-|--------|------------|
-| [`product_success/`](product_success/README.md) | The product success model: training, the `predict.py` CLI, and the scoring API on Cloud Run |
-| [`sales_forecast/`](sales_forecast/README.md) | The sales forecast: units, revenue, profit, margin, ROI and break-even predictions, and their API |
-| [`frontend/`](frontend/README.md) | The web app (React + Vite) |
-| `data/` | Shared raw and cleaned CSVs, **gitignored**: every team reads from here, nobody commits it |
+Copy the example environment file.
 
-## Product success API
+```bash
+cp .env.example .env.local
+```
 
-The model scores an Amazon product idea from 0 to 100 (the Opportunity Score) and says which
-features push it up and down. It runs on Google Cloud Run:
+To enable account features, configure Firebase Authentication using the environment variables described in the [frontend documentation](frontend/README.md).
 
-- API: https://marketlens-api-643561615020.us-central1.run.app
-- Interactive docs: https://marketlens-api-643561615020.us-central1.run.app/docs
+The landing page and anonymous demo can run without Firebase configuration. Account features require a configured Firebase project.
 
-Setup, training, the CLI, running the API locally, tests, deployment and results are in
-[`product_success/README.md`](product_success/README.md).
+### Running the Frontend
+
+From the `frontend/` directory:
+
+```bash
+npm run dev
+```
+
+Open the local URL displayed in your terminal, typically `http://localhost:5173`.
+
+The frontend uses a Vite development proxy to communicate with the backend services. Backend-dependent functionality requires the corresponding services to be available.
+
+For additional configuration, see the [frontend development guide](frontend/README.md).
+
+## Backend Services
+
+MarketLens uses two separate FastAPI services for product evaluation and financial forecasting.
+
+### Product Success API
+
+The product success model evaluates product ideas using an XGBoost classifier and generates opportunity scores with explanations.
+
+The scoring API is deployed on Google Cloud Run.
+
+- [API Documentation](https://marketlens-api-643561615020.us-central1.run.app/docs)
+- [Product Success Developer Guide](product_success/README.md)
+
+Local development requires the appropriate Python dependencies, model artifacts, and authentication configuration for protected endpoints.
+
+### Sales Forecasting API
+
+The sales forecasting service provides launch, monthly, and yearly financial predictions for supported products.
+
+Predictions include estimated sales, revenue, profit, margins, ROI, and break-even performance.
+
+- [Sales Forecasting Developer Guide](sales_forecast/README.md)
+
+The service runs locally on port `8000` by default. Follow its developer guide to configure dependencies, restore model files, and start the API.
+
+**Data limitations:** Financial forecasting models were trained using simulated sales, cost, and historical data derived from an Amazon product dataset. Reported error ranges are based on held-out model evaluations and are not guaranteed confidence intervals. Real-world forecasting accuracy has not been established.
+
+## Project Structure
+
+```text
+marketlens/
+├── docs/
+│   └── screenshots/
+│       ├── landing.png
+│       ├── opportunity-score.png
+│       └── forecasting.png
+├── frontend/
+├── product_success/
+├── sales_forecast/
+├── docker-compose.yml
+└── README.md
+```
+
+| Directory | Description |
+| --- | --- |
+| [`frontend/`](frontend/README.md) | React web application, authentication, and user interface |
+| [`product_success/`](product_success/README.md) | Opportunity scoring model and FastAPI service |
+| [`sales_forecast/`](sales_forecast/README.md) | Financial forecasting models and FastAPI service |
+| `docs/screenshots/` | Screenshots used in this README |
+
+Each component maintains its own documentation, dependencies, and development instructions.
+
+## Development
+
+### Frontend
+
+From the `frontend/` directory:
+
+```bash
+npm run lint
+npm run build
+npm run check:categories
+npm run check:score-factors
+npm run test:price-history
+```
+
+### Product Success
+
+From the repository root, with the appropriate Python dependencies installed:
+
+```bash
+pytest product_success/api/tests
+```
+
+See the [Product Success README](product_success/README.md) for additional setup and testing instructions.
+
+### Sales Forecasting
+
+From the `sales_forecast/` directory:
+
+```bash
+python -m pytest -q
+```
+
+See the [Sales Forecasting README](sales_forecast/README.md) for model tests, API tests, and example predictions.
+
+### Docker
+
+The root `docker-compose.yml` currently defines a placeholder development container. It does not start the frontend or either backend API.
+
+Use the component-specific instructions to run the application locally.
 
 ## Contributing
 
-- Branch off `main`, using a name like `<type>/<what>` (for example `feature/frontend-score-page`).
-- Open a pull request into `main`. Don't push to `main` directly.
-- Never commit data or model files (`.csv`, `.joblib`, `.npy`, `.onnx`, `.parquet`, `data/`,
-  `product_success/models/`). The root `.gitignore` blocks them; ask before adding an exception.
-- Keep each team's code in its own folder.
+Contributions are welcome.
+
+1. Create a new branch from the latest `main`.
+2. Keep changes focused on the relevant project component.
+3. Run applicable lint checks, builds, and tests.
+4. Open a pull request targeting `main`.
+
+Do not commit credentials, local environment files, datasets, or trained model artifacts.
+
+Keep component-specific changes within their respective directories and consult the relevant README before modifying backend services.
