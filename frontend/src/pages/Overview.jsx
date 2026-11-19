@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
@@ -754,7 +754,8 @@ function ProductInformation({ product }) {
 // PRICE SCENARIOS
 // ========================================
 
-function PriceScenarioPreview({ product }) {
+function PriceScenarioPreview({ product, saveSuggestedPrice }) {
+  const navigate = useNavigate();
   const originalPrice = Number(product.price);
 
   const [selectedPrice, setSelectedPrice] =
@@ -923,15 +924,22 @@ function PriceScenarioPreview({ product }) {
 
           <Link
             to="/launch-feasibility"
-            state={{
-              suggestedPrice: validPrice
-                ? adjustedPrice
-                : originalPrice,
-            }}
             aria-disabled={!validPrice}
-            tabIndex={
-              validPrice ? undefined : -1
-            }
+            tabIndex={validPrice ? undefined : -1}
+            onClick={(event) => {
+              if (!validPrice) {
+                event.preventDefault();
+                return;
+              }
+
+              if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                return;
+              }
+
+              event.preventDefault();
+              const suggestedPriceId = saveSuggestedPrice(adjustedPrice);
+              navigate("/launch-feasibility", { state: { suggestedPriceId } });
+            }}
             className={
               `mt-9 w-fit ${primaryButton} ` +
               (!validPrice
@@ -1025,6 +1033,7 @@ function AboutScore({ prediction }) {
 export default function Overview({
   product,
   prediction,
+  saveSuggestedPrice,
 }) {
   const [
     showExplanations,
@@ -1298,6 +1307,7 @@ export default function Overview({
             <PriceScenarioPreview
               key={JSON.stringify(product)}
               product={product}
+              saveSuggestedPrice={saveSuggestedPrice}
             />
           )}
 

@@ -42,11 +42,14 @@ const STORAGE_KEY =
 
 const STORAGE_VERSION = 1;
 
+const MAX_SUGGESTED_PRICES = 20;
+
 const EMPTY_ANALYSIS = {
   product: null,
   prediction: null,
   scoredProduct: null,
   forecast: null,
+  suggestedPrices: {},
 };
 
 // ========================================
@@ -113,6 +116,9 @@ function loadStoredAnalysis(userId) {
       prediction: saved.prediction ?? null,
       scoredProduct: saved.scoredProduct ?? null,
       forecast: saved.forecast ?? null,
+      suggestedPrices: isObjectOrNull(saved.suggestedPrices)
+        ? saved.suggestedPrices ?? {}
+        : {},
     };
   } catch (error) {
     console.warn(
@@ -259,6 +265,7 @@ export default function App() {
     prediction,
     scoredProduct,
     forecast,
+    suggestedPrices,
   } = analysis;
 
   // ========================================
@@ -296,6 +303,7 @@ export default function App() {
         session,
         analysis: {
           ...previous.analysis,
+          ...(field === "scoredProduct" ? { suggestedPrices: {} } : {}),
           [field]:
             typeof value === "function"
               ? value(previous.analysis[field])
@@ -313,6 +321,21 @@ export default function App() {
 
   const setScoredProduct = (value) =>
     updateAnalysisField("scoredProduct", value);
+
+  function saveSuggestedPrice(price) {
+    // History keeps the ID, while the price follows the account-owned analysis.
+    const id = crypto.getRandomValues(new Uint32Array(4)).join("-");
+    // Keep only the most recent few, so repeated clicks on one product don't
+    // grow the saved analysis without bound. Older history entries then fall
+    // back to the product's own price.
+    updateAnalysisField("suggestedPrices", (previous) =>
+      Object.fromEntries([
+        ...Object.entries(previous).slice(-(MAX_SUGGESTED_PRICES - 1)),
+        [id, price],
+      ])
+    );
+    return id;
+  }
 
   const setForecast = (value) =>
     updateAnalysisField("forecast", value);
@@ -399,6 +422,7 @@ export default function App() {
                     product={scoredProduct}
                     prediction={prediction}
                     forecast={forecast}
+                    saveSuggestedPrice={saveSuggestedPrice}
                   />
                 </ProtectedRoute>
               }
@@ -474,6 +498,7 @@ export default function App() {
                     }
                     product={scoredProduct}
                     prediction={prediction}
+                    suggestedPrices={suggestedPrices}
                   />
                 </ProtectedRoute>
               }
