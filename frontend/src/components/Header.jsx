@@ -1,5 +1,6 @@
 
 import { useEffect, useRef, useState } from "react";
+
 import {
   Link,
   useLocation,
@@ -48,6 +49,12 @@ export default function Header() {
   const isDiscover =
     location.pathname === "/discover";
 
+  const isSavedProducts =
+    location.pathname === "/saved-products";
+
+  const isProfile =
+    location.pathname === "/profile";
+
   // ========================================
   // MENU ACTIONS
   // ========================================
@@ -60,10 +67,6 @@ export default function Header() {
   function toggleMenu() {
     setMenuOpen((previous) => !previous);
     setNotice("");
-  }
-
-  function handlePlaceholder(feature) {
-    setNotice(`${feature} is coming soon.`);
   }
 
   // ========================================
@@ -79,7 +82,6 @@ export default function Header() {
       navigate("/login", {
         replace: true,
       });
-
     } catch (error) {
       console.error("Logout failed:", error);
 
@@ -145,9 +147,7 @@ export default function Header() {
     <header className="sticky top-0 z-40 border-b border-ink bg-background">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
 
-        {/* ========================================
-            EXACT LANDING PAGE LOGO
-        ======================================== */}
+        {/* MARKETLENS LOGO */}
 
         <Link
           to="/"
@@ -164,9 +164,7 @@ export default function Header() {
           </span>
         </Link>
 
-        {/* ========================================
-            COLLAPSIBLE NAVIGATION
-        ======================================== */}
+        {/* NAVIGATION MENU */}
 
         <div
           ref={menuRef}
@@ -220,12 +218,7 @@ export default function Header() {
             />
           </button>
 
-          {/* ========================================
-              FLOATING DROPDOWN
-
-              Does not expand the header.
-              Does not shift the page content.
-          ======================================== */}
+          {/* DROPDOWN MENU */}
 
           {menuOpen && (
             <nav
@@ -247,9 +240,7 @@ export default function Header() {
                   to="/discover"
                   onClick={closeMenu}
                   aria-current={
-                    isDiscover
-                      ? "page"
-                      : undefined
+                    isDiscover ? "page" : undefined
                   }
                   className={
                     menuItemStyle +
@@ -266,9 +257,7 @@ export default function Header() {
                     aria-hidden="true"
                   />
 
-                  <span>
-                    Discover Products
-                  </span>
+                  <span>Discover Products</span>
 
                   {isDiscover && (
                     <span
@@ -280,14 +269,20 @@ export default function Header() {
 
                 {/* SAVED PRODUCTS */}
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    handlePlaceholder("Saved Products")
+                <Link
+                  to="/saved-products"
+                  onClick={closeMenu}
+                  aria-current={
+                    isSavedProducts
+                      ? "page"
+                      : undefined
                   }
                   className={
                     menuItemStyle +
-                    " text-muted-foreground hover:bg-secondary"
+                    " " +
+                    (isSavedProducts
+                      ? "bg-secondary font-semibold text-foreground"
+                      : "text-muted-foreground hover:bg-secondary")
                   }
                 >
                   <Bookmark
@@ -297,21 +292,30 @@ export default function Header() {
                     aria-hidden="true"
                   />
 
-                  <span>
-                    Saved Products
-                  </span>
-                </button>
+                  <span>Saved Products</span>
+
+                  {isSavedProducts && (
+                    <span
+                      className="ml-auto size-1.5 rounded-full bg-primary"
+                      aria-hidden="true"
+                    />
+                  )}
+                </Link>
 
                 {/* PROFILE */}
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    handlePlaceholder("Profile")
+                <Link
+                  to="/profile"
+                  onClick={closeMenu}
+                  aria-current={
+                    isProfile ? "page" : undefined
                   }
                   className={
                     menuItemStyle +
-                    " text-muted-foreground hover:bg-secondary"
+                    " " +
+                    (isProfile
+                      ? "bg-secondary font-semibold text-foreground"
+                      : "text-muted-foreground hover:bg-secondary")
                   }
                 >
                   <UserRound
@@ -321,15 +325,18 @@ export default function Header() {
                     aria-hidden="true"
                   />
 
-                  <span>
-                    Profile
-                  </span>
-                </button>
+                  <span>Profile</span>
+
+                  {isProfile && (
+                    <span
+                      className="ml-auto size-1.5 rounded-full bg-primary"
+                      aria-hidden="true"
+                    />
+                  )}
+                </Link>
               </div>
 
-              {/* ========================================
-                  LOG OUT
-              ======================================== */}
+              {/* LOG OUT */}
 
               <div className="mt-2 border-t border-border pt-2">
                 <button
@@ -347,20 +354,15 @@ export default function Header() {
                     aria-hidden="true"
                   />
 
-                  <span>
-                    Log Out
-                  </span>
+                  <span>Log Out</span>
                 </button>
               </div>
 
-              {/* ========================================
-                  PLACEHOLDER FEEDBACK
-              ======================================== */}
+              {/* LOGOUT ERROR FEEDBACK */}
 
               {notice && (
                 <div
-                  role="status"
-                  aria-live="polite"
+                  role="alert"
                   className={
                     "mt-3 border-l-2 border-primary " +
                     "bg-secondary px-4 py-3"
