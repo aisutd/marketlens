@@ -1,7 +1,12 @@
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, firebaseSetupMessage } from "./services/firebase";
+
+import {
+  auth,
+  firebaseSetupMessage,
+} from "./services/firebase";
 
 import {
   BrowserRouter,
@@ -18,6 +23,7 @@ import {
 
 import Header from "./components/Header";
 import ProtectedRoute from "./components/ProtectedRoute";
+import SaveProductButton from "./components/SaveProductButton";
 
 // ========================================
 // PAGES
@@ -32,6 +38,8 @@ import ScoreDetails from "./pages/ScoreDetails";
 import LaunchFeasibility from "./pages/LaunchFeasibility";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
+import SavedProducts from "./pages/SavedProducts";
+import Profile from "./pages/Profile";
 
 // ========================================
 // LOCAL STORAGE
@@ -41,7 +49,6 @@ const STORAGE_KEY =
   "marketlens:current-analysis:v1";
 
 const STORAGE_VERSION = 1;
-
 const MAX_SUGGESTED_PRICES = 20;
 
 const EMPTY_ANALYSIS = {
@@ -60,7 +67,7 @@ function loadStoredAnalysis(userId) {
   try {
     if (!userId) {
       localStorage.removeItem(STORAGE_KEY);
-      return EMPTY_ANALYSIS;
+      return { ...EMPTY_ANALYSIS };
     }
 
     const savedData = localStorage.getItem(
@@ -75,7 +82,7 @@ function loadStoredAnalysis(userId) {
 
     if (stored?.userId !== userId) {
       localStorage.removeItem(STORAGE_KEY);
-      return EMPTY_ANALYSIS;
+      return { ...EMPTY_ANALYSIS };
     }
 
     if (
@@ -116,7 +123,9 @@ function loadStoredAnalysis(userId) {
       prediction: saved.prediction ?? null,
       scoredProduct: saved.scoredProduct ?? null,
       forecast: saved.forecast ?? null,
-      suggestedPrices: isObjectOrNull(saved.suggestedPrices)
+      suggestedPrices: isObjectOrNull(
+        saved.suggestedPrices
+      )
         ? saved.suggestedPrices ?? {}
         : {},
     };
@@ -138,9 +147,9 @@ function saveStoredAnalysis(userId, analysis) {
   try {
     const hasResult = Boolean(
       analysis.product ||
-        analysis.prediction ||
-        analysis.scoredProduct ||
-        analysis.forecast
+      analysis.prediction ||
+      analysis.scoredProduct ||
+      analysis.forecast
     );
 
     if (!hasResult) {
@@ -193,8 +202,6 @@ function AppHeader({ userId }) {
 function Footer() {
   const location = useLocation();
 
-  // LandingPage renders its own footer.
-
   if (location.pathname === "/") {
     return null;
   }
@@ -202,7 +209,6 @@ function Footer() {
   return (
     <footer className="mt-auto border-t border-border bg-white/50 px-6 py-6">
       <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-center gap-2 text-center">
-
         <p className="text-sm font-medium text-muted-foreground">
           © {new Date().getFullYear()} MarketLens.
           All rights reserved.
@@ -211,7 +217,6 @@ function Footer() {
         <p className="text-xs text-muted-foreground">
           AI-Powered Product Intelligence
         </p>
-
       </div>
     </footer>
   );
@@ -255,6 +260,7 @@ function FirebaseSetupNotice() {
         <h1 className="mb-3 text-xl font-semibold">
           Firebase setup required
         </h1>
+
         <p>{firebaseSetupMessage}</p>
       </div>
 
@@ -269,18 +275,77 @@ function FirebaseSetupNotice() {
 }
 
 // ========================================
+// FORECAST SAVE BUTTON PLACEMENT
+// ========================================
+
+function ForecastSaveAction({ forecast }) {
+  const [target, setTarget] = useState(null);
+
+  useEffect(() => {
+    if (
+      !forecast ||
+      !["existing", "launch"].includes(
+        forecast.type
+      )
+    ) {
+      return;
+    }
+
+    // Schedule the DOM lookup after rendering.
+    // This avoids setting React state directly
+    // inside the effect body.
+
+    const frameId = requestAnimationFrame(() => {
+      const productSection =
+        document.querySelector(
+          "main header .border-l-2"
+        );
+
+      setTarget(productSection);
+    });
+
+    return () => {
+      cancelAnimationFrame(frameId);
+    };
+  }, [forecast]);
+
+  if (!target || !forecast) {
+    return null;
+  }
+
+  return createPortal(
+    <div className="mt-4">
+      <SaveProductButton
+        key={JSON.stringify(forecast)}
+        forecast={forecast}
+      />
+    </div>,
+    target
+  );
+}
+
+// ========================================
 // MAIN APPLICATION
 // ========================================
 
 export default function App() {
   const activeSession = useRef(null);
 
-  const [{ session, analysis }, setAnalysisState] = useState({
+  const [
+    { session, analysis },
+    setAnalysisState,
+  ] = useState({
     session: null,
     analysis: EMPTY_ANALYSIS,
   });
 
-  const userId = auth ? session?.userId : null;
+  const userId = auth
+    ? session?.userId
+    : null;
+
+  // ========================================
+  // FIREBASE AUTHENTICATION
+  // ========================================
 
   useEffect(() => {
     if (!auth) return;
@@ -294,7 +359,9 @@ export default function App() {
 
       setAnalysisState({
         session: nextSession,
-        analysis: loadStoredAnalysis(nextSession.userId),
+        analysis: loadStoredAnalysis(
+          nextSession.userId
+        ),
       });
     }
 
@@ -306,10 +373,15 @@ export default function App() {
           "Authentication check failed:",
           error
         );
+
         updateSession(null);
       }
     );
   }, []);
+
+  // ========================================
+  // CURRENT ANALYSIS DATA
+  // ========================================
 
   const {
     prediction,
@@ -328,7 +400,10 @@ export default function App() {
       session === activeSession.current &&
       auth.currentUser?.uid === userId
     ) {
-      saveStoredAnalysis(userId, analysis);
+      saveStoredAnalysis(
+        userId,
+        analysis
+      );
     }
   }, [analysis, session, userId]);
 
@@ -337,8 +412,9 @@ export default function App() {
   // ========================================
 
   function updateAnalysisField(field, value) {
-    // A request started in a previous session may
-    // finish after sign-out.
+    // Prevent requests from a previous session
+    // from modifying the active user's analysis.
+
     if (
       !userId ||
       session !== activeSession.current ||
@@ -348,7 +424,9 @@ export default function App() {
     }
 
     setAnalysisState((previous) => {
-      if (previous.session !== session) {
+      if (
+        previous.session !== session
+      ) {
         return previous;
       }
 
@@ -356,43 +434,68 @@ export default function App() {
         session,
         analysis: {
           ...previous.analysis,
+
           ...(field === "scoredProduct"
             ? { suggestedPrices: {} }
             : {}),
+
           [field]:
             typeof value === "function"
-              ? value(previous.analysis[field])
+              ? value(
+                  previous.analysis[field]
+                )
               : value,
         },
       };
     });
   }
 
+  // ========================================
+  // PRODUCT SETTERS
+  // ========================================
+
   const setProduct = (value) =>
-    updateAnalysisField("product", value);
+    updateAnalysisField(
+      "product",
+      value
+    );
 
   const setPrediction = (value) =>
-    updateAnalysisField("prediction", value);
+    updateAnalysisField(
+      "prediction",
+      value
+    );
 
   const setScoredProduct = (value) =>
-    updateAnalysisField("scoredProduct", value);
+    updateAnalysisField(
+      "scoredProduct",
+      value
+    );
+
+  const setForecast = (value) =>
+    updateAnalysisField(
+      "forecast",
+      value
+    );
+
+  // ========================================
+  // SAVE SUGGESTED PRICE
+  // ========================================
 
   function saveSuggestedPrice(price) {
-    // History keeps the ID, while the price follows
-    // the account-owned analysis.
     const id = crypto
-      .getRandomValues(new Uint32Array(4))
+      .getRandomValues(
+        new Uint32Array(4)
+      )
       .join("-");
 
-    // Keep only the most recent few, so repeated clicks
-    // on one product don't grow the saved analysis
-    // without bound. Older history entries then fall
-    // back to the product's own price.
     updateAnalysisField(
       "suggestedPrices",
       (previous) =>
         Object.fromEntries([
-          ...Object.entries(previous).slice(
+          ...Object.entries(
+            previous ?? {}
+          ).slice(
             -(MAX_SUGGESTED_PRICES - 1)
           ),
           [id, price],
@@ -402,8 +505,55 @@ export default function App() {
     return id;
   }
 
-  const setForecast = (value) =>
-    updateAnalysisField("forecast", value);
+  // ========================================
+  // OPEN SAVED PRODUCT ANALYSIS
+  // ========================================
+
+  function openSavedAnalysis(savedAnalysis) {
+    if (
+      !userId ||
+      session !== activeSession.current ||
+      auth.currentUser?.uid !== userId
+    ) {
+      return;
+    }
+
+    if (
+      !savedAnalysis ||
+      typeof savedAnalysis !== "object" ||
+      Array.isArray(savedAnalysis)
+    ) {
+      return;
+    }
+
+    setAnalysisState((previous) => {
+      if (
+        previous.session !== session
+      ) {
+        return previous;
+      }
+
+      return {
+        session,
+        analysis: {
+          product:
+            savedAnalysis.product ?? null,
+
+          prediction:
+            savedAnalysis.prediction ?? null,
+
+          scoredProduct:
+            savedAnalysis.scoredProduct ?? null,
+
+          forecast:
+            savedAnalysis.forecast ?? null,
+
+          suggestedPrices:
+            savedAnalysis.suggestedPrices ?? {},
+        },
+      };
+    });
+  }
 
   // ========================================
   // OVERVIEW ROUTING
@@ -424,24 +574,26 @@ export default function App() {
       <AppLayout>
 
         {/* CONDITIONAL NAVIGATION */}
+
         <AppHeader userId={userId} />
 
         {/* PAGE CONTENT */}
+
         <div className="w-full flex-1">
           <Routes>
 
-            {/* ========================================
-                LANDING PAGE
-            ======================================== */}
+            {/* LANDING PAGE */}
 
             <Route
               path="/"
-              element={<LandingPage userId={userId} />}
+              element={
+                <LandingPage
+                  userId={userId}
+                />
+              }
             />
 
-            {/* ========================================
-                USER SIGN UP
-            ======================================== */}
+            {/* USER SIGN UP */}
 
             <Route
               path="/signup"
@@ -454,9 +606,7 @@ export default function App() {
               }
             />
 
-            {/* ========================================
-                USER LOGIN
-            ======================================== */}
+            {/* USER LOGIN */}
 
             <Route
               path="/login"
@@ -469,88 +619,142 @@ export default function App() {
               }
             />
 
-            {/* ========================================
-                DISCOVER PRODUCTS
-            ======================================== */}
+            {/* DISCOVER PRODUCTS */}
 
             <Route
               path="/discover"
               element={
-                <ProtectedRoute userId={userId}>
+                <ProtectedRoute
+                  userId={userId}
+                >
                   <Discover
                     setProduct={setProduct}
                     setPrediction={setPrediction}
-                    setScoredProduct={setScoredProduct}
+                    setScoredProduct={
+                      setScoredProduct
+                    }
                     setForecast={setForecast}
                   />
                 </ProtectedRoute>
               }
             />
 
-            {/* ========================================
-                PRODUCT OPPORTUNITY ANALYSIS
-            ======================================== */}
+            {/* SAVED PRODUCTS */}
 
             <Route
-              path="/product-overview"
+              path="/saved-products"
               element={
-                <ProtectedRoute userId={userId}>
-                  <Overview
-                    product={scoredProduct}
-                    prediction={prediction}
-                    forecast={forecast}
-                    saveSuggestedPrice={saveSuggestedPrice}
+                <ProtectedRoute
+                  userId={userId}
+                >
+                  <SavedProducts
+                    key={userId}
+                    onOpenAnalysis={
+                      openSavedAnalysis
+                    }
                   />
                 </ProtectedRoute>
               }
             />
 
-            {/* ========================================
-                SALES FORECASTING
-                NEW PRODUCT + EXISTING PRODUCT
-            ======================================== */}
+            {/* PROFILE MANAGEMENT */}
 
             <Route
-              path="/sales-forecast-overview"
+              path="/profile"
               element={
-                <ProtectedRoute userId={userId}>
-                  {forecast?.type === "launch" ? (
-                    <LaunchForecastOverview
-                      forecast={forecast}
-                    />
-                  ) : (
-                    <SalesForecastOverview
-                      forecast={forecast}
-                    />
-                  )}
+                <ProtectedRoute
+                  userId={userId}
+                >
+                  <Profile key={userId} />
                 </ProtectedRoute>
               }
             />
 
-            {/* ========================================
-                LEGACY OVERVIEW REDIRECT
-            ======================================== */}
+            {/* PRODUCT OPPORTUNITY ANALYSIS */}
+
+            <Route
+              path="/product-overview"
+              element={
+                <ProtectedRoute
+                  userId={userId}
+                >
+                  <Overview
+                    product={scoredProduct}
+                    prediction={prediction}
+                    forecast={forecast}
+                    saveSuggestedPrice={
+                      saveSuggestedPrice
+                    }
+                  />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* SALES AND LAUNCH FORECASTING */}
+
+            <Route
+              path="/sales-forecast-overview"
+              element={
+                <ProtectedRoute
+                  userId={userId}
+                >
+                  <>
+                    {forecast?.type ===
+                    "launch" ? (
+                      <LaunchForecastOverview
+                        forecast={forecast}
+                      />
+                    ) : (
+                      <SalesForecastOverview
+                        forecast={forecast}
+                      />
+                    )}
+
+                    {forecast &&
+                      [
+                        "existing",
+                        "launch",
+                      ].includes(
+                        forecast.type
+                      ) && (
+                        <ForecastSaveAction
+                          key={JSON.stringify(
+                            forecast
+                          )}
+                          forecast={forecast}
+                        />
+                      )}
+                  </>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* LEGACY OVERVIEW REDIRECT */}
 
             <Route
               path="/overview"
               element={
-                <ProtectedRoute userId={userId}>
+                <ProtectedRoute
+                  userId={userId}
+                >
                   <Navigate
-                    to={overviewDestination}
+                    to={
+                      overviewDestination
+                    }
                     replace
                   />
                 </ProtectedRoute>
               }
             />
 
-            {/* ========================================
-                SCORE EXPLANATIONS
-            ======================================== */}
+            {/* SCORE EXPLANATIONS */}
 
             <Route
               path="/score-details"
               element={
-                <ProtectedRoute userId={userId}>
+                <ProtectedRoute
+                  userId={userId}
+                >
                   <ScoreDetails
                     product={scoredProduct}
                     prediction={prediction}
@@ -559,31 +763,37 @@ export default function App() {
               }
             />
 
-            {/* ========================================
-                WHAT-IF PRICE SIMULATOR
-            ======================================== */}
+            {/* WHAT-IF PRICE SIMULATOR */}
 
             <Route
               path="/launch-feasibility"
               element={
-                <ProtectedRoute userId={userId}>
+                <ProtectedRoute
+                  userId={userId}
+                >
                   <LaunchFeasibility
                     key={
                       scoredProduct
-                        ? JSON.stringify(scoredProduct)
+                        ? JSON.stringify(
+                            scoredProduct
+                          )
                         : "no-product"
                     }
-                    product={scoredProduct}
-                    prediction={prediction}
-                    suggestedPrices={suggestedPrices}
+                    product={
+                      scoredProduct
+                    }
+                    prediction={
+                      prediction
+                    }
+                    suggestedPrices={
+                      suggestedPrices
+                    }
                   />
                 </ProtectedRoute>
               }
             />
 
-            {/* ========================================
-                FALLBACK ROUTE
-            ======================================== */}
+            {/* FALLBACK ROUTE */}
 
             <Route
               path="*"
@@ -599,6 +809,7 @@ export default function App() {
         </div>
 
         {/* GLOBAL COPYRIGHT FOOTER */}
+
         <Footer />
 
       </AppLayout>

@@ -16,6 +16,7 @@ import { getPredictionReasons } from "../services/marketlensApi";
 import { getScoreBand } from "../constants/scoreBands";
 import InfoDialog from "../components/InfoDialog";
 import OpportunityGauge from "../components/OpportunityGauge";
+import SaveProductButton from "../components/SaveProductButton";
 import {
   factorInfo,
   isCategoryWide,
@@ -1226,6 +1227,12 @@ export default function Overview({
               {product.title}
             </h2>
           </div>
+
+          <SaveProductButton
+            key={JSON.stringify(product)}
+            product={product}
+            prediction={prediction}
+          />
         </header>
 
         {/* OPPORTUNITY SCORE */}
