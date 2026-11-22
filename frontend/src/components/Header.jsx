@@ -15,6 +15,7 @@ import {
   ChevronDown,
   LogOut,
   Menu,
+  RotateCcw,
   ScanSearch,
   Search,
   UserRound,
@@ -36,7 +37,10 @@ const menuItemStyle =
 // HEADER
 // ========================================
 
-export default function Header() {
+export default function Header({
+  hasAnalysis = false,
+  onNewAnalysis,
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [notice, setNotice] = useState("");
 
@@ -67,6 +71,16 @@ export default function Header() {
   function toggleMenu() {
     setMenuOpen((previous) => !previous);
     setNotice("");
+  }
+
+  // ========================================
+  // START A NEW ANALYSIS
+  // ========================================
+
+  function handleNewAnalysis() {
+    onNewAnalysis?.();
+    closeMenu();
+    navigate("/discover");
   }
 
   // ========================================
@@ -184,7 +198,6 @@ export default function Header() {
                 ? "Close navigation menu"
                 : "Open navigation menu"
             }
-            aria-haspopup="true"
             className={
               "inline-flex items-center gap-2 " +
               "rounded-md border border-ink bg-ink " +
@@ -233,6 +246,28 @@ export default function Header() {
               }
             >
               <div className="space-y-1">
+
+                {/* CLEAR THE CURRENT ANALYSIS */}
+
+                {hasAnalysis && onNewAnalysis && (
+                  <button
+                    type="button"
+                    onClick={handleNewAnalysis}
+                    className={
+                      menuItemStyle +
+                      " text-muted-foreground hover:bg-secondary"
+                    }
+                  >
+                    <RotateCcw
+                      size={18}
+                      strokeWidth={1.8}
+                      className="shrink-0"
+                      aria-hidden="true"
+                    />
+
+                    <span>New analysis</span>
+                  </button>
+                )}
 
                 {/* DISCOVER PRODUCTS */}
 
