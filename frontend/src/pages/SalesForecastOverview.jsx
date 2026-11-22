@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 
 import InfoDialog from "../components/InfoDialog";
+import { formatPercent } from "../services/formatPercent";
 
 // ========================================
 // COLORS AND STYLES
@@ -113,7 +114,7 @@ function formatMetric(metric) {
   }
 
   if (metric.unit === "%") {
-    return `${value.toFixed(2)}%`;
+    return formatPercent(value, 2);
   }
 
   return formatNumber(value);
@@ -211,18 +212,15 @@ function RangeText({ metric }) {
 
   if (!range) return null;
 
+  const low = formatMetric({ value: range[0], unit: metric.unit });
+  const high = formatMetric({ value: range[1], unit: metric.unit });
+
+  // Both ends print the same (e.g. "under 0.1%"): the range adds nothing.
+  if (low === high) return null;
+
   return (
     <p className="mt-3 text-xs leading-6 text-muted-foreground">
-      Estimated range:{" "}
-      {formatMetric({
-        value: range[0],
-        unit: metric.unit,
-      })}
-      {" – "}
-      {formatMetric({
-        value: range[1],
-        unit: metric.unit,
-      })}
+      Estimated range: {low} – {high}
     </p>
   );
 }
@@ -635,14 +633,14 @@ function ProfitabilitySection({
     predictions?.profit_margin_pct
   );
 
-  const cumulativeROI = metricValue(
-    predictions?.roi_cum_pct
-  );
-
   const periodROI =
     timeframe === "yearly"
       ? predictions?.roi_year_pct
       : predictions?.roi_unit_pct;
+
+  // roi_cum_pct is not shown: it adds this year's ROI to the history's own
+  // cumulative figure, which reached 4,309% next to a 15% yearly ROI (#41).
+  // Bring it back once the history column is confirmed or fixed.
 
   return (
     <section className="mt-14">
@@ -653,7 +651,7 @@ function ProfitabilitySection({
         description="Explore how much money might remain after costs and how the estimated return compares with the investment."
       />
 
-      <div className="mt-7 grid gap-5 md:grid-cols-3">
+      <div className="mt-7 grid gap-5 md:grid-cols-2">
         <MetricCard
           label="Profit margin"
           metric={predictions?.profit_margin_pct}
@@ -670,12 +668,6 @@ function ProfitabilitySection({
               : "Estimated return associated with each unit."
           }
         />
-
-        <MetricCard
-          label="Cumulative return"
-          metric={predictions?.roi_cum_pct}
-          description="Estimated return accumulated through the selected period."
-        />
       </div>
 
       <div className="mt-6 border border-ink bg-card p-6">
@@ -691,14 +683,6 @@ function ProfitabilitySection({
               : margin < 0
                 ? "The forecast shows a negative profit margin. Review the costs and pricing assumptions before making an investment decision."
                 : "The forecast shows little or no profit remaining from sales. Consider whether the planned price and costs are sustainable."}
-        </p>
-
-        <p className="mt-3 text-sm leading-7 text-muted-foreground">
-          {cumulativeROI === null
-            ? "An overall investment return estimate isn't available."
-            : cumulativeROI < 0
-              ? "The estimated cumulative return is negative. Investigate the investment and operating costs before committing additional resources."
-              : "A nonnegative cumulative return doesn't establish that the investment is worthwhile. Compare the potential return with the money at risk and other opportunities."}
         </p>
       </div>
     </section>
@@ -955,10 +939,6 @@ function SupportingDetails({
   const periodReturnValue =
     metricValue(periodReturn);
 
-  const cumulativeReturn = metricValue(
-    predictions?.roi_cum_pct
-  );
-
   const metrics = {
     pricing: [
       {
@@ -1027,20 +1007,7 @@ function SupportingDetails({
 
         highlighted: true,
       },
-
-      {
-        label: "Cumulative return on investment",
-        metric: predictions?.roi_cum_pct,
-
-        explanation:
-          "This estimates the overall return accumulated through the selected period. It is different from the return for one month, one year, or one unit.",
-
-        guidance:
-          cumulativeReturn !== null &&
-          cumulativeReturn < 0
-            ? "The estimated cumulative return is negative. Review the investment assumptions and consider what would need to change before investing further."
-            : "Compare the estimated overall return with your investment goals and financial risk. A positive estimate alone is not enough to establish that the opportunity is worthwhile.",
-      },
+      // Cumulative return left out until roi_cum_pct is confirmed (#41).
     ],
   };
 

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 
 import InfoDialog from "../components/InfoDialog";
+import { formatPercent } from "../services/formatPercent";
 
 // ========================================
 // DESIGN SYSTEM
@@ -59,6 +60,14 @@ const moneyFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
+// Prices to the cent ($24.99 stays $24.99); totals above stay whole dollars.
+const priceFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 const numberFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
@@ -93,6 +102,14 @@ function formatMoney(value) {
     : moneyFormatter.format(amount);
 }
 
+function formatPrice(value) {
+  const amount = numeric(value);
+
+  return amount === null
+    ? "—"
+    : priceFormatter.format(amount);
+}
+
 function formatNumber(value) {
   const amount = numeric(value);
 
@@ -109,7 +126,7 @@ function formatMetric(metric, fallbackUnit) {
   const unit = metric?.unit || fallbackUnit;
 
   if (unit === "USD") return formatMoney(value);
-  if (unit === "%") return `${value.toFixed(1)}%`;
+  if (unit === "%") return formatPercent(value, 1);
 
   if (unit === "months") {
     return `${formatNumber(value)} months`;
@@ -151,18 +168,15 @@ function RangeText({ metric }) {
 
   if (!range) return null;
 
+  const low = formatMetric({ value: range[0], unit: metric.unit });
+  const high = formatMetric({ value: range[1], unit: metric.unit });
+
+  // Both ends print the same (e.g. "under 0.1%"): the range adds nothing.
+  if (low === high) return null;
+
   return (
     <p className="mt-3 text-xs leading-6 text-muted-foreground">
-      Estimated range:{" "}
-      {formatMetric({
-        value: range[0],
-        unit: metric.unit,
-      })}
-      {" – "}
-      {formatMetric({
-        value: range[1],
-        unit: metric.unit,
-      })}
+      Estimated range: {low} – {high}
     </p>
   );
 }
@@ -554,7 +568,7 @@ function InvestmentOutlook({ predictions }) {
           <p className="mt-6 font-display text-4xl">
             {riskValue === null
               ? "—"
-              : `${riskValue.toFixed(1)}%`}
+              : formatPercent(riskValue, 1)}
           </p>
 
           {riskLevel && (
@@ -660,13 +674,12 @@ function AdditionalDetails({
     },
     {
       label: "Planned selling price",
-      value: formatMoney(product?.price),
+      value: formatPrice(product?.price),
     },
     {
       label: "Average first-year selling price",
-      value: formatMetric(
-        predictions?.avg_price_12m,
-        "USD"
+      value: formatPrice(
+        metricValue(predictions?.avg_price_12m)
       ),
     },
   ];
@@ -1001,7 +1014,7 @@ export default function LaunchForecastOverview({
               {numeric(product.price) !== null && (
                 <span className="border border-ink bg-card px-3 py-2 text-xs">
                   Planned price:{" "}
-                  {formatMoney(product.price)}
+                  {formatPrice(product.price)}
                 </span>
               )}
             </div>
