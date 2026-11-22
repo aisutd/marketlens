@@ -143,3 +143,64 @@ def test_demo_routes_validate_like_protected_routes(real_auth):
 @in_process
 def test_rescore_has_no_demo_route(real_auth):
     assert real_auth.post("/demo/rescore", json={"product": DEMO, "changes": {"price": 30}}).status_code == 404
+
+
+# ---- clock skew: a token minted on a clock slightly ahead of the server's ----
+
+@pytest.fixture
+def sign_token(real_auth, monkeypatch):
+    """Sign real RS256 ID tokens with a throwaway key, served as Google's public certificate.
+
+    The SDK's own checks (signature, audience, issuer, iat/exp) all run; only the certificate download is replaced."""
+    import datetime
+    import time
+
+    import google.oauth2.id_token
+    from cryptography import x509
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    from cryptography.x509.oid import NameOID
+    from google.auth import crypt, jwt
+
+    from api.firebase_auth import PROJECT_ID
+
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "test")])
+    now = datetime.datetime.now(datetime.timezone.utc)
+    cert = (x509.CertificateBuilder().subject_name(name).issuer_name(name).public_key(key.public_key())
+            .serial_number(1).not_valid_before(now - datetime.timedelta(days=1))
+            .not_valid_after(now + datetime.timedelta(days=1)).sign(key, hashes.SHA256()))
+    cert_pem = cert.public_bytes(serialization.Encoding.PEM)
+    key_pem = key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
+                                serialization.NoEncryption())
+    monkeypatch.setattr(google.oauth2.id_token, "_fetch_certs", lambda request, url: {"test-kid": cert_pem})
+    signer = crypt.RSASigner.from_string(key_pem, key_id="test-kid")
+
+    def sign(issued_ahead_seconds):
+        iat = int(time.time()) + issued_ahead_seconds
+        claims = {"iss": f"https://securetoken.google.com/{PROJECT_ID}", "aud": PROJECT_ID,
+                  "sub": "skewed-user", "iat": iat, "auth_time": iat, "exp": iat + 3600}
+        return jwt.encode(signer, claims).decode()
+    return sign
+
+
+@in_process
+def test_token_signed_now_is_accepted(real_auth, sign_token):
+    r = real_auth.post("/predict", json=DEMO, headers={"Authorization": f"Bearer {sign_token(0)}"})
+    assert r.status_code == 200, r.text
+
+
+@in_process
+def test_token_issued_slightly_ahead_is_accepted(real_auth, sign_token):
+    # a server clock a few seconds behind Google's must not reject a token minted just now
+    r = real_auth.post("/predict", json=DEMO, headers={"Authorization": f"Bearer {sign_token(5)}"})
+    assert r.status_code == 200, r.text
+
+
+@in_process
+def test_token_issued_beyond_the_allowance_is_rejected(real_auth, sign_token):
+    from api.firebase_auth import CLOCK_SKEW_SECONDS
+    ahead = CLOCK_SKEW_SECONDS + 20
+    r = real_auth.post("/predict", json=DEMO, headers={"Authorization": f"Bearer {sign_token(ahead)}"})
+    assert r.status_code == 401, r.text
+    assert r.json() == {"detail": "Invalid or expired authentication token"}

@@ -22,6 +22,12 @@ PROJECT_ID = os.environ.get(
     "marketlens-backend"
 )
 
+# A token's "iat" comes from Google's clock and is checked against this server's. Without an
+# allowance, a server clock even a second behind rejects a freshly minted token as "used too
+# early", so the first request after sign-in fails with 401. 10 s is the usual allowance; the
+# SDK accepts up to 60.
+CLOCK_SKEW_SECONDS = 10
+
 # ========================================
 # FIREBASE INITIALIZATION
 # ========================================
@@ -80,7 +86,8 @@ def verify_firebase_token(
         decoded_token = auth.verify_id_token(
             credentials.credentials,
             app=firebase_app,
-            check_revoked=False
+            check_revoked=False,
+            clock_skew_seconds=CLOCK_SKEW_SECONDS,
         )
 
         return decoded_token
