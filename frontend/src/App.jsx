@@ -24,6 +24,7 @@ import {
 import Header from "./components/Header";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SaveProductButton from "./components/SaveProductButton";
+import { returnPathFrom } from "./services/returnPath";
 
 // ========================================
 // PAGES
@@ -193,6 +194,28 @@ function AppHeader({ userId }) {
       <Header />
     </ProtectedRoute>
   );
+}
+
+// ========================================
+// SIGN-IN PAGES: ONLY WHILE SIGNED OUT
+// ========================================
+
+// A signed-in user who opens /login or /signup goes on to the page they were
+// sent from, or Discover. While the session check is still running (userId is
+// undefined) the form shows as before.
+function SignedOutOnly({ userId, children }) {
+  const location = useLocation();
+
+  if (userId) {
+    return (
+      <Navigate
+        to={returnPathFrom(location.state)}
+        replace
+      />
+    );
+  }
+
+  return children;
 }
 
 // ========================================
@@ -599,7 +622,9 @@ export default function App() {
               path="/signup"
               element={
                 auth ? (
-                  <SignUp />
+                  <SignedOutOnly userId={userId}>
+                    <SignUp />
+                  </SignedOutOnly>
                 ) : (
                   <FirebaseSetupNotice />
                 )
@@ -612,7 +637,9 @@ export default function App() {
               path="/login"
               element={
                 auth ? (
-                  <Login />
+                  <SignedOutOnly userId={userId}>
+                    <Login />
+                  </SignedOutOnly>
                 ) : (
                   <FirebaseSetupNotice />
                 )
