@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 
 import {
@@ -8,6 +8,7 @@ import {
   firebaseSetupMessage,
   isFirebaseSetupError,
 } from "../services/firebase";
+import { returnPathFrom } from "../services/returnPath";
 
 // ========================================
 // LOGIN PAGE
@@ -15,6 +16,7 @@ import {
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // ========================================
   // FORM STATE
@@ -42,8 +44,8 @@ export default function Login() {
         password
       );
 
-      // Redirect after successful login.
-      navigate("/discover", { replace: true });
+      // Return to the page that sent the user here, or Discover.
+      navigate(returnPathFrom(location.state), { replace: true });
 
     } catch (error) {
       console.error("Login failed:", error.code);
@@ -171,6 +173,7 @@ export default function Login() {
           Don't have an account?{" "}
           <Link
             to="/signup"
+            state={location.state}
             className="font-semibold text-primary underline-offset-4 hover:underline"
           >
             Create an account

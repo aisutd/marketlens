@@ -1,16 +1,18 @@
 
 import { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import {
   auth,
   firebaseSetupMessage,
   isFirebaseSetupError,
 } from "../services/firebase";
+import { returnPathFrom } from "../services/returnPath";
 
 export default function SignUp() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,7 +47,7 @@ export default function SignUp() {
         password
       );
 
-      navigate("/discover", { replace: true });
+      navigate(returnPathFrom(location.state), { replace: true });
     } catch (err) {
       if (isFirebaseSetupError(err.code)) {
         setError(firebaseSetupMessage);
@@ -180,6 +182,7 @@ export default function SignUp() {
           Already have an account?{" "}
           <Link
             to="/login"
+            state={location.state}
             className="font-semibold text-primary underline-offset-4 hover:underline"
           >
             Log In
