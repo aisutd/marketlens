@@ -176,10 +176,85 @@ function saveStoredAnalysis(userId, analysis) {
 }
 
 // ========================================
+// PAGE TITLES AND SCROLL RESET
+// ========================================
+
+const PAGE_TITLES = {
+  "/signup": "Sign up",
+  "/login": "Log in",
+  "/discover": "Discover",
+  "/saved-products": "Saved products",
+  "/profile": "Profile",
+  "/product-overview": "Product overview",
+  "/sales-forecast-overview": "Sales forecast",
+  "/score-details": "Score details",
+  "/launch-feasibility": "Launch feasibility",
+};
+
+function RouteEffects() {
+  const { pathname, hash } = useLocation();
+
+  useEffect(() => {
+    const page = PAGE_TITLES[pathname];
+
+    document.title = page
+      ? `${page} · MarketLens`
+      : "MarketLens";
+  }, [pathname]);
+
+  useEffect(() => {
+    // In-page anchors such as /#try scroll
+    // themselves; every other navigation
+    // starts at the top of the new page.
+    // "instant" overrides the stylesheet's
+    // smooth scrolling, which would otherwise
+    // animate up through the new page.
+    if (!hash) {
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "instant",
+      });
+    }
+  }, [pathname, hash]);
+
+  return null;
+}
+
+// ========================================
+// SKIP LINK
+// ========================================
+
+function SkipLink() {
+  return (
+    <a
+      href="#main-content"
+      className={
+        "sr-only focus:not-sr-only " +
+        "focus:fixed focus:left-4 focus:top-4 " +
+        "focus:z-[60] focus:rounded-md " +
+        "focus:border focus:border-ink " +
+        "focus:bg-card focus:px-4 focus:py-3 " +
+        "focus:text-sm focus:font-medium " +
+        "focus:text-foreground " +
+        "focus:outline-2 focus:outline-offset-2 " +
+        "focus:outline-primary"
+      }
+    >
+      Skip to content
+    </a>
+  );
+}
+
+// ========================================
 // CONDITIONAL APPLICATION HEADER
 // ========================================
 
-function AppHeader({ userId }) {
+function AppHeader({
+  userId,
+  hasAnalysis,
+  onNewAnalysis,
+}) {
   const location = useLocation();
 
   const publicPages = ["/", "/signup", "/login"];
@@ -190,7 +265,10 @@ function AppHeader({ userId }) {
 
   return (
     <ProtectedRoute userId={userId}>
-      <Header />
+      <Header
+        hasAnalysis={hasAnalysis}
+        onNewAnalysis={onNewAnalysis}
+      />
     </ProtectedRoute>
   );
 }
@@ -556,6 +634,39 @@ export default function App() {
   }
 
   // ========================================
+  // START A NEW ANALYSIS
+  // ========================================
+
+  // Clearing every field lets the persist
+  // effect remove the stored analysis.
+
+  function clearAnalysis() {
+    if (
+      !userId ||
+      session !== activeSession.current ||
+      auth.currentUser?.uid !== userId
+    ) {
+      return;
+    }
+
+    setAnalysisState((previous) =>
+      previous.session !== session
+        ? previous
+        : {
+            session,
+            analysis: { ...EMPTY_ANALYSIS },
+          }
+    );
+  }
+
+  const hasAnalysis = Boolean(
+    analysis.product ||
+      prediction ||
+      scoredProduct ||
+      forecast
+  );
+
+  // ========================================
   // OVERVIEW ROUTING
   // ========================================
 
@@ -571,15 +682,27 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <RouteEffects />
+
       <AppLayout>
+
+        <SkipLink />
 
         {/* CONDITIONAL NAVIGATION */}
 
-        <AppHeader userId={userId} />
+        <AppHeader
+          userId={userId}
+          hasAnalysis={hasAnalysis}
+          onNewAnalysis={clearAnalysis}
+        />
 
         {/* PAGE CONTENT */}
 
-        <div className="w-full flex-1">
+        <div
+          id="main-content"
+          tabIndex={-1}
+          className="w-full flex-1 outline-none"
+        >
           <Routes>
 
             {/* LANDING PAGE */}
