@@ -12,7 +12,8 @@
     "check:score-factors": "node scripts/check-score-factors.mjs",
     "generate:review-categories": "node scripts/generate-review-categories.mjs",
     "test:price-history": "node --test tests/suggested-price-history.test.mjs",
-    "test:login-return": "node --test tests/login-return-path.test.mjs"
+    "test:login-return": "node --test tests/login-return-path.test.mjs",
+    "test:forecast-numbers": "node --test tests/forecast-numbers.test.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
