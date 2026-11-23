@@ -254,7 +254,7 @@ function SiteHeader({ userId }) {
             <a
               key={href}
               href={href}
-              className="transition-colors hover:text-foreground"
+              className="transition-colors hover:text-foreground focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
             >
               {label}
             </a>
@@ -277,7 +277,7 @@ function SiteHeader({ userId }) {
           aria-expanded={menuOpen}
           aria-controls="landing-mobile-menu"
           onClick={() => setMenuOpen(!menuOpen)}
-          className="border border-ink p-2 md:hidden"
+          className="flex size-11 items-center justify-center border border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary md:hidden"
         >
           {menuOpen ? <X size={19} /> : <Menu size={19} />}
         </button>
@@ -565,7 +565,7 @@ function HeroSection() {
               href="#try"
               className="inline-flex items-center justify-center gap-2 rounded-md border border-ink bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-offset transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-offset-sm"
             >
-              Score a quick Idea
+              Score a quick idea
               <ArrowRight size={18} />
             </a>
 
@@ -611,7 +611,7 @@ function TechnicalTicker() {
       aria-label="MarketLens product capabilities"
       className="overflow-hidden border-b border-ink bg-ink py-3 text-ink-foreground"
     >
-      <div className="flex w-max animate-marquee gap-10 whitespace-nowrap font-mono text-xs uppercase tracking-[0.18em]">
+      <div className="flex w-max animate-marquee gap-10 whitespace-nowrap font-mono text-xs uppercase tracking-[0.18em] motion-reduce:animate-none">
         {[...ticker, ...ticker].map((item, index) => (
           <span
             key={`${item}-${index}`}
@@ -970,16 +970,20 @@ function LandingFooter() {
 
 export default function LandingPage({ userId }) {
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <SiteHeader userId={userId} />
-      <HeroSection />
-      <TechnicalTicker />
-      <HowItWorks />
-      <TryItSection />
-      <CapabilitiesSection />
-      <ForecastSection />
-      <DecisionSection />
+
+      <main id="main-content">
+        <HeroSection />
+        <TechnicalTicker />
+        <HowItWorks />
+        <TryItSection />
+        <CapabilitiesSection />
+        <ForecastSection />
+        <DecisionSection />
+      </main>
+
       <LandingFooter />
-    </main>
+    </div>
   );
 }
