@@ -42,12 +42,15 @@ const COLORS = {
   red: "#B94747",
 };
 
-const DEFAULT_COSTS = {
-  units: "500",
-  manufacturing: "7.50",
-  shipping: "2.00",
-  amazonFees: "5.00",
-  advertising: "3.00",
+// Units and costs start empty: the page calculates nothing until the user
+// enters their own numbers, so it never shows a profit or loss they didn't
+// ask for (#40).
+const EMPTY_ASSUMPTIONS = {
+  units: "",
+  manufacturing: "",
+  shipping: "",
+  amazonFees: "",
+  advertising: "",
 };
 
 // How far either side of the scenario price the simulation reaches. The
@@ -336,10 +339,11 @@ function ScenarioControl({
       : Math.max(min, Math.min(max, parsed));
 
   const valid =
-    parsed !== null &&
+    value === "" ||
+    (parsed !== null &&
     parsed >= min &&
     parsed <= 100000 &&
-    (step !== 1 || Number.isSafeInteger(parsed));
+    (step !== 1 || Number.isSafeInteger(parsed)));
 
   const maximumLabel =
     step === 1
@@ -597,6 +601,7 @@ function LiveMetric({
 function LiveResults({
   financials,
   isValid,
+  needsInput,
   units,
   price,
 }) {
@@ -673,6 +678,14 @@ function LiveResults({
               </span>
             </div>
           </>
+        ) : needsInput ? (
+          <div
+            role="status"
+            className="mt-4 border-l-2 border-primary bg-[#F8EEE0] p-4 text-xs leading-6 text-foreground"
+          >
+            Enter your costs to see profit and
+            margin.
+          </div>
         ) : (
           <div
             role="status"
@@ -1374,7 +1387,7 @@ export default function LaunchFeasibility({
       startingPrice === null
         ? ""
         : String(startingPrice),
-    ...DEFAULT_COSTS,
+    ...EMPTY_ASSUMPTIONS,
   }));
 
   const [rescore, setRescore] = useState(null);
@@ -1421,7 +1434,7 @@ export default function LaunchFeasibility({
         originalPrice === null
           ? ""
           : String(originalPrice),
-      ...DEFAULT_COSTS,
+      ...EMPTY_ASSUMPTIONS,
     });
 
     resetResults();
@@ -1449,6 +1462,17 @@ export default function LaunchFeasibility({
     ) &&
     values.price > 0 &&
     Number.isSafeInteger(values.units);
+
+  // Units or a cost not entered yet: prompt for them instead of an error.
+  const needsInput = Object.keys(EMPTY_ASSUMPTIONS).some(
+    (key) => scenario[key] === ""
+  );
+
+  // The price simulation scores the price only, so it doesn't wait for costs.
+  const priceValid =
+    values.price !== null &&
+    values.price > 0 &&
+    values.price <= 100000;
 
   const financials = isValid
     ? calculateFinancials(values)
@@ -1507,7 +1531,7 @@ export default function LaunchFeasibility({
     if (
       !product ||
       !prediction ||
-      !isValid ||
+      !priceValid ||
       loading
     ) {
       return;
@@ -1768,7 +1792,26 @@ export default function LaunchFeasibility({
                 ))}
               </div>
 
-              {!isValid && (
+              {needsInput && (
+                <div
+                  role="status"
+                  className="mt-5 flex items-start gap-3 border-l-2 border-primary bg-[#F8EEE0] p-4"
+                >
+                  <CircleAlert
+                    size={18}
+                    className="mt-0.5 shrink-0 text-primary"
+                  />
+
+                  <p className="text-xs leading-6 text-foreground">
+                    Enter your monthly units and costs
+                    per unit to see profit and margin.
+                    Nothing is prefilled, so the results
+                    use only your own numbers.
+                  </p>
+                </div>
+              )}
+
+              {!isValid && !needsInput && (
                 <div
                   role="alert"
                   className="mt-5 flex items-start gap-3 border-l-2 border-red-600 bg-red-50 p-4"
@@ -1792,6 +1835,7 @@ export default function LaunchFeasibility({
             <LiveResults
               financials={financials}
               isValid={isValid}
+              needsInput={needsInput}
               units={values.units}
               price={values.price}
             />
@@ -1879,8 +1923,12 @@ export default function LaunchFeasibility({
                 />
 
                 <DetailRow
-                  label="Break-even quantity"
-                  value="Not calculated"
+                  label="Break-even price"
+                  value={
+                    isValid
+                      ? formatMoney(financials.unitCost)
+                      : "—"
+                  }
                 />
               </div>
             </div>
@@ -1894,8 +1942,9 @@ export default function LaunchFeasibility({
                 </h3>
 
                 <p className="mt-4 text-sm text-muted-foreground">
-                  Enter valid assumptions to
-                  view the cost breakdown.
+                  {needsInput
+                    ? "Enter your units and costs to view the cost breakdown."
+                    : "Enter valid assumptions to view the cost breakdown."}
                 </p>
               </div>
             )}
@@ -1929,7 +1978,7 @@ export default function LaunchFeasibility({
         <AIPriceSimulation
           product={product}
           prediction={prediction}
-          isValid={isValid}
+          isValid={priceValid}
           loading={loading}
           error={error}
           rescore={rescore}
