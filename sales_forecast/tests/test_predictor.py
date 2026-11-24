@@ -130,7 +130,28 @@ def test_launch_numbers_agree_across_periods(predictor):
     assert 1.75 <= p["revenue_24m"]["value"] / p["revenue_12m"]["value"] <= 2.45
     assert 0.85 * 651 <= p["avg_price_12m"]["value"] <= 651
     for h in ("12m", "24m"):
-        assert p[f"roi_pct_{h}"]["value"] == pytest.approx(p[f"profit_{h}"]["value"] / capital * 100, abs=0.05)
+        assert p[f"roi_pct_{h}"]["value"] == pytest.approx((p[f"profit_{h}"]["value"] - capital) / capital * 100, abs=0.05)
     assert (p["break_even_months"]["value"] <= 12) == (p["profit_12m"]["value"] >= capital)
     assert p["break_even_months"]["range"][0] <= p["break_even_months"]["value"] <= p["break_even_months"]["range"][1]
     assert p["demand_share_pct_12m"]["value"] > 0
+
+
+@pytest.mark.parametrize("category", ["Computers & Accessories", "Cell Phones & Accessories", "Home & Kitchen",
+                                      "Office Products", "Toys & Games", "Automotive"])
+def test_launch_roi_and_break_even_agree(predictor, category):
+    """ROI is profit after paying back the investment, so its sign, profit - capital and break-even all agree (#38)."""
+    for price in (5.99, 24.99, 79.99, 249.0, 999.0):
+        for reviews, months in ((0, 0), (1500, 12)):
+            r = predictor.predict_launch({"category": category, "price": price, "review_count": reviews, "months_on_market": months})
+            p, capital = r["predictions"], r["unit_economics"]["capital_invested"]
+            be = p["break_even_months"]["value"]
+            for h, months_in in (("12m", 12), ("24m", 24)):
+                roi, profit = p[f"roi_pct_{h}"]["value"], p[f"profit_{h}"]["value"]
+                if abs(profit - capital) > 0.01 * capital:          # skip knife-edge cases that round either way
+                    assert (roi > 0) == (profit > capital), (category, price, h)
+                    assert (be <= months_in) == (roi > 0), (category, price, h, be, roi)
+                lo, hi = p[f"roi_pct_{h}"]["range"]
+                assert lo <= roi <= hi
+                assert lo >= -100 or p[f"profit_{h}"]["range"][0] < 0   # below -100% only with an actual loss
+            if p["avg_price_12m"]["value"] < price * 0.995:
+                assert any("below the planned price" in n for n in r["notes"])

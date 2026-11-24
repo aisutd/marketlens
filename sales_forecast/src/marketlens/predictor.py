@@ -29,12 +29,12 @@ LAUNCH_METRICS = {
     "revenue_12m": ("Revenue, first 12 months", "USD", False),
     "profit_12m": ("Net profit, first 12 months", "USD", True),
     "margin_pct_12m": ("Profit margin, first 12 months", "%", True),
-    "roi_pct_12m": ("ROI, first 12 months", "%", True),
+    "roi_pct_12m": ("ROI after paying back the investment, first 12 months", "%", True),
     "units_sold_24m": ("Units sold, first 24 months", "units", False),
     "revenue_24m": ("Revenue, first 24 months", "USD", False),
     "profit_24m": ("Net profit, first 24 months", "USD", True),
     "margin_pct_24m": ("Profit margin, first 24 months", "%", True),
-    "roi_pct_24m": ("ROI, first 24 months", "%", True),
+    "roi_pct_24m": ("ROI after paying back the investment, first 24 months", "%", True),
     "break_even_months": ("Months to break even", "months", False),
 }
 MONTHLY_METRICS = {
@@ -181,6 +181,11 @@ class MarketLensPredictor:
             risk = max(risk, 0.8 if year2_profit <= 0 else 0.2)
         preds["never_breaks_even"] = {"label": "Chance it never pays back", "value": round(risk * 100, 1), "unit": "%",
                                       "risk_level": "low" if risk < 0.2 else "medium" if risk < 0.5 else "high"}
+        notes = ["Estimates are based on simulated U.S. market data; plus_minus is the model's typical error on unseen test data."]
+        avg_price = preds["avg_price_12m"]["value"]
+        if avg_price < product.price * 0.995:
+            notes.append(f"The average selling price (${avg_price:,.2f}) is below the planned price (${product.price:,.2f}) "
+                         "because it includes typical promotions and discounts during the first year.")
         return {
             "type": "launch",
             "input": product.__dict__,
@@ -189,7 +194,7 @@ class MarketLensPredictor:
                                "launch_fixed_cost": float(x.launch_fixed_cost), "capital_invested": round(capital, 2),
                                "pre_ad_unit_margin_pct": float(x.unit_margin_pct)},
             "predictions": preds,
-            "notes": ["Estimates are based on simulated U.S. market data; plus_minus is the model's typical error on unseen test data."],
+            "notes": notes,
         }
 
     def predict_next_month(self, product_id: str, promo_depth_pct: Optional[float] = None, everyday_price: Optional[float] = None) -> dict:
@@ -232,8 +237,13 @@ class MarketLensPredictor:
         demand and margins. Everything else follows from them:
           - average price stays close to the planned price; units = revenue / price; demand >= units
           - 24-month revenue is 1.75-2.45x the 12-month revenue (the range seen in the data), so year two isn't empty
-          - profit = revenue x margin; ROI = profit / capital invested, with the same capital for 12 and 24 months
-          - break-even is the month cumulative profit covers that capital, so it agrees with profit and ROI
+          - profit = revenue x margin
+          - ROI = (profit - capital invested) / capital invested, with the same capital for 12 and 24 months,
+            so ROI is positive exactly when that period's profit has paid the investment back
+          - break-even is the month cumulative profit covers that capital, so it is <= 12 (or 24) months
+            exactly when the 12 (or 24) month ROI is >= 0
+        ROI can fall below -100% only when the profit itself is negative (fees and advertising cost more than
+        the sales bring in), so the range is not clipped there: that loss is real in the model.
         Returns the capital invested (launch costs + opening inventory)."""
         lo, hi = config.LAUNCH_AVG_PRICE_VS_PLANNED
         avg_price = float(np.clip(preds["avg_price_12m"]["value"], lo * price, hi * price))
@@ -269,7 +279,8 @@ class MarketLensPredictor:
         capital = float(x.launch_fixed_cost) + config.LAUNCH_INVENTORY_SHARE * units12 * float(x.landed_cost_unit)
         for h in ("12m", "24m"):
             p = preds[f"profit_{h}"]
-            _set_value(preds[f"roi_pct_{h}"], p["value"] / capital * 100, signed=True, plus_minus=(p["plus_minus"] or 0) / capital * 100)
+            _set_value(preds[f"roi_pct_{h}"], (p["value"] - capital) / capital * 100, signed=True,
+                       plus_minus=(p["plus_minus"] or 0) / capital * 100)
 
         p12, p24 = preds["profit_12m"], preds["profit_24m"]
         be = _break_even_month(capital, p12["value"], p24["value"])
