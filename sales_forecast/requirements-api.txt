@@ -6,3 +6,6 @@ joblib==1.6.0
 pyarrow==26.0.0  # the saved encoders contain pandas data stored with pyarrow
 fastapi==0.159.1
 uvicorn==0.54.0
+
+# Firebase ID token verification
+firebase-admin==7.8.0
