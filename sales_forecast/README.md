@@ -45,7 +45,8 @@ Every prediction comes with a `plus_minus` (the model's typical error on unseen 
 **Consistency rules:** each metric has its own model, so the predictor makes related numbers agree:
 revenue = units × price and profit = revenue × margin everywhere; units sold never exceed demand;
 launch and yearly units come from revenue ÷ price; monthly revenue and profit come from units × price × margin;
-24-month totals are at least the 12-month totals; ROI is computed from predicted profit and the product's investment,
+24-month totals are at least the 12-month totals; launch ROI is (profit − investment) ÷ investment, so it turns positive
+exactly when break-even falls inside that period; monthly and yearly ROI are computed from predicted profit and the product's investment,
 and cumulative ROI chains period to period. When last year is only partly observed (history ends Sep 2026), its
 full-year forecast is used as "last year". These rules are for consistency and don't always improve accuracy:
 on held-out data, monthly revenue, monthly profit and launch units improved, while yearly units (78% to 74%) and yearly margin (88% to 80%) got worse.
