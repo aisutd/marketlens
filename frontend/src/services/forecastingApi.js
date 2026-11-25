@@ -1,15 +1,32 @@
-
-import { requestJson } from "./apiClient";
+import { ApiError, requestJson } from "./apiClient";
+import { auth } from "./firebase";
 
 const BASE_URL = "/api/forecasting/api/v1";
 
+// ========================================
+// AUTHENTICATED API REQUEST
+// ========================================
+
 async function request(endpoint, options = {}) {
+  const user = auth?.currentUser;
+
+  if (!user) {
+    throw new ApiError(
+      "You must be logged in to use MarketLens.",
+      { kind: "auth", retryable: false }
+    );
+  }
+
+  const token = await user.getIdToken();
+
+  const headers = new Headers(options.headers);
+
+  headers.set("Content-Type", "application/json");
+  headers.set("Authorization", `Bearer ${token}`);
+
   const result = await requestJson(`${BASE_URL}${endpoint}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
+    headers,
     service: "forecasting service",
     readError: (body) => body?.error?.message || "",
   });
@@ -17,7 +34,10 @@ async function request(endpoint, options = {}) {
   return result?.data ?? result;
 }
 
-// Retrieve existing products from the forecasting catalogue.
+// ========================================
+// GET FORECASTING PRODUCTS
+// ========================================
+
 export function getForecastProducts(offset = 0, limit = 100) {
   const params = new URLSearchParams({
     offset: String(offset),
@@ -27,7 +47,10 @@ export function getForecastProducts(offset = 0, limit = 100) {
   return request(`/products?${params}`);
 }
 
-// Forecast a product using its attributes.
+// ========================================
+// NEW PRODUCT LAUNCH FORECAST
+// ========================================
+
 export function predictLaunch(product) {
   return request("/predictions/launch", {
     method: "POST",
@@ -35,7 +58,10 @@ export function predictLaunch(product) {
   });
 }
 
-// Forecast monthly sales using an existing Product ID.
+// ========================================
+// MONTHLY SALES FORECAST
+// ========================================
+
 export function predictMonthly(productId) {
   return request("/predictions/monthly", {
     method: "POST",
@@ -45,7 +71,10 @@ export function predictMonthly(productId) {
   });
 }
 
-// Forecast yearly sales using an existing Product ID.
+// ========================================
+// YEARLY SALES FORECAST
+// ========================================
+
 export function predictYearly(productId, year = 2026) {
   return request("/predictions/yearly", {
     method: "POST",

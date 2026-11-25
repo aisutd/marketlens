@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from marketlens import MarketLensPredictor, ProductInput
 from marketlens.api.app import create_app
+from marketlens.api.firebase_auth import verify_firebase_token
 
 LAUNCH = {"category": "Cell Phones & Accessories", "price": 29.99, "list_price": 39.99,
           "review_count": 1200, "months_on_market": 10, "launch_month": 7}
@@ -17,8 +18,16 @@ BASE = "/api/v1/predictions"
 def client():
     with patch.dict("os.environ", {"MARKETLENS_CORS_ORIGINS": "http://localhost:3000,http://localhost:5173"}):
         app = create_app()
+
+    # Simulate an authenticated user for existing API contract tests.
+    app.dependency_overrides[verify_firebase_token] = lambda: {
+        "uid": "test-user"
+    }
+
     with TestClient(app, raise_server_exceptions=False) as client:
         yield client
+
+    app.dependency_overrides.clear()
 
 
 def test_health_and_documentation(client):
@@ -107,10 +116,11 @@ def test_validation_and_routing_errors(client):
 
 def test_cors(client):
     headers = {"Origin": "http://localhost:3000", "Access-Control-Request-Method": "POST",
-               "Access-Control-Request-Headers": "content-type"}
+               "Access-Control-Request-Headers": "authorization, content-type"}
     allowed = client.options(f"{BASE}/launch", headers=headers)
     assert allowed.status_code == 200
     assert allowed.headers["access-control-allow-origin"] == headers["Origin"]
+    assert "authorization" in allowed.headers["access-control-allow-headers"].lower()
     denied = client.options(f"{BASE}/launch", headers={**headers, "Origin": "https://untrusted.example"})
     assert denied.status_code == 400
     assert "access-control-allow-origin" not in denied.headers

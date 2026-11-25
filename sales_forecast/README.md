@@ -194,7 +194,9 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 python -m pip install -e '.[api,dev]'
 export MARKETLENS_ROOT="$PWD"
+export FIREBASE_PROJECT_ID="marketlens-backend"
 export MARKETLENS_CORS_ORIGINS="http://localhost:3000,http://localhost:5173"
+gcloud auth application-default login
 python -m uvicorn marketlens.api.app:app --host 127.0.0.1 --port 8000 --reload
 ```
 
@@ -223,44 +225,55 @@ Successful responses have the form `{"data": ...}`. Prediction `data` contains t
 
 Errors use `{"error":{"code":"...","message":"...","details":[]}}`: invalid inputs or unsupported category/year return 422, unknown product IDs return 404, and unexpected failures return a generic 500 with details logged on the server. Validation details identify invalid fields. Extra request fields are rejected. Prices and weights must be positive and finite; rating is >0 and ≤5, list price cannot be below selling price, and counts cannot be negative. Review count and months on market may describe a comparable competitor when evaluating a new idea.
 
-### Requests and future frontend integration
+### Authentication and frontend integration
+
+The forecasting API uses Firebase Authentication to verify users
+before allowing access to protected endpoints.
+
+| Endpoint | Authentication |
+|---|---|
+| GET `/health` | Public |
+| GET `/api/v1/categories` | Public |
+| GET `/api/v1/products` | Required |
+| POST `/api/v1/predictions/launch` | Required |
+| POST `/api/v1/predictions/monthly` | Required |
+| POST `/api/v1/predictions/yearly` | Required |
+
+Protected requests must include a valid Firebase ID token in the
+`Authorization: Bearer <token>` header.
+
+### Authentication responses
+
+- 401 Unauthorized: Missing, invalid, or expired token.
+- 503 Service Unavailable: Authentication infrastructure unavailable.
+
+For local development, configure Application Default Credentials:
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/predictions/launch \
-  -H 'Content-Type: application/json' \
-  -d '{"category":"Cell Phones & Accessories","price":29.99,"list_price":39.99,"review_count":1200,"months_on_market":10}'
-
-curl -X POST http://localhost:8000/api/v1/predictions/monthly \
-  -H 'Content-Type: application/json' \
-  -d '{"product_id":"B07JW9H4J1","promo_depth_pct":20}'
-
-curl -X POST http://localhost:8000/api/v1/predictions/yearly \
-  -H 'Content-Type: application/json' \
-  -d '{"product_id":"B07JW9H4J1","year":2026}'
+gcloud auth application-default login
 ```
 
-The future frontend can make JSON requests using its configured API base URL:
+Set `FIREBASE_PROJECT_ID` to the Firebase project issuing
+the frontend's tokens.
 
-```javascript
-const apiBase = "http://localhost:8000"; // configure per deployment
-const response = await fetch(`${apiBase}/api/v1/predictions/monthly`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ product_id: "B07JW9H4J1" }),
-});
-const body = await response.json();
-if (!response.ok) throw new Error(body.error.message);
-const forecast = body.data;
-console.log(forecast.predictions.gross_revenue); // value, unit, plus_minus, range
-```
+Production deployments should use a dedicated Cloud Run service
+account. Never commit personal credentials.
 
-Set `MARKETLENS_CORS_ORIGINS` before starting the server to a comma-separated list of exact frontend origins (scheme, hostname, port; no paths). By default, no cross-origin browser access is enabled. Wildcards are rejected; browser credentials are disabled. CORS is a browser policy, not authentication. Authentication, rate limiting, and deployment hardening remain future integration work; this development API should not be exposed publicly as-is.
+The React frontend automatically attaches Firebase ID tokens
+through `frontend/src/services/forecastingApi.js`.
+
+CORS permits Content-Type and Authorization headers from
+configured frontend origins.
+
+Rate limiting and additional deployment hardening remain future work.
+
 
 ### Tests and data limitations
 
 From the `sales_forecast/` folder:
 
 ```bash
+python -m pytest tests/test_auth.py -v
 python -m pytest -q                   # existing ML tests plus API tests
 python -m pytest tests/test_api.py -q # API contracts with real bundled models
 python scripts/example_predictions.py
