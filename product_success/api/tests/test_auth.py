@@ -1,6 +1,9 @@
 """Firebase ID token check: the scoring endpoints refuse a missing, malformed or wrongly sent token with 401;
-/health, /categories and the /demo/* routes stay public, and the demo routes answer exactly as the protected ones;
-CORS lets the browser send the Authorization header."""
+/health and /categories stay public;
+CORS lets the browser send the Authorization header.
+
+The former public demo scoring routes are covered by test_demo_security.py.
+"""
 import pytest
 
 from conftest import in_process
@@ -108,41 +111,6 @@ def test_cors_allows_authorization_header(client):
                                               "Access-Control-Request-Headers": "authorization, content-type"})
     assert pre.status_code == 200, pre.text
     assert "authorization" in pre.headers.get("access-control-allow-headers", "").lower()
-
-
-# ---- public demo routes (the landing page's "Try it live") ----
-
-DEMO_ROUTES = [
-    ("/demo/predict", "/predict", DEMO),
-    ("/demo/reasons", "/reasons", DEMO),
-    ("/demo/what-if", "/what-if", {"product": DEMO, "prices": [20, 30, 89.99]}),
-]
-
-
-@in_process
-@pytest.mark.parametrize("demo_path,path,body", DEMO_ROUTES)
-def test_demo_routes_need_no_token(real_auth, demo_path, path, body):
-    r = real_auth.post(demo_path, json=body)
-    assert r.status_code == 200, r.text
-
-
-@pytest.mark.parametrize("demo_path,path,body", DEMO_ROUTES)
-def test_demo_routes_match_protected_routes(client, demo_path, path, body):
-    # client sends a token (in-process: the test user), so both routes answer
-    demo, protected = client.post(demo_path, json=body), client.post(path, json=body)
-    assert demo.status_code == protected.status_code == 200, (demo.text, protected.text)
-    assert demo.json() == protected.json()
-
-
-@in_process
-def test_demo_routes_validate_like_protected_routes(real_auth):
-    assert real_auth.post("/demo/what-if", json={"product": DEMO, "prices": []}).status_code == 422
-    assert real_auth.post("/demo/predict", json={**DEMO, "price": 0}).status_code == 422
-
-
-@in_process
-def test_rescore_has_no_demo_route(real_auth):
-    assert real_auth.post("/demo/rescore", json={"product": DEMO, "changes": {"price": 30}}).status_code == 404
 
 
 # ---- clock skew: a token minted on a clock slightly ahead of the server's ----

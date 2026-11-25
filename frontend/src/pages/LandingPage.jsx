@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -716,7 +715,7 @@ function TryItSection() {
           index="02"
           eyebrow="Try it live"
           title="Score a product idea right now."
-          lede="Choose an example or enter your own product information to explore its opportunity score."
+          lede="Choose one of three example products, adjust its pricing and review information, and explore its opportunity score in an interactive preview."
         />
 
         <div className="mt-12">

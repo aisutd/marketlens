@@ -1,47 +1,19 @@
+import { useState } from "react";
 
-import { useEffect, useMemo, useState } from "react";
 import {
   ArrowDownRight,
   ArrowUpRight,
-  LoaderCircle,
   Sparkles,
 } from "lucide-react";
 
 import {
-  getCategories,
-  getPredictionReasons,
-  predictProduct,
-  simulatePrices,
-} from "../services/marketlensApi";
+  DEMO_PRESETS,
+  previewScore,
+} from "../services/demoPreview.js";
 
-import { categoryUsesReviews } from "../constants/reviewCategories";
 import { factorName } from "../constants/scoreFactors";
 
-const DEMO = { demo: true };
-
-const PRESETS = [
-  {
-    label: "Silicone food bags",
-    title: "Reusable Silicone Food Storage Bags, 10 Pack, Leakproof",
-    category: "Kitchen & Dining",
-    price: "14.99",
-    listPrice: "19.99",
-  },
-  {
-    label: "Insulated bottle",
-    title: "Stainless Steel Insulated Water Bottle 32oz, Leak Proof Lid",
-    category: "Sports & Outdoors",
-    price: "24.99",
-    listPrice: "29.99",
-  },
-  {
-    label: "Car phone mount",
-    title: "Magnetic Phone Car Mount, Dashboard Holder Compatible with iPhone 15",
-    category: "Cell Phones & Accessories",
-    price: "15.99",
-    listPrice: "21.99",
-  },
-];
+const PRESETS = DEMO_PRESETS;
 
 const INITIAL = PRESETS[0];
 
@@ -79,12 +51,15 @@ function makePriceSweep(price) {
 
   const prices = factors.map((factor) =>
     Math.max(
-      0.99,
-      Math.round(price * factor * 100) / 100
+      0.01,
+      Math.min(
+        100000,
+        Math.round(price * factor * 100) / 100
+      )
     )
   );
 
-  return [...new Set(prices)].sort(
+  return [...new Set([...prices, price])].sort(
     (a, b) => a - b
   );
 }
@@ -109,30 +84,6 @@ function normalizeReasons(items) {
         Math.abs(a.impact)
     )
     .slice(0, 3);
-}
-
-function normalizeCurve(response) {
-  const items = Array.isArray(response)
-    ? response
-    : Array.isArray(response?.results)
-      ? response.results
-      : Array.isArray(response?.points)
-        ? response.points
-        : [];
-
-  return items
-    .map((item) => ({
-      price: Number(item?.price),
-      score: Number(
-        item?.opportunity_score ?? item?.score
-      ),
-    }))
-    .filter(
-      (item) =>
-        Number.isFinite(item.price) &&
-        Number.isFinite(item.score)
-    )
-    .sort((a, b) => a.price - b.price);
 }
 
 function ScoreDial({
@@ -162,6 +113,7 @@ function ScoreDial({
             Math.PI - (tick / 100) * Math.PI;
 
           const outer = 92;
+
           const inner =
             tick % 50 === 0 ? 82 : 86;
 
@@ -433,11 +385,11 @@ function PriceCurve({ points, current }) {
       </svg>
 
       <figcaption className="mt-2 text-xs leading-relaxed text-muted-foreground">
-        At your price, the tested score is{" "}
+        At your price, the preview score is{" "}
         <span className="font-mono text-foreground">
           {nearest.score}
         </span>
-        . Best tested:{" "}
+        . Best previewed:{" "}
         <span className="font-mono text-foreground">
           {best.score}
         </span>{" "}
@@ -452,96 +404,22 @@ function PriceCurve({ points, current }) {
 }
 
 export default function TryItLive() {
-  const [categories, setCategories] = useState([]);
-  const [categoriesLoading, setCategoriesLoading] =
-    useState(true);
-  const [categoriesError, setCategoriesError] =
-    useState("");
+  const [selectedPreset, setSelectedPreset] =
+    useState(INITIAL);
 
-  const [title, setTitle] = useState(INITIAL.title);
-  const [category, setCategory] = useState(
-    INITIAL.category
+  const [price, setPrice] = useState(
+    INITIAL.price
   );
-  const [price, setPrice] = useState(INITIAL.price);
+
   const [listPrice, setListPrice] = useState(
     INITIAL.listPrice
   );
+
   const [stars, setStars] = useState("");
   const [reviews, setReviews] = useState("");
 
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
-  const [attempt, setAttempt] = useState(0);
-
-  // Load categories from MarketLens.
-  useEffect(() => {
-    let active = true;
-
-    async function loadCategories() {
-      setCategoriesLoading(true);
-      setCategoriesError("");
-
-      try {
-        const response = await getCategories();
-
-        if (!active) return;
-
-        const items = Array.isArray(response)
-          ? response
-          : Array.isArray(response?.categories)
-            ? response.categories
-            : [];
-
-        setCategories(items);
-      } catch (err) {
-        if (active) {
-          setCategoriesError(
-            err.message ||
-            "Categories are unavailable."
-          );
-        }
-      } finally {
-        if (active) {
-          setCategoriesLoading(false);
-        }
-      }
-    }
-
-    loadCategories();
-
-    return () => {
-      active = false;
-    };
-  }, [attempt]);
-
-  // Sort category data without changing state.
-  const sortedCategories = useMemo(
-    () =>
-      [...categories].sort((a, b) =>
-        a.name.localeCompare(b.name)
-      ),
-    [categories]
-  );
-
-  // Resolve a category from its ID or exact name.
-  // No setState or extra effect is necessary.
-  const chosenCategory = useMemo(() => {
-    const selected = String(category).trim();
-
-    return (
-      sortedCategories.find(
-        (item) =>
-          String(item.id) === selected
-      ) ||
-      sortedCategories.find(
-        (item) =>
-          item.name.toLowerCase() ===
-          selected.toLowerCase()
-      ) ||
-      null
-    );
-  }, [category, sortedCategories]);
 
   function resetResult() {
     setResult(null);
@@ -549,8 +427,7 @@ export default function TryItLive() {
   }
 
   function applyPreset(preset) {
-    setTitle(preset.title);
-    setCategory(preset.category);
+    setSelectedPreset(preset);
     setPrice(preset.price);
     setListPrice(preset.listPrice);
     setStars("");
@@ -563,30 +440,13 @@ export default function TryItLive() {
     resetResult();
   }
 
-  async function handleSubmit(event) {
+  function handleSubmit(event) {
     event.preventDefault();
-
-    if (loading) return;
 
     const sellingPrice = toNumber(price);
     const originalPrice = toNumber(listPrice);
     const rating = toNumber(stars);
     const reviewCount = toNumber(reviews);
-
-    if (
-      title.trim().length < 3 ||
-      title.trim().length > 500
-    ) {
-      setError(
-        "Enter a product title between 3 and 500 characters."
-      );
-      return;
-    }
-
-    if (!chosenCategory) {
-      setError("Select a valid product category.");
-      return;
-    }
 
     if (
       sellingPrice === null ||
@@ -598,9 +458,19 @@ export default function TryItLive() {
     }
 
     if (
+      String(listPrice).trim() !== "" &&
+      originalPrice === null
+    ) {
+      setError('Enter a valid "was" price.');
+      return;
+    }
+
+    if (
       originalPrice !== null &&
-      (originalPrice < sellingPrice ||
-        originalPrice > 100000)
+      (
+        originalPrice < sellingPrice ||
+        originalPrice > 100000
+      )
     ) {
       setError(
         'The "was" price must be at least the selling price.'
@@ -609,8 +479,19 @@ export default function TryItLive() {
     }
 
     if (
+      String(stars).trim() !== "" &&
+      rating === null
+    ) {
+      setError("Enter a valid star rating.");
+      return;
+    }
+
+    if (
       rating !== null &&
-      (rating < 1 || rating > 5)
+      (
+        rating < 1 ||
+        rating > 5
+      )
     ) {
       setError(
         "Star rating must be between 1 and 5."
@@ -619,9 +500,19 @@ export default function TryItLive() {
     }
 
     if (
+      String(reviews).trim() !== "" &&
+      reviewCount === null
+    ) {
+      setError("Enter a valid review count.");
+      return;
+    }
+
+    if (
       reviewCount !== null &&
-      (!Number.isSafeInteger(reviewCount) ||
-        reviewCount < 0)
+      (
+        !Number.isSafeInteger(reviewCount) ||
+        reviewCount < 0
+      )
     ) {
       setError(
         "Review count must be a non-negative whole number."
@@ -630,97 +521,58 @@ export default function TryItLive() {
     }
 
     const useReviews =
-      categoryUsesReviews(chosenCategory.id) &&
       rating !== null &&
       reviewCount !== null &&
       reviewCount > 0;
 
     const product = {
-      title: title.trim(),
-      category: chosenCategory.id,
-      categoryName: chosenCategory.name,
+      id: selectedPreset.id,
+
+      title: selectedPreset.title,
+
+      category: selectedPreset.category,
+
       price: sellingPrice,
+
       originalPrice:
         originalPrice === null
           ? ""
           : originalPrice,
-      stars: useReviews ? rating : null,
-      reviews: useReviews ? reviewCount : 0,
+
+      stars: useReviews
+        ? rating
+        : null,
+
+      reviews: useReviews
+        ? reviewCount
+        : 0,
     };
 
-    setLoading(true);
-    setError("");
-    setResult(null);
-
     try {
-      // The demo is for visitors without an account: it scores through
-      // the public /demo/* routes.
-      const prediction = await predictProduct(
+      const preview = previewScore(
         product,
-        DEMO
+        makePriceSweep(sellingPrice)
       );
 
-      const score = Number(
-        prediction?.opportunity_score
-      );
-
-      if (
-        !Number.isFinite(score) ||
-        score < 0 ||
-        score > 100
-      ) {
-        throw new Error(
-          "The scoring API did not return a valid opportunity score."
-        );
-      }
-
-      const [reasonsResponse, curveResponse] =
-        await Promise.allSettled([
-          getPredictionReasons(product, DEMO),
-          simulatePrices(
-            product,
-            makePriceSweep(sellingPrice),
-            DEMO
-          ),
-        ]);
-
-      const reasons =
-        reasonsResponse.status === "fulfilled"
-          ? reasonsResponse.value
-          : null;
-
-      const curve =
-        curveResponse.status === "fulfilled"
-          ? normalizeCurve(curveResponse.value)
-          : [];
+      setError("");
 
       setResult({
-        score,
-        probability: prediction?.probability,
-        model:
-          prediction?.model_used ||
-          (useReviews ? "full" : "launch"),
-        categoryName: chosenCategory.name,
-        price: sellingPrice,
+        ...preview,
+
         reasonsUp: normalizeReasons(
-          reasons?.reasons_up
+          preview.reasonsUp
         ),
+
         reasonsDown: normalizeReasons(
-          reasons?.reasons_down
+          preview.reasonsDown
         ),
-        curve,
-        reasonsUnavailable:
-          reasonsResponse.status === "rejected",
-        curveUnavailable:
-          curveResponse.status === "rejected",
       });
-    } catch (err) {
+    } catch {
+      setResult(null);
+
       setError(
-        err.message ||
-        "The scoring service did not respond."
+        "The preview could not be generated. Select a demo product and try again."
       );
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -733,9 +585,11 @@ export default function TryItLive() {
         <div className="flex flex-wrap gap-2">
           {PRESETS.map((preset) => (
             <button
-              key={preset.label}
+              key={preset.id}
               type="button"
-              disabled={loading}
+              aria-pressed={
+                selectedPreset.id === preset.id
+              }
               onClick={() => applyPreset(preset)}
               className="rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-ink hover:text-foreground disabled:opacity-50"
             >
@@ -755,15 +609,9 @@ export default function TryItLive() {
           <input
             id="live-title"
             className={inputClass}
-            value={title}
+            value={selectedPreset.title}
             maxLength={500}
-            disabled={loading}
-            onChange={(event) =>
-              changeValue(
-                setTitle,
-                event.target.value
-              )
-            }
+            readOnly
           />
         </div>
 
@@ -775,60 +623,12 @@ export default function TryItLive() {
             Category
           </label>
 
-          <select
+          <input
             id="live-category"
             className={inputClass}
-            value={
-              chosenCategory
-                ? String(chosenCategory.id)
-                : ""
-            }
-            disabled={
-              loading || categoriesLoading
-            }
-            onChange={(event) =>
-              changeValue(
-                setCategory,
-                event.target.value
-              )
-            }
-          >
-            <option value="">
-              {categoriesLoading
-                ? "Loading categories..."
-                : "Select category"}
-            </option>
-
-            {sortedCategories.map((item) => (
-              <option
-                key={item.id}
-                value={item.id}
-              >
-                {item.name}
-              </option>
-            ))}
-          </select>
-
-          {categoriesError && (
-            <div
-              role="alert"
-              className="mt-2 text-xs text-signal-down"
-            >
-              {categoriesError}
-
-              <button
-                type="button"
-                onClick={() =>
-                  setAttempt(
-                    (previous) => previous + 1
-                  )
-                }
-                className="ml-2 underline"
-              >
-                Retry
-              </button>
-            </div>
-          )}
+            value={selectedPreset.category}
+            readOnly
+          />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -845,7 +645,6 @@ export default function TryItLive() {
               className={inputClass}
               inputMode="decimal"
               value={price}
-              disabled={loading}
               onChange={(event) =>
                 changeValue(
                   setPrice,
@@ -869,7 +668,6 @@ export default function TryItLive() {
               inputMode="decimal"
               placeholder="optional"
               value={listPrice}
-              disabled={loading}
               onChange={(event) =>
                 changeValue(
                   setListPrice,
@@ -893,7 +691,6 @@ export default function TryItLive() {
               inputMode="decimal"
               placeholder="none yet"
               value={stars}
-              disabled={loading}
               onChange={(event) =>
                 changeValue(
                   setStars,
@@ -917,7 +714,6 @@ export default function TryItLive() {
               inputMode="numeric"
               placeholder="none yet"
               value={reviews}
-              disabled={loading}
               onChange={(event) =>
                 changeValue(
                   setReviews,
@@ -929,9 +725,11 @@ export default function TryItLive() {
         </div>
 
         <p className="text-xs leading-relaxed text-muted-foreground">
-          Leave stars and reviews empty for a
-          new product idea. MarketLens will use
-          its launch-time model.
+          Choose an example product and adjust its
+          details to explore illustrative scores.
+          Leave stars and reviews empty for a new
+          product idea. Sign in to analyze your own
+          products in real time.
         </p>
 
         {error && (
@@ -945,34 +743,19 @@ export default function TryItLive() {
 
         <button
           type="submit"
-          disabled={
-            loading ||
-            categoriesLoading ||
-            sortedCategories.length === 0
-          }
           className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-ink bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-offset transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-offset-sm disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {loading ? (
-            <LoaderCircle
-              size={17}
-              className="animate-spin"
-            />
-          ) : (
-            <Sparkles size={17} />
-          )}
+          <Sparkles size={17} />
 
-          {loading
-            ? "Scoring against the category..."
-            : "Score this idea"}
+          Score this idea
         </button>
       </form>
 
       <div
         className="flex min-h-[420px] flex-col p-6 sm:p-8"
         aria-live="polite"
-        aria-busy={loading}
       >
-        {!result && !loading && (
+        {!result && (
           <div className="flex flex-1 flex-col items-center justify-center text-center">
             <div className="w-56 opacity-40">
               <ScoreDial
@@ -989,17 +772,7 @@ export default function TryItLive() {
           </div>
         )}
 
-        {loading && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-            <LoaderCircle className="size-6 animate-spin text-primary" />
-
-            <p className="text-sm text-muted-foreground">
-              Comparing with real listings...
-            </p>
-          </div>
-        )}
-
-        {result && !loading && (
+        {result && (
           <div className="animate-rise space-y-6">
             <div className="flex items-center justify-between gap-3">
               <span className="eyebrow text-muted-foreground">
@@ -1008,10 +781,8 @@ export default function TryItLive() {
 
               <span className="rounded-full border border-border px-2.5 py-0.5 font-mono text-[11px] text-muted-foreground">
                 {result.model === "launch"
-                  ? "launch-time model"
-                  : result.model === "full"
-                    ? "full model"
-                    : result.model}
+                  ? "launch-time preview"
+                  : "full-model preview"}
               </span>
             </div>
 
@@ -1020,7 +791,7 @@ export default function TryItLive() {
             </div>
 
             <p className="text-center text-sm text-muted-foreground">
-              Opportunity score:{" "}
+              Illustrative score:{" "}
               <span className="font-medium text-foreground">
                 {result.score}/100
               </span>
@@ -1037,9 +808,7 @@ export default function TryItLive() {
                 />
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  {result.reasonsUnavailable
-                    ? "Factor explanations could not be loaded."
-                    : "No explanation factors were returned."}
+                  No explanation factors were returned.
                 </p>
               )}
             </div>
@@ -1056,9 +825,7 @@ export default function TryItLive() {
                 />
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  {result.curveUnavailable
-                    ? "Price simulations could not be loaded."
-                    : "No price curve was returned."}
+                  No price curve was returned.
                 </p>
               )}
             </div>
