@@ -265,7 +265,54 @@ through `frontend/src/services/forecastingApi.js`.
 CORS permits Content-Type and Authorization headers from
 configured frontend origins.
 
-Rate limiting and additional deployment hardening remain future work.
+### Rate limiting
+
+The forecasting API uses SlowAPI to enforce per-user
+rate limits based on verified Firebase user IDs.
+
+| Endpoint | Rate limit |
+|---|---|
+| GET `/health` | Unrestricted |
+| GET `/api/v1/categories` | Unrestricted |
+| GET `/api/v1/products` | 60 requests/minute |
+| POST `/api/v1/predictions/launch` | 10 requests/minute |
+| POST `/api/v1/predictions/monthly` | 10 requests/minute |
+| POST `/api/v1/predictions/yearly` | 10 requests/minute |
+| All predictions combined | 200 requests/day |
+
+Each authenticated user has an independent quota.
+Limits use rolling time windows.
+
+Requests exceeding a quota receive HTTP 429 with a
+Retry-After header, without executing the prediction model.
+
+### Rate limit configuration
+
+| Environment variable | Default |
+|---|---|
+| MARKETLENS_PRODUCTS_PER_MINUTE | 60 |
+| MARKETLENS_PREDICTIONS_PER_MINUTE | 10 |
+| MARKETLENS_PREDICTIONS_PER_DAY | 200 |
+| MARKETLENS_RATE_LIMIT_STORAGE_URI | memory:// |
+
+### Current limitations
+
+Rate-limit counters are stored in memory and are not shared
+across multiple server processes or Cloud Run instances.
+Counters reset when the server restarts.
+
+Distributed storage, such as Redis, may be introduced
+in the future if production traffic requires it.
+
+Rate limiting for the Product Opportunity Score API and
+Try It Live demo is outside the scope of this implementation.
+
+### Rate limit testing
+
+```bash
+MARKETLENS_RATE_LIMIT_STORAGE_URI=memory:// python -m pytest tests/test_rate_limit.py -v
+```
+
 
 
 ### Tests and data limitations
