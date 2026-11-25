@@ -8,4 +8,4 @@ fastapi==0.159.1
 uvicorn==0.54.0
 
 # Firebase ID token verification
-firebase-admin==7.8.0
+firebase-admin==7.8.0slowapi==0.1.10
