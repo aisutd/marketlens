@@ -13,6 +13,10 @@ import {
 } from "../services/demoPreview.js";
 
 import { factorName } from "../constants/scoreFactors";
+import {
+  handleRadioGroupKeyDown,
+  radioProps,
+} from "../lib/radioGroup";
 
 const PRESETS = DEMO_PRESETS;
 
@@ -590,14 +594,19 @@ export default function TryItLive() {
         onSubmit={handleSubmit}
         className="space-y-5 border-b border-ink p-6 sm:p-8 lg:border-b-0 lg:border-r"
       >
-        <div className="flex flex-wrap gap-2">
+        <div
+          role="radiogroup"
+          aria-label="Example product"
+          onKeyDown={handleRadioGroupKeyDown}
+          className="flex flex-wrap gap-2"
+        >
           {PRESETS.map((preset) => (
             <button
               key={preset.id}
               type="button"
-              aria-pressed={
+              {...radioProps(
                 selectedPreset.id === preset.id
-              }
+              )}
               onClick={() => applyPreset(preset)}
               className="rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-ink hover:text-foreground disabled:opacity-50"
             >

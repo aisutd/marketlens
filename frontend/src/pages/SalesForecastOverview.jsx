@@ -19,6 +19,10 @@ import {
 
 import InfoDialog from "../components/InfoDialog";
 import { formatPercent } from "../services/formatPercent";
+import {
+  handleRadioGroupKeyDown,
+  radioProps,
+} from "../lib/radioGroup";
 
 // ========================================
 // COLORS AND STYLES
@@ -1021,8 +1025,9 @@ function SupportingDetails({
       />
 
       <div
-        role="group"
+        role="radiogroup"
         aria-label="Forecast detail category"
+        onKeyDown={handleRadioGroupKeyDown}
         className="mt-7 flex flex-wrap gap-2"
       >
         {DETAIL_GROUPS.map((group) => (
@@ -1030,7 +1035,7 @@ function SupportingDetails({
             key={group.id}
             type="button"
             onClick={() => setCategory(group.id)}
-            aria-pressed={category === group.id}
+            {...radioProps(category === group.id)}
             className={
               "border border-ink px-5 py-3 text-sm font-semibold transition-colors " +
               (category === group.id
@@ -1432,16 +1437,17 @@ export default function SalesForecastOverview({
           </div>
 
           <div
-            role="group"
+            role="radiogroup"
             aria-label="Forecast timeframe"
+            onKeyDown={handleRadioGroupKeyDown}
             className="flex border border-ink bg-card p-1"
           >
             <button
               type="button"
               disabled={!monthly}
-              aria-pressed={
+              {...radioProps(
                 activeTimeframe === "monthly"
-              }
+              )}
               onClick={() =>
                 setTimeframe("monthly")
               }
@@ -1458,9 +1464,9 @@ export default function SalesForecastOverview({
             <button
               type="button"
               disabled={!yearly}
-              aria-pressed={
+              {...radioProps(
                 activeTimeframe === "yearly"
-              }
+              )}
               onClick={() =>
                 setTimeframe("yearly")
               }

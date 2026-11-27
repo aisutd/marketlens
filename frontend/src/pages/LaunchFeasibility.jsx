@@ -25,6 +25,7 @@ import {
   rescoreProduct,
   simulatePrices,
 } from "../services/marketlensApi";
+import { parseNumberInput } from "../lib/numberInput";
 
 // ========================================
 // DESIGN SYSTEM
@@ -130,16 +131,9 @@ const compactFormatter = new Intl.NumberFormat("en-US", {
 });
 
 function numeric(value) {
-  if (
-    value === "" ||
-    value === null ||
-    value === undefined ||
-    !Number.isFinite(Number(value))
-  ) {
-    return null;
-  }
-
-  return Number(value);
+  // Field text must be a plain decimal ("  " is not 0); numbers from
+  // the API pass through when finite.
+  return parseNumberInput(value);
 }
 
 function formatMoney(value) {
@@ -375,11 +369,9 @@ function ScenarioControl({
 
           <input
             id={id}
-            type="number"
+            type="text"
+            inputMode={step === 1 ? "numeric" : "decimal"}
             value={value}
-            min={min}
-            max={100000}
-            step={step}
             onChange={(event) =>
               onChange(event.target.value)
             }
