@@ -210,7 +210,7 @@ test("the existing-product page shows no cumulative return next to its yearly RO
   assert.doesNotMatch(text, /4,?309/);
 
   // Nor in the "Returns" detail group.
-  await page.getByRole("button", { name: "Returns", exact: true }).click();
+  await page.getByRole("radio", { name: "Returns", exact: true }).click();
   const returns = await mainText(page);
   assert.match(returns, /annual return on investment/i);
   assert.doesNotMatch(returns, /cumulative/i);
@@ -221,7 +221,7 @@ test("the existing-product page shows a tiny category share as under 0.01%", asy
   const page = await openForecast(existingForecast, "existing-yearly-share");
 
   // The share sits in the "Demand" detail group.
-  await page.getByRole("button", { name: "Demand", exact: true }).click();
+  await page.getByRole("radio", { name: "Demand", exact: true }).click();
   const text = await mainText(page);
 
   assert.match(text, /under 0\.01%/);
