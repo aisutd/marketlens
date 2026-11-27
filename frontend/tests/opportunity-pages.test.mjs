@@ -18,3 +18,24 @@ test("Overview prints the score as text only inside the About dialog", () => {
   const dialog = text.slice(text.indexOf("function AboutScore"));
   assert.match(dialog, /`\$\{score\}\/100`/);
 });
+
+test("no opportunity screen shows the model's raw probability", () => {
+  // EvaluationSummary paired "92/100" with "Probability: 0.7%"; it was
+  // unused and is gone. #22 / PR #34 settled on the score alone.
+  assert.equal(
+    existsSync(new URL("../src/components/EvaluationSummary.jsx", import.meta.url)),
+    false
+  );
+  for (const path of [
+    "../src/pages/Overview.jsx",
+    "../src/pages/ScoreDetails.jsx",
+  ]) {
+    assert.doesNotMatch(source(path), /probability/i, path);
+  }
+  // LaunchFeasibility mentions it only in a comment explaining why the
+  // score is shown alone; nothing renders prediction.probability.
+  assert.doesNotMatch(
+    source("../src/pages/LaunchFeasibility.jsx"),
+    /prediction\??\.probability/
+  );
+});
