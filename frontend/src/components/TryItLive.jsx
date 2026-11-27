@@ -756,15 +756,17 @@ export default function TryItLive() {
       >
         {!result && (
           <div className="flex flex-1 flex-col items-center justify-center text-center">
+            {/* Only the drawing is faded; the text stays at full
+                contrast (#78). */}
             <div className="w-56 opacity-40">
-              <ScoreDial
-                score={0}
-                label="Illustrative preview score:"
-                caption="awaiting preview"
-              />
+              <ScoreDial score={0} placeholder />
             </div>
 
-            <p className="mt-6 max-w-xs text-sm text-muted-foreground">
+            <p className="eyebrow mt-3 text-muted-foreground">
+              Awaiting preview
+            </p>
+
+            <p className="mt-4 max-w-xs text-sm text-muted-foreground">
               An illustrative score, the factors
               behind it, and how it moves with
               price will show up here.
