@@ -3,10 +3,15 @@
 // e.g. "Example opportunity score" -> "Example opportunity score 70 out
 // of 100". The arc is keyed on the value so its sweep replays when the
 // score changes.
+//
+// `placeholder` is the empty-state ghost: it draws only the dial, with no
+// number or caption, and is hidden from assistive technology, so nothing
+// shows or announces a score of 0 before there is one (#78).
 export default function ScoreDial({
   score,
   label,
   caption = "out of 100",
+  placeholder = false,
 }) {
   const value = Math.max(
     0,
@@ -23,8 +28,9 @@ export default function ScoreDial({
       <svg
         viewBox="0 0 200 116"
         className="w-full"
-        role="img"
-        aria-label={`${label} ${value} out of 100`}
+        {...(placeholder
+          ? { "aria-hidden": "true" }
+          : { role: "img", "aria-label": `${label} ${value} out of 100` })}
       >
         {ticks.map((tick) => {
           const angle =
@@ -68,15 +74,17 @@ export default function ScoreDial({
         />
       </svg>
 
-      <div className="absolute inset-x-0 bottom-0 flex flex-col items-center">
-        <span className="font-display tabular text-6xl leading-none text-foreground">
-          {value}
-        </span>
+      {!placeholder && (
+        <div className="absolute inset-x-0 bottom-0 flex flex-col items-center">
+          <span className="font-display tabular text-6xl leading-none text-foreground">
+            {value}
+          </span>
 
-        <span className="eyebrow mt-2 text-muted-foreground">
-          {caption}
-        </span>
-      </div>
+          <span className="eyebrow mt-2 text-muted-foreground">
+            {caption}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
