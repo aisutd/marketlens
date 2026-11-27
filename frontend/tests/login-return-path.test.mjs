@@ -171,6 +171,12 @@ test("going from login to sign-up keeps the requested page", async () => {
   await page.waitForURL("**/login");
   await page.getByRole("link", { name: "Create an account" }).click();
   await page.waitForURL("**/signup");
+  // Pages load on demand (#49) and React Router navigates in a
+  // transition, so the URL changes while Login is still on screen; wait
+  // for the sign-up form itself before typing into it.
+  await page
+    .getByRole("heading", { name: "Create your account." })
+    .waitFor();
 
   await page.locator("input[type=email]").fill("new-user@example.com");
   const passwords = page.locator("input[type=password]");
