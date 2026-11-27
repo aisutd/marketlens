@@ -15,6 +15,7 @@ import ApiErrorNotice from "./ApiErrorNotice";
 import { FORECAST_CATEGORIES } from "../constants/forecastCategoryMap";
 import { categoryUsesReviews } from "../constants/reviewCategories";
 import { getForecastProducts } from "../services/forecastingApi";
+import { isBlank, parseNumberInput } from "../lib/numberInput";
 import {
   handleRadioGroupKeyDown,
   radioProps,
@@ -196,9 +197,6 @@ function Field({
   placeholder,
   type = "text",
   inputMode,
-  min,
-  max,
-  step,
   disabled,
   required = false,
   hint,
@@ -223,9 +221,6 @@ function Field({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        min={min}
-        max={max}
-        step={step}
         disabled={disabled}
         aria-required={required || undefined}
         aria-invalid={error ? true : undefined}
@@ -612,23 +607,22 @@ export default function ProductSearch({
   );
 
   function validatePrice(priceString) {
-    const price = Number(priceString);
+    const price = parseNumberInput(priceString);
 
     return (
-      priceString !== "" &&
-      Number.isFinite(price) &&
+      price !== null &&
       price > 0 &&
       price <= 100000
     );
   }
 
   function validateListPrice(listPriceString, price) {
-    if (listPriceString === "") return true;
+    if (isBlank(listPriceString)) return true;
 
-    const listPrice = Number(listPriceString);
+    const listPrice = parseNumberInput(listPriceString);
 
     return (
-      Number.isFinite(listPrice) &&
+      listPrice !== null &&
       listPrice >= price &&
       listPrice <= 100000
     );
@@ -645,10 +639,10 @@ export default function ProductSearch({
   }
 
   function validateCount(value, noun) {
-    const count = Number(value);
+    const count = parseNumberInput(value);
 
     if (
-      value === "" ||
+      count === null ||
       !Number.isSafeInteger(count) ||
       count < 0
     ) {
@@ -697,13 +691,15 @@ export default function ProductSearch({
           String(item.id) === String(details.category)
       );
 
-      const price = Number(details.price);
-      const reviews = Number(details.review_count);
+      const price = parseNumberInput(details.price);
+      const reviews = parseNumberInput(details.review_count);
 
-      const stars =
-        details.stars === ""
-          ? null
-          : Number(details.stars);
+      // Text that is not a number is an error, not "no rating": only an
+      // empty field means the product has no rating yet.
+      const starsBlank = isBlank(details.stars);
+      const stars = starsBlank
+        ? null
+        : parseNumberInput(details.stars);
 
       // Insertion order is the on-screen order, so the first key is the
       // first field the person meets.
@@ -723,8 +719,8 @@ export default function ProductSearch({
       const reviewsError = validateCount(details.review_count, "reviews");
       if (reviewsError) errors["details-review_count"] = reviewsError;
       if (
-        stars !== null &&
-        (!Number.isFinite(stars) || stars < 1 || stars > 5)
+        !starsBlank &&
+        (stars === null || stars < 1 || stars > 5)
       ) {
         errors["details-stars"] =
           "Enter a rating from 1 to 5, or leave it empty.";
@@ -740,9 +736,9 @@ export default function ProductSearch({
           categoryName: category.name,
           price,
           originalPrice:
-            details.list_price === ""
+            isBlank(details.list_price)
               ? ""
-              : Number(details.list_price),
+              : parseNumberInput(details.list_price),
           reviews,
           stars,
         },
@@ -752,9 +748,9 @@ export default function ProductSearch({
     }
 
     if (isLaunch) {
-      const price = Number(launch.price);
-      const reviews = Number(launch.review_count);
-      const months = Number(launch.months_on_market);
+      const price = parseNumberInput(launch.price);
+      const reviews = parseNumberInput(launch.review_count);
+      const months = parseNumberInput(launch.months_on_market);
 
       const errors = {};
       const nameError = validateName(launch.name);
@@ -784,8 +780,8 @@ export default function ProductSearch({
           name: launch.name.trim(),
           category: launch.category,
           price,
-          ...(launch.list_price !== "" && {
-            list_price: Number(launch.list_price),
+          ...(!isBlank(launch.list_price) && {
+            list_price: parseNumberInput(launch.list_price),
           }),
           review_count: reviews,
           months_on_market: months,
@@ -966,11 +962,8 @@ export default function ProductSearch({
                   <Field
                     name="details-price"
                     label="Selling price (USD)"
-                    type="number"
+                    type="text"
                     inputMode="decimal"
-                    min="0.01"
-                    max="100000"
-                    step="0.01"
                     placeholder="24.99"
                     value={details.price}
                     onChange={(value) =>
@@ -984,11 +977,8 @@ export default function ProductSearch({
                   <Field
                     name="details-list_price"
                     label="List price before discount (optional)"
-                    type="number"
+                    type="text"
                     inputMode="decimal"
-                    min="0.01"
-                    max="100000"
-                    step="0.01"
                     placeholder="29.99"
                     value={details.list_price}
                     onChange={(value) =>
@@ -1001,10 +991,8 @@ export default function ProductSearch({
                   <Field
                     name="details-review_count"
                     label="Review count"
-                    type="number"
+                    type="text"
                     inputMode="numeric"
-                    min="0"
-                    step="1"
                     value={details.review_count}
                     onChange={(value) =>
                       updateDetails("review_count", value)
@@ -1017,11 +1005,8 @@ export default function ProductSearch({
                   <Field
                     name="details-stars"
                     label="Star rating (optional)"
-                    type="number"
+                    type="text"
                     inputMode="decimal"
-                    min="1"
-                    max="5"
-                    step="0.1"
                     placeholder="4.5"
                     value={details.stars}
                     onChange={(value) =>
@@ -1038,8 +1023,8 @@ export default function ProductSearch({
                     for this category's opportunity score.
                   </Note>
                 ) : (
-                  Number(details.review_count) > 0 &&
-                  details.stars === "" && (
+                  parseNumberInput(details.review_count) > 0 &&
+                  isBlank(details.stars) && (
                     <Note>
                       Add a star rating to include review
                       signals. Otherwise, the product is
@@ -1087,11 +1072,8 @@ export default function ProductSearch({
                   <Field
                     name="launch-price"
                     label="Expected selling price (USD)"
-                    type="number"
+                    type="text"
                     inputMode="decimal"
-                    min="0.01"
-                    max="100000"
-                    step="0.01"
                     placeholder="24.99"
                     value={launch.price}
                     onChange={(value) =>
@@ -1105,11 +1087,8 @@ export default function ProductSearch({
                   <Field
                     name="launch-list_price"
                     label="List price before discount (optional)"
-                    type="number"
+                    type="text"
                     inputMode="decimal"
-                    min="0.01"
-                    max="100000"
-                    step="0.01"
                     placeholder="29.99"
                     value={launch.list_price}
                     onChange={(value) =>
@@ -1122,10 +1101,8 @@ export default function ProductSearch({
                   <Field
                     name="launch-review_count"
                     label="Review count"
-                    type="number"
+                    type="text"
                     inputMode="numeric"
-                    min="0"
-                    step="1"
                     value={launch.review_count}
                     onChange={(value) =>
                       updateLaunch("review_count", value)
@@ -1138,10 +1115,8 @@ export default function ProductSearch({
                   <Field
                     name="launch-months_on_market"
                     label="Months on market"
-                    type="number"
+                    type="text"
                     inputMode="numeric"
-                    min="0"
-                    step="1"
                     value={launch.months_on_market}
                     onChange={(value) =>
                       updateLaunch("months_on_market", value)
