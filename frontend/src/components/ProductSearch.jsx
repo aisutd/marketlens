@@ -828,6 +828,7 @@ export default function ProductSearch({
       ref={formRef}
       onSubmit={handleSubmit}
       noValidate
+      aria-busy={loading || undefined}
       className="space-y-12"
     >
       <section>
@@ -1322,9 +1323,9 @@ export default function ProductSearch({
                       type="button"
                       onClick={() => handleManualProductId("")}
                       aria-label="Remove selected product"
-                      className="text-muted-foreground transition-colors hover:text-primary"
+                      className="-m-2 flex size-10 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-primary"
                     >
-                      <X size={19} />
+                      <X size={19} aria-hidden="true" />
                     </button>
                   </div>
                 )}
@@ -1387,6 +1388,17 @@ export default function ProductSearch({
       />
 
       <div className="border-t border-ink pt-8">
+        {/* The live region is always in the DOM so screen readers pick up
+            the change when an analysis starts; the visible button text
+            alone is not announced, since the button is disabled. */}
+        <p role="status" className="sr-only">
+          {loading
+            ? isOpportunity
+              ? "Analyzing opportunity, please wait."
+              : "Generating forecast, please wait."
+            : ""}
+        </p>
+
         <button
           type="submit"
           disabled={loading}

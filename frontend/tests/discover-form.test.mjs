@@ -106,3 +106,9 @@ test("single-choice groups use radio semantics, not toggles", () => {
     assert.match(text, /onKeyDown=\{handleRadioGroupKeyDown\}/, path);
   }
 });
+
+test("the Discover form reports its busy state", () => {
+  const text = source("../src/components/ProductSearch.jsx");
+  assert.match(text, /aria-busy=\{loading \|\| undefined\}/);
+  assert.match(text, /<p role="status" className="sr-only">/);
+});
