@@ -27,3 +27,17 @@ test("only the landing page is imported eagerly by App", () => {
   }
   assert.match(app, /<Suspense fallback=\{<PageLoading \/>\}>/);
 });
+
+test("the catalogue is fetched only after the product search is focused", () => {
+  const text = source("../src/components/ProductSearch.jsx");
+  // The fetch effect bails out until catalogueWanted is set...
+  assert.match(
+    text,
+    /!isExisting \|\|\s*!catalogueWanted \|\|\s*products\.length > 0/
+  );
+  // ...and only the search box's onFocus sets it.
+  const setters = text.match(/setCatalogueWanted\(true\)/g) || [];
+  assert.equal(setters.length, 1);
+  const focus = text.slice(text.indexOf("onFocus={() => {"));
+  assert.match(focus.slice(0, 80), /setCatalogueWanted\(true\)/);
+});
