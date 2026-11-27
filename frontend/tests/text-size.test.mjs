@@ -169,6 +169,16 @@ for (const width of WIDTHS) {
     // The price chart is the part that scales: its labels must be measured.
     const chart = page.getByRole("img", { name: /preview score at different selling prices/ });
     await chart.waitFor();
+    // The chart sizes its labels from its own measured width, which can land
+    // a frame after it appears (seen in CI). Give it up to 3s to settle; the
+    // checks below are unchanged and still fail if it never does.
+    await page
+      .waitForFunction((minPx) => {
+        const svg = document.querySelector('svg[aria-label*="selling prices"]');
+        const label = svg?.querySelector("text");
+        return label && parseFloat(getComputedStyle(label).fontSize) * svg.getScreenCTM().a >= minPx - 0.01;
+      }, MIN_PX, { timeout: 3000 })
+      .catch(() => {});
     assert.deepEqual(await tooSmall(page), []);
     // Bigger labels on phones still fit inside the chart, not past its edges.
     const outside = await chart.evaluate((svg) => {

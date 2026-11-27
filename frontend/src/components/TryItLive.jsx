@@ -197,14 +197,21 @@ function useSvgScale(viewBoxWidth) {
     const measure = () => {
       const rendered = svg.getBoundingClientRect().width;
       if (rendered > 0) setScale(rendered / viewBoxWidth);
+      return rendered > 0;
     };
 
-    measure();
+    // Measure before the first paint; if the chart has no width yet, try
+    // again next frame rather than waiting for the observer's first report.
+    let frame = measure() ? 0 : requestAnimationFrame(measure);
 
-    if (typeof ResizeObserver === "undefined") return undefined;
-    const observer = new ResizeObserver(measure);
-    observer.observe(svg);
-    return () => observer.disconnect();
+    const observer =
+      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    observer?.observe(svg);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer?.disconnect();
+    };
   }, [viewBoxWidth]);
 
   return [ref, scale];
