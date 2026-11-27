@@ -806,7 +806,9 @@ function PriceScenarioPreview({ product, saveSuggestedPrice }) {
                 New selling price
               </label>
 
-              <div className="mt-2 flex items-center border border-ink bg-card px-4">
+              {/* The input drops its own outline so the ring can go round
+                  the whole box, "$" included. */}
+              <div className="mt-2 flex items-center border border-ink bg-card px-4 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary">
                 <span className="text-sm">
                   $
                 </span>
