@@ -23,6 +23,13 @@ const inputClass =
   "focus-visible:border-primary focus-visible:ring-1 " +
   "focus-visible:ring-primary disabled:opacity-50";
 
+// Title and category come from the chosen example and cannot be typed
+// into, so they must not look like the editable fields below them.
+const fixedClass =
+  "h-10 w-full cursor-default rounded-md border border-dashed " +
+  "border-border bg-muted px-3 text-sm text-muted-foreground " +
+  "outline-none focus-visible:ring-1 focus-visible:ring-primary";
+
 const labelClass =
   "mb-2 block text-sm font-medium text-foreground";
 
@@ -608,9 +615,9 @@ export default function TryItLive() {
 
           <input
             id="live-title"
-            className={inputClass}
+            className={fixedClass}
             value={selectedPreset.title}
-            maxLength={500}
+            aria-describedby="live-fixed-hint"
             readOnly
           />
         </div>
@@ -625,10 +632,19 @@ export default function TryItLive() {
 
           <input
             id="live-category"
-            className={inputClass}
+            className={fixedClass}
             value={selectedPreset.category}
+            aria-describedby="live-fixed-hint"
             readOnly
           />
+
+          <p
+            id="live-fixed-hint"
+            className="mt-2 text-xs text-muted-foreground"
+          >
+            Title and category are set by the example
+            you pick above.
+          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
