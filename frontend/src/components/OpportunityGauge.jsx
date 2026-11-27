@@ -71,12 +71,12 @@ export default function OpportunityGauge({ score }) {
             } ${segment.x} ${segment.y})`}
             fill={
               !hasScore
-                ? "#E2E8F0"
+                ? "var(--gauge-track)"
                 : normalizedScore === 0
-                ? "#FECACA"
+                ? "var(--gauge-empty)"
                 : segment.active
                 ? scoreColor
-                : "#E2E8F0"
+                : "var(--gauge-track)"
             }
           />
         ))}
@@ -91,7 +91,7 @@ export default function OpportunityGauge({ score }) {
             {hasScore ? score : "—"}
           </span>
 
-          <span className="ml-1 text-sm text-[#475569]">
+          <span className="ml-1 text-sm text-score-note">
             /100
           </span>
         </div>

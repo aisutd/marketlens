@@ -23,90 +23,44 @@ import {
   handleRadioGroupKeyDown,
   radioProps,
 } from "../lib/radioGroup";
+import {
+  compactFormat,
+  formatWith,
+  moneyFormat,
+  numberFormat,
+  toNumber as numeric,
+} from "../lib/format";
+import SectionHeading from "../components/SectionHeading";
+import { primaryButton } from "../lib/buttons";
+import MetricCard, { RangeText } from "../components/MetricCard";
+import { cardHover } from "../lib/cards";
+import ChartPanel from "../components/ChartPanel";
 
 // ========================================
 // COLORS AND STYLES
 // ========================================
 
 const COLORS = {
-  orange: "#D95332",
-  green: "#47866B",
-  ink: "#1D150F",
-  muted: "#645850", // = --muted-foreground; #776C61 was 4.46:1 on the beige panels
-  cream: "#F8EEE0",
+  orange: "var(--chart-accent)",
+  green: "var(--chart-positive)",
+  ink: "var(--ink)",
+  muted: "var(--muted-foreground)", // #776C61 was 4.46:1 on the beige panels
+  cream: "var(--surface-warm)",
 };
-
-const primaryButton =
-  "inline-flex items-center justify-center gap-3 " +
-  "border border-ink bg-primary px-6 py-3 " +
-  "font-semibold text-primary-foreground shadow-offset " +
-  "transition-transform duration-150 " +
-  "hover:translate-x-[2px] hover:translate-y-[2px]";
-
-const cardHover =
-  "transition-[background-color,box-shadow,transform] " +
-  "duration-200 hover:-translate-y-[2px] " +
-  "hover:shadow-offset motion-reduce:transform-none";
 
 // ========================================
 // FORMATTING
 // ========================================
 
-function numeric(value) {
-  if (
-    value === null ||
-    value === undefined ||
-    value === "" ||
-    !Number.isFinite(Number(value))
-  ) {
-    return null;
-  }
-
-  return Number(value);
-}
-
 function metricValue(metric) {
   return numeric(metric?.value);
 }
 
-const numberFormatter = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 0,
-});
+const formatNumber = formatWith(numberFormat);
 
-const moneyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 2,
-});
+const formatMoney = formatWith(moneyFormat);
 
-const compactFormatter = new Intl.NumberFormat("en-US", {
-  notation: "compact",
-  maximumFractionDigits: 1,
-});
-
-function formatNumber(value) {
-  const result = numeric(value);
-
-  return result === null
-    ? "—"
-    : numberFormatter.format(result);
-}
-
-function formatMoney(value) {
-  const result = numeric(value);
-
-  return result === null
-    ? "—"
-    : moneyFormatter.format(result);
-}
-
-function formatCompact(value) {
-  const result = numeric(value);
-
-  return result === null
-    ? "—"
-    : compactFormatter.format(result);
-}
+const formatCompact = formatWith(compactFormat);
 
 function formatMetric(metric) {
   const value = metricValue(metric);
@@ -122,34 +76,6 @@ function formatMetric(metric) {
   }
 
   return formatNumber(value);
-}
-
-function metricRange(metric) {
-  const range = metric?.range;
-  const value = metricValue(metric);
-
-  if (
-    !Array.isArray(range) ||
-    range.length !== 2 ||
-    value === null
-  ) {
-    return null;
-  }
-
-  const low = numeric(range[0]);
-  const high = numeric(range[1]);
-
-  if (
-    low === null ||
-    high === null ||
-    low > high ||
-    value < low ||
-    value > high
-  ) {
-    return null;
-  }
-
-  return [low, high];
 }
 
 function formatPeriod(period) {
@@ -180,117 +106,9 @@ function formatPeriod(period) {
 // SHARED COMPONENTS
 // ========================================
 
-function SectionHeading({
-  number,
-  eyebrow,
-  title,
-  description,
-}) {
-  return (
-    <div>
-      <p className="eyebrow flex items-center gap-3 text-muted-foreground">
-        <span className="text-primary">
-          {number}
-        </span>
-
-        <span className="h-px w-8 bg-current" />
-
-        {eyebrow}
-      </p>
-
-      <h2 className="mt-4 font-display text-3xl leading-tight sm:text-4xl">
-        {title}
-      </h2>
-
-      {description && (
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground">
-          {description}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function RangeText({ metric }) {
-  const range = metricRange(metric);
-
-  if (!range) return null;
-
-  const low = formatMetric({ value: range[0], unit: metric.unit });
-  const high = formatMetric({ value: range[1], unit: metric.unit });
-
-  // Both ends print the same (e.g. "under 0.1%"): the range adds nothing.
-  if (low === high) return null;
-
-  return (
-    <p className="mt-3 text-xs leading-6 text-muted-foreground">
-      Estimated range: {low} – {high}
-    </p>
-  );
-}
-
-function MetricCard({
-  label,
-  metric,
-  description,
-  highlighted = false,
-}) {
-  return (
-    <article
-      className={
-        "flex min-h-48 min-w-0 flex-col justify-between border border-ink p-6 " +
-        (highlighted
-          ? "bg-[#F8EEE0] "
-          : "bg-card ") +
-        cardHover
-      }
-    >
-      <p className="eyebrow text-muted-foreground">
-        {label}
-      </p>
-
-      <div className="mt-8">
-        <p className="break-words font-display text-4xl leading-tight">
-          {formatMetric(metric)}
-        </p>
-
-        <p className="mt-3 text-sm leading-6 text-muted-foreground">
-          {description}
-        </p>
-
-        <RangeText metric={metric} />
-      </div>
-    </article>
-  );
-}
-
 // ========================================
 // ALIGNED CHART CARD
 // ========================================
-
-function ChartPanel({
-  title,
-  description,
-  children,
-}) {
-  return (
-    <article className="flex h-full min-w-0 flex-col border border-ink bg-card p-5 sm:p-7">
-      <div className="min-h-[120px]">
-        <h3 className="font-display text-2xl leading-tight">
-          {title}
-        </h3>
-
-        <p className="mt-3 text-sm leading-7 text-muted-foreground">
-          {description}
-        </p>
-      </div>
-
-      <div className="mt-5 flex flex-1 flex-col">
-        {children}
-      </div>
-    </article>
-  );
-}
 
 function ChartValues({ items }) {
   return (
@@ -301,7 +119,7 @@ function ChartValues({ items }) {
           className={
             "flex min-h-[112px] min-w-0 flex-col justify-center border border-border p-4 " +
             (index === 0
-              ? "bg-[#F8EEE0]"
+              ? "bg-surface-warm"
               : "bg-background")
           }
         >
@@ -415,7 +233,7 @@ function FinancialChart({ predictions }) {
           >
             <CartesianGrid
               vertical={false}
-              stroke="#E8DED2"
+              stroke="var(--chart-grid)"
             />
 
             <XAxis
@@ -434,7 +252,7 @@ function FinancialChart({ predictions }) {
               width={66}
               tick={{
                 fill: COLORS.muted,
-                fontSize: 11,
+                fontSize: 12,
               }}
               tickFormatter={(value) =>
                 `$${formatCompact(value)}`
@@ -552,7 +370,7 @@ function DemandChart({ predictions }) {
           >
             <CartesianGrid
               horizontal={false}
-              stroke="#E8DED2"
+              stroke="var(--chart-grid)"
             />
 
             <XAxis
@@ -561,7 +379,7 @@ function DemandChart({ predictions }) {
               axisLine={false}
               tick={{
                 fill: COLORS.muted,
-                fontSize: 11,
+                fontSize: 12,
               }}
               tickFormatter={formatCompact}
             />
@@ -657,6 +475,7 @@ function ProfitabilitySection({
 
       <div className="mt-7 grid gap-5 md:grid-cols-2">
         <MetricCard
+          format={formatMetric}
           label="Profit margin"
           metric={predictions?.profit_margin_pct}
           description="The estimated portion of sales revenue remaining as profit."
@@ -664,6 +483,7 @@ function ProfitabilitySection({
         />
 
         <MetricCard
+          format={formatMetric}
           label="Return on investment"
           metric={periodROI}
           description={
@@ -751,7 +571,7 @@ function DemandDirection({
       />
 
       <div className="mt-7 grid gap-5 lg:grid-cols-2">
-        <article className="border border-ink bg-[#F8EEE0] p-6">
+        <article className="border border-ink bg-surface-warm p-6">
           <p className="eyebrow text-muted-foreground">
             Estimated direction
           </p>
@@ -871,7 +691,7 @@ function SupportingMetric({
       className={
         "flex min-w-0 flex-col border border-ink " +
         (highlighted
-          ? "bg-[#F8EEE0] "
+          ? "bg-surface-warm "
           : "bg-card ") +
         cardHover
       }
@@ -885,7 +705,7 @@ function SupportingMetric({
           {formatMetric(metric)}
         </p>
 
-        <RangeText metric={metric} />
+        <RangeText metric={metric} format={formatMetric} />
       </div>
 
       <div className="flex flex-1 flex-col gap-5 border-t border-border p-6">
@@ -1040,7 +860,7 @@ function SupportingDetails({
               "border border-ink px-5 py-3 text-sm font-semibold transition-colors " +
               (category === group.id
                 ? "bg-primary text-primary-foreground shadow-offset"
-                : "bg-card hover:bg-[#F8EEE0]")
+                : "bg-card hover:bg-surface-warm")
             }
           >
             {group.label}
@@ -1048,7 +868,7 @@ function SupportingDetails({
         ))}
       </div>
 
-      <div className="mt-7 border border-ink bg-[#F8EEE0] p-6">
+      <div className="mt-7 border border-ink bg-surface-warm p-6">
         <h3 className="font-display text-2xl">
           {activeGroup.heading}
         </h3>
@@ -1222,7 +1042,7 @@ function DecisionGuidance({
               key={step.title}
               className="flex items-start gap-4 border-b border-border pb-6 last:border-b-0 last:pb-0"
             >
-              <span className="flex size-9 shrink-0 items-center justify-center border border-ink bg-[#F8EEE0] font-mono text-xs">
+              <span className="flex size-9 shrink-0 items-center justify-center border border-ink bg-surface-warm font-mono text-xs">
                 {String(index + 1).padStart(2, "0")}
               </span>
 
@@ -1274,7 +1094,7 @@ function AboutForecast({ notes }) {
 
             {Array.isArray(notes) &&
               notes.length > 0 && (
-                <div className="mt-6 border-l-2 border-primary bg-[#F8EEE0] p-4">
+                <div className="mt-6 border-l-2 border-primary bg-surface-warm p-4">
                   <p className="text-sm font-semibold">
                     Additional information
                   </p>
@@ -1455,7 +1275,7 @@ export default function SalesForecastOverview({
                 "px-5 py-3 text-sm font-semibold transition-colors disabled:opacity-40 " +
                 (activeTimeframe === "monthly"
                   ? "bg-primary text-primary-foreground"
-                  : "hover:bg-[#F8EEE0]")
+                  : "hover:bg-surface-warm")
               }
             >
               Monthly
@@ -1474,7 +1294,7 @@ export default function SalesForecastOverview({
                 "px-5 py-3 text-sm font-semibold transition-colors disabled:opacity-40 " +
                 (activeTimeframe === "yearly"
                   ? "bg-primary text-primary-foreground"
-                  : "hover:bg-[#F8EEE0]")
+                  : "hover:bg-surface-warm")
               }
             >
               Yearly
@@ -1496,6 +1316,7 @@ export default function SalesForecastOverview({
 
               <div className="mt-7 grid gap-5 md:grid-cols-3">
                 <MetricCard
+                  format={formatMetric}
                   label="Gross revenue"
                   metric={predictions.gross_revenue}
                   description="Estimated sales revenue before costs."
@@ -1503,12 +1324,14 @@ export default function SalesForecastOverview({
                 />
 
                 <MetricCard
+                  format={formatMetric}
                   label="Net profit"
                   metric={predictions.net_profit}
                   description="Estimated earnings after costs."
                 />
 
                 <MetricCard
+                  format={formatMetric}
                   label="Units sold"
                   metric={predictions.units_sold}
                   description="Estimated sales volume, not confirmed orders."
@@ -1518,7 +1341,7 @@ export default function SalesForecastOverview({
 
             {/* MAIN TAKEAWAY */}
 
-            <section className="mt-6 border-l-2 border-primary bg-[#F8EEE0] p-6">
+            <section className="mt-6 border-l-2 border-primary bg-surface-warm p-6">
               <p className="font-semibold">
                 What do these results suggest?
               </p>
@@ -1548,6 +1371,7 @@ export default function SalesForecastOverview({
                 <ChartPanel
                   title="Where could the revenue go?"
                   description="Compare estimated revenue with costs calculated from the forecast."
+                  alignCharts
                 >
                   <FinancialChart
                     predictions={predictions}
@@ -1557,6 +1381,7 @@ export default function SalesForecastOverview({
                 <ChartPanel
                   title="How do sales and demand compare?"
                   description="These projections describe possible outcomes, not confirmed customer purchases."
+                  alignCharts
                 >
                   <DemandChart
                     predictions={predictions}

@@ -239,10 +239,9 @@ function RouteEffects() {
   useEffect(() => {
     // In-page anchors such as /#try scroll
     // themselves; every other navigation
-    // starts at the top of the new page.
-    // "instant" overrides the stylesheet's
-    // smooth scrolling, which would otherwise
-    // animate up through the new page.
+    // starts at the top of the new page,
+    // instantly rather than animating up
+    // through it.
     if (!hash) {
       window.scrollTo({
         top: 0,
@@ -369,7 +368,7 @@ function AppLayout({ children }) {
 
   const backgroundClass = isAuthPage
     ? "bg-background text-foreground"
-    : "bg-gradient-to-b from-[#F8FAFC] to-[#DCE3EA]";
+    : "bg-gradient-to-b from-backdrop-top to-backdrop-bottom";
 
   return (
     <div

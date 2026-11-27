@@ -17,6 +17,8 @@ import { getPredictionReasons } from "../services/marketlensApi";
 import { getScoreBand } from "../constants/scoreBands";
 import OpportunityGauge from "../components/OpportunityGauge";
 import { factorInfo } from "../constants/scoreFactors";
+import SectionHeading from "../components/SectionHeading";
+import { primaryButton } from "../lib/buttons";
 
 function normalizeGroup(items, positive) {
   if (!Array.isArray(items)) return [];
@@ -70,45 +72,9 @@ function getScoreMessage(score) {
 // SHARED DESIGN STYLES
 // ========================================
 
-const primaryButton =
-  "inline-flex items-center justify-center gap-3 " +
-  "border border-ink bg-primary px-6 py-3 " +
-  "font-semibold text-primary-foreground shadow-offset " +
-  "transition-transform duration-150 " +
-  "hover:translate-x-[2px] hover:translate-y-[2px] " +
-  "focus-visible:outline-2 focus-visible:outline-offset-4 " +
-  "focus-visible:outline-primary";
-
 // ========================================
 // PAGE HEADINGS
 // ========================================
-
-function SectionHeading({
-  number,
-  eyebrow,
-  title,
-  description,
-}) {
-  return (
-    <div>
-      <p className="eyebrow flex items-center gap-3 text-muted-foreground">
-        <span className="text-primary">{number}</span>
-        <span className="h-px w-8 bg-current" />
-        {eyebrow}
-      </p>
-
-      <h2 className="mt-4 font-display text-3xl leading-tight sm:text-4xl">
-        {title}
-      </h2>
-
-      {description && (
-        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          {description}
-        </p>
-      )}
-    </div>
-  );
-}
 
 // ========================================
 // OPPORTUNITY SUMMARY
@@ -152,7 +118,7 @@ function OpportunitySummary({
             </p>
           )}
 
-          <div className="mt-7 inline-flex border border-ink bg-[#F8EEE0] px-4 py-2 text-sm font-semibold">
+          <div className="mt-7 inline-flex border border-ink bg-surface-warm px-4 py-2 text-sm font-semibold">
             {band.label} opportunity
           </div>
 
@@ -203,15 +169,15 @@ function FindingCard({
           setExpanded((previous) => !previous)
         }
         aria-expanded={expanded}
-        className="w-full p-5 text-left transition-colors hover:bg-[#F8EEE0] sm:p-6"
+        className="w-full p-5 text-left transition-colors hover:bg-surface-warm sm:p-6"
       >
         <div className="flex items-start gap-4">
           <span
             className={
               "flex size-10 shrink-0 items-center justify-center border border-ink " +
               (factor.positive
-                ? "bg-[#E8F3EC]"
-                : "bg-[#F8EEE0]")
+                ? "bg-signal-up-surface"
+                : "bg-surface-warm")
             }
           >
             {factor.positive ? (
@@ -259,7 +225,7 @@ function FindingCard({
               className={
                 "h-full transition-[width] duration-300 " +
                 (factor.positive
-                  ? "bg-[#47866B]"
+                  ? "bg-chart-positive"
                   : "bg-primary")
               }
               style={{
@@ -294,7 +260,7 @@ function FindingCard({
             {factor.effect}
           </p>
 
-          <div className="mt-5 border-l-2 border-primary bg-[#F8EEE0] p-4">
+          <div className="mt-5 border-l-2 border-primary bg-surface-warm p-4">
             <p className="text-sm font-semibold">
               What you can do next
             </p>
@@ -328,8 +294,8 @@ function FindingsColumn({
             className={
               "flex size-11 shrink-0 items-center justify-center border border-ink " +
               (positive
-                ? "bg-[#E8F3EC]"
-                : "bg-[#F8EEE0]")
+                ? "bg-signal-up-surface"
+                : "bg-surface-warm")
             }
           >
             {positive ? (
@@ -375,7 +341,7 @@ function FindingsColumn({
 // SUGGESTED NEXT STEPS
 // ========================================
 
-function NextSteps({
+function ConcernNextSteps({
   concerns,
   hasFindings,
 }) {
@@ -399,6 +365,7 @@ function NextSteps({
   return (
     <section className="mt-14">
       <SectionHeading
+        descriptionLeading="relaxed"
         number="02"
         eyebrow="Research checklist"
         title="What should you do next?"
@@ -419,7 +386,7 @@ function NextSteps({
               key={`${index}-${step}`}
               className="flex items-start gap-4 border-b border-border pb-5 last:border-b-0 last:pb-0"
             >
-              <span className="flex size-9 shrink-0 items-center justify-center border border-ink bg-[#F8EEE0] font-mono text-xs">
+              <span className="flex size-9 shrink-0 items-center justify-center border border-ink bg-surface-warm font-mono text-xs">
                 {String(index + 1).padStart(2, "0")}
               </span>
 
@@ -598,6 +565,7 @@ export default function ScoreDetails({
 
         <section className="mt-14">
           <SectionHeading
+            descriptionLeading="relaxed"
             number="01"
             eyebrow="Your product findings"
             title="What stands out?"
@@ -622,7 +590,7 @@ export default function ScoreDetails({
           {!loading && error && (
             <div
               role="alert"
-              className="mt-7 border border-ink bg-[#F8EEE0] p-6"
+              className="mt-7 border border-ink bg-surface-warm p-6"
             >
               <p className="font-semibold">
                 Detailed findings unavailable
@@ -717,7 +685,7 @@ export default function ScoreDetails({
         </section>
 
         {!loading && !error && reasons && (
-          <NextSteps
+          <ConcernNextSteps
             concerns={negativeFactors.filter(
               (factor) => !factor.categoryWide
             )}
