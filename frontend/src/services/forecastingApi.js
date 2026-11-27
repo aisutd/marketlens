@@ -21,7 +21,12 @@ async function request(endpoint, options = {}) {
 
   const headers = new Headers(options.headers);
 
-  headers.set("Content-Type", "application/json");
+  // Content-Type only when there is a body: on a GET it is meaningless
+  // and, off the dev proxy, turns every request into a CORS preflight
+  // (#39).
+  if (options.body !== undefined && options.body !== null) {
+    headers.set("Content-Type", "application/json");
+  }
   headers.set("Authorization", `Bearer ${token}`);
 
   const result = await requestJson(`${BASE_URL}${endpoint}`, {
