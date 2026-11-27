@@ -31,14 +31,7 @@ import {
   toNumber as numeric,
 } from "../lib/format";
 import SectionHeading from "../components/SectionHeading";
-
-const primaryButton =
-  "inline-flex items-center justify-center gap-3 " +
-  "border border-ink bg-primary px-6 py-3 " +
-  "font-semibold text-primary-foreground shadow-offset " +
-  "transition-transform duration-150 " +
-  "hover:translate-x-[2px] hover:translate-y-[2px]";
-
+import { primaryButton } from "../lib/buttons";
 
 // ========================================
 // COLORS AND STYLES

@@ -94,7 +94,7 @@ test("number and money formats are defined once", () => {
 
 // ---- shared UI pieces ----
 
-test("SectionHeading has one definition", () => {
+test("SectionHeading and primaryButton each have one definition", () => {
   for (const file of [
     "../src/components/ProductSearch.jsx", "../src/pages/LaunchFeasibility.jsx",
     "../src/pages/LaunchForecastOverview.jsx", "../src/pages/Overview.jsx",
@@ -103,5 +103,12 @@ test("SectionHeading has one definition", () => {
     const text = read(file);
     assert.doesNotMatch(text, /^function SectionHeading\(/m, file);
     assert.match(text, /import SectionHeading from "(\.\.\/components|\.)\/SectionHeading"/, file);
+    assert.doesNotMatch(text, /^const primaryButton =\s*\n\s*"/m, file);
   }
+});
+
+test("every shared primary button has a keyboard focus outline", async () => {
+  const { primaryButton, focusRing } = await import("../src/lib/buttons.js");
+  assert.ok(primaryButton.includes(focusRing));
+  assert.match(focusRing, /focus-visible:outline-2/);
 });
