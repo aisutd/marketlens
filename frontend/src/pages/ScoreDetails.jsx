@@ -341,7 +341,7 @@ function FindingsColumn({
 // SUGGESTED NEXT STEPS
 // ========================================
 
-function NextSteps({
+function ConcernNextSteps({
   concerns,
   hasFindings,
 }) {
@@ -685,7 +685,7 @@ export default function ScoreDetails({
         </section>
 
         {!loading && !error && reasons && (
-          <NextSteps
+          <ConcernNextSteps
             concerns={negativeFactors.filter(
               (factor) => !factor.categoryWide
             )}

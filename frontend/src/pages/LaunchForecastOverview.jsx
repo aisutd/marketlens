@@ -561,7 +561,7 @@ function AdditionalDetails({
 // PRACTICAL BUSINESS GUIDANCE
 // ========================================
 
-function NextSteps({ predictions, period }) {
+function ForecastNextSteps({ predictions, period }) {
   const suffix = period === "12m" ? "12m" : "24m";
 
   const profit = metricValue(
@@ -991,7 +991,7 @@ export default function LaunchForecastOverview({
 
         {/* BUSINESS GUIDANCE */}
 
-        <NextSteps
+        <ForecastNextSteps
           predictions={predictions}
           period={period}
         />
