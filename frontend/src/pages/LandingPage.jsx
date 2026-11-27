@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import TryItLive from "../components/TryItLive";
+import ScoreDial from "../components/ScoreDial";
 
 const ticker = [
   "Market Intelligence",
@@ -405,73 +406,6 @@ function SectionHead({
   );
 }
 
-function ScoreDial({
-  score,
-  caption = "out of 100",
-}) {
-  const value = Math.max(
-    0,
-    Math.min(100, Number(score) || 0)
-  );
-
-  return (
-    <div className="relative">
-      <svg
-        viewBox="0 0 200 116"
-        className="w-full"
-        role="img"
-        aria-label={`Example opportunity score ${value} out of 100`}
-      >
-        {Array.from({ length: 11 }, (_, i) => {
-          const tick = i * 10;
-          const angle = Math.PI - (tick / 100) * Math.PI;
-          const inner = tick % 50 === 0 ? 82 : 86;
-
-          return (
-            <line
-              key={tick}
-              x1={100 + 92 * Math.cos(angle)}
-              y1={104 - 92 * Math.sin(angle)}
-              x2={100 + inner * Math.cos(angle)}
-              y2={104 - inner * Math.sin(angle)}
-              className="stroke-muted-foreground"
-              strokeWidth={1}
-            />
-          );
-        })}
-
-        <path
-          d="M 24 104 A 76 76 0 0 1 176 104"
-          fill="none"
-          className="stroke-secondary"
-          strokeWidth={12}
-        />
-
-        <path
-          d="M 24 104 A 76 76 0 0 1 176 104"
-          fill="none"
-          pathLength={100}
-          strokeDasharray="100"
-          strokeDashoffset={100 - value}
-          className="stroke-primary animate-sweep"
-          style={{ "--dash-from": 100 }}
-          strokeWidth={12}
-        />
-      </svg>
-
-      <div className="absolute inset-x-0 bottom-0 flex flex-col items-center">
-        <span className="font-display tabular text-6xl leading-none">
-          {value}
-        </span>
-
-        <span className="eyebrow mt-2 text-muted-foreground">
-          {caption}
-        </span>
-      </div>
-    </div>
-  );
-}
-
 function ReasonBars({ up, down }) {
   const maximum = Math.max(
     0.0001,
@@ -571,7 +505,10 @@ function HeroCard() {
         </div>
 
         <div className="px-10 pb-2 pt-4">
-          <ScoreDial score={example.score} />
+          <ScoreDial
+            score={example.score}
+            label="Example opportunity score"
+          />
         </div>
 
         <p className="px-5 pb-5 text-center text-sm text-muted-foreground">

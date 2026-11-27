@@ -17,6 +17,7 @@ import {
   handleRadioGroupKeyDown,
   radioProps,
 } from "../lib/radioGroup";
+import ScoreDial from "./ScoreDial";
 
 const PRESETS = DEMO_PRESETS;
 
@@ -96,83 +97,6 @@ function normalizeReasons(items) {
         Math.abs(a.impact)
     )
     .slice(0, 3);
-}
-
-function ScoreDial({
-  score,
-  caption = "out of 100",
-}) {
-  const value = Math.max(
-    0,
-    Math.min(100, Number(score) || 0)
-  );
-
-  const ticks = Array.from(
-    { length: 11 },
-    (_, index) => index * 10
-  );
-
-  return (
-    <div className="relative">
-      <svg
-        viewBox="0 0 200 116"
-        className="w-full"
-        role="img"
-        aria-label={`Illustrative preview score: ${value} out of 100`}
-      >
-        {ticks.map((tick) => {
-          const angle =
-            Math.PI - (tick / 100) * Math.PI;
-
-          const outer = 92;
-
-          const inner =
-            tick % 50 === 0 ? 82 : 86;
-
-          return (
-            <line
-              key={tick}
-              x1={100 + outer * Math.cos(angle)}
-              y1={104 - outer * Math.sin(angle)}
-              x2={100 + inner * Math.cos(angle)}
-              y2={104 - inner * Math.sin(angle)}
-              className="stroke-muted-foreground"
-              strokeWidth={1}
-            />
-          );
-        })}
-
-        <path
-          d="M 24 104 A 76 76 0 0 1 176 104"
-          fill="none"
-          className="stroke-secondary"
-          strokeWidth={12}
-        />
-
-        <path
-          key={value}
-          d="M 24 104 A 76 76 0 0 1 176 104"
-          fill="none"
-          pathLength={100}
-          strokeDasharray="100"
-          strokeDashoffset={100 - value}
-          className="stroke-primary animate-sweep"
-          style={{ "--dash-from": 100 }}
-          strokeWidth={12}
-        />
-      </svg>
-
-      <div className="absolute inset-x-0 bottom-0 flex flex-col items-center">
-        <span className="font-display tabular text-6xl leading-none text-foreground">
-          {value}
-        </span>
-
-        <span className="eyebrow mt-2 text-muted-foreground">
-          {caption}
-        </span>
-      </div>
-    </div>
-  );
 }
 
 function FactorBars({ up = [], down = [] }) {
@@ -786,6 +710,7 @@ export default function TryItLive() {
             <div className="w-56 opacity-40">
               <ScoreDial
                 score={0}
+                label="Illustrative preview score:"
                 caption="awaiting preview"
               />
             </div>
@@ -813,7 +738,10 @@ export default function TryItLive() {
             </div>
 
             <div className="mx-auto w-60">
-              <ScoreDial score={result.score} />
+              <ScoreDial
+                score={result.score}
+                label="Illustrative preview score:"
+              />
             </div>
 
             <p className="text-center text-sm text-muted-foreground">

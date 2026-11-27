@@ -140,3 +140,11 @@ test("charts share one ChartTooltip", () => {
     assert.match(text, /<ChartTooltip format=\{formatMoney\} \/>/, file);
   }
 });
+
+test("the landing page and Try It Live share one ScoreDial", () => {
+  for (const [file, from] of [["../src/pages/LandingPage.jsx", "../components/ScoreDial"], ["../src/components/TryItLive.jsx", "./ScoreDial"]]) {
+    const text = read(file);
+    assert.doesNotMatch(text, /^function ScoreDial/m, file);
+    assert.ok(text.includes(`import ScoreDial from "${from}"`), file);
+  }
+});
