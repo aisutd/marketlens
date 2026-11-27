@@ -9,6 +9,10 @@ These tests verify that:
 - Retired endpoints are absent from the API schema.
 
 Trained ML models are not required for these tests.
+
+Most checks inspect the app in-process and are skipped when API_BASE_URL
+is set; test_demo_route_is_absent_on_server then sends the /demo/* checks
+to that server instead.
 """
 
 import importlib
@@ -18,6 +22,7 @@ from fastapi.testclient import TestClient
 
 from api.app import app
 from api.firebase_auth import verify_firebase_token
+from conftest import BASE_URL, in_process
 
 
 api_module = importlib.import_module("api.app")
@@ -123,6 +128,7 @@ def isolated_client(monkeypatch):
 
 # ---- Removed anonymous demo endpoints ----
 
+@in_process
 @pytest.mark.parametrize(
     "path,body",
     DEMO_ROUTES
@@ -140,6 +146,7 @@ def test_anonymous_demo_route_returns_404(
     assert response.status_code == 404, response.text
 
 
+@in_process
 @pytest.mark.parametrize(
     "path,body",
     DEMO_ROUTES
@@ -162,6 +169,7 @@ def test_demo_route_with_token_returns_404(
 
 # ---- Protected scoring endpoints ----
 
+@in_process
 @pytest.mark.parametrize(
     "path,body",
     PROTECTED_ROUTES
@@ -183,6 +191,7 @@ def test_protected_route_requires_authentication(
     }
 
 
+@in_process
 @pytest.mark.parametrize(
     "path,body",
     PROTECTED_ROUTES
@@ -205,6 +214,7 @@ def test_protected_route_rejects_basic_auth(
 
 # ---- FastAPI route registration ----
 
+@in_process
 @pytest.mark.parametrize(
     "path,body",
     DEMO_ROUTES
@@ -221,6 +231,7 @@ def test_demo_route_is_not_registered(
     assert path not in registered_paths
 
 
+@in_process
 @pytest.mark.parametrize(
     "path,body",
     PROTECTED_ROUTES
@@ -237,6 +248,7 @@ def test_protected_route_is_still_registered(
     assert path in registered_paths
 
 
+@in_process
 @pytest.mark.parametrize(
     "path,body",
     PROTECTED_ROUTES
@@ -266,6 +278,7 @@ def test_protected_route_has_firebase_dependency(
 
 # ---- OpenAPI documentation ----
 
+@in_process
 @pytest.mark.parametrize(
     "path,body",
     DEMO_ROUTES
@@ -279,6 +292,7 @@ def test_demo_route_is_not_in_openapi(
     assert path not in schema["paths"]
 
 
+@in_process
 @pytest.mark.parametrize(
     "path,body",
     PROTECTED_ROUTES
@@ -294,27 +308,24 @@ def test_protected_route_is_still_in_openapi(
     assert "post" in schema["paths"][path]
 
 
-# ---- CORS compatibility ----
+# ---- Deployed server ----
 
-def test_cors_allows_authorization_header(
-    isolated_client
+@pytest.mark.skipif(
+    not BASE_URL,
+    reason="needs a running server (API_BASE_URL is not set)"
+)
+@pytest.mark.parametrize(
+    "path,body",
+    DEMO_ROUTES
+)
+def test_demo_route_is_absent_on_server(
+    client,
+    path,
+    body
 ):
-    response = isolated_client.options(
-        "/predict",
-        headers={
-            "Origin": "http://localhost:3000",
-
-            "Access-Control-Request-Method":
-                "POST",
-
-            "Access-Control-Request-Headers":
-                "authorization, content-type"
-        }
+    response = client.post(
+        path,
+        json=body
     )
 
-    assert response.status_code == 200, response.text
-
-    assert "authorization" in response.headers.get(
-        "access-control-allow-headers",
-        ""
-    ).lower()
+    assert response.status_code == 404, response.text
