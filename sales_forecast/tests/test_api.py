@@ -9,6 +9,9 @@ from marketlens import MarketLensPredictor, ProductInput
 from marketlens.api.app import create_app
 from marketlens.api.firebase_auth import verify_firebase_token
 
+# Every test here needs the trained models (directly or through the API lifespan).
+pytestmark = pytest.mark.models
+
 LAUNCH = {"category": "Cell Phones & Accessories", "price": 29.99, "list_price": 39.99,
           "review_count": 1200, "months_on_market": 10, "launch_month": 7}
 BASE = "/api/v1/predictions"

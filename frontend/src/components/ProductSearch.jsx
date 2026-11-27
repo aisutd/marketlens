@@ -346,6 +346,12 @@ export default function ProductSearch({
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [productsError, setProductsError] = useState("");
   const [catalogueAttempt, setCatalogueAttempt] = useState(0);
+  // The catalogue (about 1,350 products in pages of 500) is fetched only
+  // once the person first focuses the product search, not when the
+  // "Existing Product" workflow opens: someone who types a Product ID
+  // never waits for it, and a cold-starting forecasting service is not
+  // hit until it is needed (#49).
+  const [catalogueWanted, setCatalogueWanted] = useState(false);
 
   const [activeIndex, setActiveIndex] = useState(-1);
 
@@ -359,7 +365,11 @@ export default function ProductSearch({
     model === "sales" && forecastWorkflow === "existing";
 
   useEffect(() => {
-    if (!isExisting || products.length > 0) {
+    if (
+      !isExisting ||
+      !catalogueWanted ||
+      products.length > 0
+    ) {
       return;
     }
 
@@ -449,7 +459,12 @@ export default function ProductSearch({
     return () => {
       active = false;
     };
-  }, [isExisting, products.length, catalogueAttempt]);
+  }, [
+    isExisting,
+    catalogueWanted,
+    products.length,
+    catalogueAttempt,
+  ]);
 
   const filteredProducts = useMemo(() => {
     const query = productQuery.trim().toLowerCase();
@@ -1163,6 +1178,8 @@ export default function ProductSearch({
                       autoComplete="off"
                       disabled={loading}
                       onFocus={() => {
+                        setCatalogueWanted(true);
+
                         if (!selectedProduct) {
                           setShowDropdown(true);
                         }

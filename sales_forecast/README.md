@@ -75,7 +75,7 @@ Run these from the `sales_forecast/` folder (`cd sales_forecast`):
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 .venv/bin/pip install .            # installs the marketlens package (re-run after changing src/)
-.venv/bin/python -m pytest         # 29 tests
+.venv/bin/python -m pytest         # 110 tests; those marked `models` skip without models/final and data/
 .venv/bin/python scripts/example_predictions.py
 ```
 
@@ -202,6 +202,8 @@ python -m uvicorn marketlens.api.app:app --host 127.0.0.1 --port 8000 --reload
 
 Alternatively, `pip install -e '.[api,dev]'` alone installs the library, API, and test dependencies without the optional notebook tools; `requirements.txt` pins the versions tested together. `--reload` is for development. Run from the `sales_forecast/` folder or set `MARKETLENS_ROOT` to its absolute path so the library can find model and data files. Each additional server worker loads its own models and histories.
 
+`MARKETLENS_CORS_ORIGINS` lists the exact frontend origins allowed to call the API from a browser (no wildcard; with none set, browsers are refused). A production frontend calls this API cross-origin, so its origin must be listed here; see "Production build" in `frontend/README.md`.
+
 Open `/docs` on your running server for Swagger UI, `/redoc` for ReDoc, and `/openapi.json` for the schema. For a basic readiness check:
 
 ```bash
@@ -324,6 +326,15 @@ python -m pytest tests/test_auth.py -v
 python -m pytest -q                   # existing ML tests plus API tests
 python -m pytest tests/test_api.py -q # API contracts with real bundled models
 python scripts/example_predictions.py
+```
+
+Most tests need the trained models and data, which are gitignored (`models/final`, `data/`). They are marked
+`models` and are skipped, with a reason, when those folders are missing, for example on a fresh clone or in CI.
+The rest (fee rules, cleaning helpers) run anywhere:
+
+```bash
+python -m pytest -m "not models"      # model-free tests only (18), the set CI can run
+MARKETLENS_ROOT=/path/to/project python -m pytest   # everything, with models/final and data/ in that folder
 ```
 
 API tests cover real launch/monthly/yearly results, exact preservation of the library outputs and uncertainty, catalogue pagination, validation, unknown IDs, unsupported years, CORS, startup loading/failures, internal errors, and OpenAPI documentation.
