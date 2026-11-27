@@ -17,15 +17,15 @@ import { auth } from "../services/firebase";
 const MODEL_STYLES = {
   opportunity: {
     label: "Opportunity Score",
-    className: "bg-[#DCEFE6] text-[#245B46]",
+    className: "bg-status-good text-status-good-foreground",
   },
   sales: {
     label: "Sales Forecast",
-    className: "bg-[#E1EAF8] text-[#244D81]",
+    className: "bg-status-info text-status-info-foreground",
   },
   launch: {
     label: "Launch Forecast",
-    className: "bg-[#F9E8D6] text-[#885321]",
+    className: "bg-status-warn text-status-warn-foreground",
   },
 };
 

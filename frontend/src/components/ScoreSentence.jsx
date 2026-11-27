@@ -21,9 +21,9 @@ export default function ScoreSentence({ score, categoryName }) {
 
   return (
     <>
-      <p className="mt-2 text-sm text-[#475569]">{rank}</p>
+      <p className="mt-2 text-sm text-score-note">{rank}</p>
 
-      <p className="mt-1 text-sm text-[#475569]">
+      <p className="mt-1 text-sm text-score-note">
         {getScoreBand(score).odds}
       </p>
     </>

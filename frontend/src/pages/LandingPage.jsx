@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowDownRight,
   ArrowRight,
@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import TryItLive from "../components/TryItLive";
+import ScoreDial from "../components/ScoreDial";
 
 const ticker = [
   "Market Intelligence",
@@ -184,8 +185,8 @@ const cardHover =
   "transition-[background-color,box-shadow,transform] " +
   "duration-200 ease-out " +
   "hover:z-10 hover:-translate-y-[2px] " +
-  "hover:bg-[#F8EEE0] " +
-  "hover:shadow-[4px_4px_0_0_#1D150F] " +
+  "hover:bg-surface-warm " +
+  "hover:shadow-offset " +
   "motion-reduce:transform-none " +
   "motion-reduce:transition-none";
 
@@ -214,10 +215,59 @@ function PrimaryButton({
   );
 }
 
+// Click handler for in-page links (href="#how" and so on). The page has no
+// global smooth scrolling (#50: it also animated find-in-page and history
+// jumps), so these links scroll smoothly themselves, or jump when the
+// visitor prefers reduced motion. The hash still goes into the URL, and
+// focus moves to the section, as a native anchor jump would do for
+// keyboard users. Modified clicks (new tab and so on) are left alone.
+function useSectionLink() {
+  const navigate = useNavigate();
+
+  return (event) => {
+    const id = event.currentTarget.hash.slice(1);
+    const target = id && document.getElementById(id);
+
+    if (
+      !target ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    navigate({ hash: id });
+
+    target.scrollIntoView({
+      behavior: reduceMotion ? "instant" : "smooth",
+      block: "start",
+    });
+
+    // tabindex -1 makes the section focusable without adding a Tab stop;
+    // data-section-target hides the outline a whole focused section would
+    // otherwise get (lovable-reference.css).
+    if (!target.hasAttribute("tabindex")) {
+      target.setAttribute("tabindex", "-1");
+    }
+    target.setAttribute("data-section-target", "");
+    target.focus({ preventScroll: true });
+  };
+}
+
 // userId comes from App's auth check: null when logged out, undefined
 // while the check is still running (then nothing extra is shown).
 function SiteHeader({ userId }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const scrollToSection = useSectionLink();
 
   const loggedOut = userId === null;
   const startHref = loggedOut ? "/signup" : "/discover";
@@ -254,6 +304,7 @@ function SiteHeader({ userId }) {
             <a
               key={href}
               href={href}
+              onClick={scrollToSection}
               className="transition-colors hover:text-foreground focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
             >
               {label}
@@ -293,7 +344,10 @@ function SiteHeader({ userId }) {
             <a
               key={href}
               href={href}
-              onClick={() => setMenuOpen(false)}
+              onClick={(event) => {
+                setMenuOpen(false);
+                scrollToSection(event);
+              }}
             >
               {label}
             </a>
@@ -348,73 +402,6 @@ function SectionHead({
       <p className={`mt-5 text-lg leading-relaxed ${muted}`}>
         {lede}
       </p>
-    </div>
-  );
-}
-
-function ScoreDial({
-  score,
-  caption = "out of 100",
-}) {
-  const value = Math.max(
-    0,
-    Math.min(100, Number(score) || 0)
-  );
-
-  return (
-    <div className="relative">
-      <svg
-        viewBox="0 0 200 116"
-        className="w-full"
-        role="img"
-        aria-label={`Example opportunity score ${value} out of 100`}
-      >
-        {Array.from({ length: 11 }, (_, i) => {
-          const tick = i * 10;
-          const angle = Math.PI - (tick / 100) * Math.PI;
-          const inner = tick % 50 === 0 ? 82 : 86;
-
-          return (
-            <line
-              key={tick}
-              x1={100 + 92 * Math.cos(angle)}
-              y1={104 - 92 * Math.sin(angle)}
-              x2={100 + inner * Math.cos(angle)}
-              y2={104 - inner * Math.sin(angle)}
-              className="stroke-muted-foreground"
-              strokeWidth={1}
-            />
-          );
-        })}
-
-        <path
-          d="M 24 104 A 76 76 0 0 1 176 104"
-          fill="none"
-          className="stroke-secondary"
-          strokeWidth={12}
-        />
-
-        <path
-          d="M 24 104 A 76 76 0 0 1 176 104"
-          fill="none"
-          pathLength={100}
-          strokeDasharray="100"
-          strokeDashoffset={100 - value}
-          className="stroke-primary animate-sweep"
-          style={{ "--dash-from": 100 }}
-          strokeWidth={12}
-        />
-      </svg>
-
-      <div className="absolute inset-x-0 bottom-0 flex flex-col items-center">
-        <span className="font-display tabular text-6xl leading-none">
-          {value}
-        </span>
-
-        <span className="eyebrow mt-2 text-muted-foreground">
-          {caption}
-        </span>
-      </div>
     </div>
   );
 }
@@ -489,7 +476,7 @@ function ReasonBars({ up, down }) {
 function HeroCard() {
   return (
     <div className="relative">
-      <div className="absolute -bottom-4 -left-4 z-10 -rotate-2 border border-ink bg-accent px-3 py-1 font-mono text-[11px] uppercase tracking-widest text-accent-foreground shadow-offset-sm">
+      <div className="absolute -bottom-4 -left-4 z-10 -rotate-2 border border-ink bg-accent px-3 py-1 font-mono text-xs uppercase tracking-widest text-accent-foreground shadow-offset-sm">
         Illustrative example
       </div>
 
@@ -499,7 +486,7 @@ function HeroCard() {
             Product opportunity
           </span>
 
-          <span className="font-mono text-[11px] text-muted-foreground">
+          <span className="font-mono text-xs text-muted-foreground">
             Analysis preview
           </span>
         </div>
@@ -518,7 +505,10 @@ function HeroCard() {
         </div>
 
         <div className="px-10 pb-2 pt-4">
-          <ScoreDial score={example.score} />
+          <ScoreDial
+            score={example.score}
+            label="Example opportunity score"
+          />
         </div>
 
         <p className="px-5 pb-5 text-center text-sm text-muted-foreground">
@@ -537,6 +527,7 @@ function HeroCard() {
 }
 
 function HeroSection() {
+  const scrollToSection = useSectionLink();
   return (
     <section className="relative overflow-hidden border-b border-ink bg-ledger">
       <div className="mx-auto grid max-w-6xl items-center gap-14 px-5 pb-20 pt-14 sm:px-8 lg:grid-cols-[1.15fr_1fr] lg:pb-24 lg:pt-20">
@@ -563,6 +554,7 @@ function HeroSection() {
           <div className="mt-9 flex flex-wrap gap-4">
             <a
               href="#try"
+              onClick={scrollToSection}
               className="inline-flex items-center justify-center gap-2 rounded-md border border-ink bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-offset transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-offset-sm"
             >
               Score a quick idea
@@ -809,7 +801,7 @@ function ForecastSection() {
                 Financial outlook
               </span>
 
-              <span className="font-mono text-[11px] text-muted-foreground">
+              <span className="font-mono text-xs text-muted-foreground">
                 Planning tools
               </span>
             </div>
@@ -903,7 +895,7 @@ function DecisionSection() {
                         {item.title}
                       </h3>
 
-                      <span className="font-mono text-[11px] text-muted-foreground">
+                      <span className="font-mono text-xs text-muted-foreground">
                         {String(index + 1).padStart(2, "0")}
                       </span>
                     </div>
@@ -973,7 +965,9 @@ export default function LandingPage({ userId }) {
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader userId={userId} />
 
-      <main id="main-content">
+      {/* The skip link's target on this page; App leaves the id off its
+          own wrapper here. */}
+      <main id="main-content" tabIndex={-1} className="outline-none">
         <HeroSection />
         <TechnicalTicker />
         <HowItWorks />

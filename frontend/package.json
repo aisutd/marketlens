@@ -15,13 +15,17 @@
     "test:login-return": "node --test tests/login-return-path.test.mjs",
     "test:forecast-numbers": "node --test tests/forecast-numbers.test.mjs",
     "test:feasibility-costs": "node --test tests/feasibility-costs.test.mjs",
+    "test:design-system": "node --test tests/design-system.test.mjs",
+    "test:text-size": "node --test tests/text-size.test.mjs",
     "test:opportunity-pages": "node --test tests/opportunity-pages.test.mjs",
     "test:discover-form": "node --test tests/discover-form.test.mjs",
     "test:load-on-demand": "node --test tests/load-on-demand.test.mjs",
     "test:api-headers": "node --test tests/api-headers.test.mjs",
     "test:api-base": "node --test tests/api-base.test.mjs",
     "test:demo-preview": "node --test tests/demo-preview.test.mjs",
-    "test:not-found": "node --test tests/not-found.test.mjs"
+    "test:not-found": "node --test tests/not-found.test.mjs",
+    "test:skip-link": "node --test tests/skip-link.test.mjs",
+    "test:focus-visible": "node --test tests/focus-visible.test.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

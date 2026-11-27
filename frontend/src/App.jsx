@@ -261,10 +261,9 @@ function RouteEffects() {
   useEffect(() => {
     // In-page anchors such as /#try scroll
     // themselves; every other navigation
-    // starts at the top of the new page.
-    // "instant" overrides the stylesheet's
-    // smooth scrolling, which would otherwise
-    // animate up through the new page.
+    // starts at the top of the new page,
+    // instantly rather than animating up
+    // through it.
     if (!hash) {
       window.scrollTo({
         top: 0,
@@ -402,11 +401,31 @@ function AppLayout({ children }) {
 
   const backgroundClass = isAuthPage
     ? "bg-background text-foreground"
-    : "bg-gradient-to-b from-[#F8FAFC] to-[#DCE3EA]";
+    : "bg-gradient-to-b from-backdrop-top to-backdrop-bottom";
 
   return (
     <div
       className={`flex min-h-screen flex-col ${backgroundClass}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ========================================
+// PAGE CONTENT (SKIP LINK TARGET)
+// ========================================
+
+// The landing page brings its own header, main and footer, so there the
+// skip link must point at its <main>, not at this wrapper around all three.
+function PageContent({ children }) {
+  const location = useLocation();
+
+  return (
+    <div
+      id={location.pathname === "/" ? undefined : "main-content"}
+      tabIndex={-1}
+      className="w-full flex-1 outline-none"
     >
       {children}
     </div>
@@ -789,11 +808,7 @@ export default function App() {
 
         {/* PAGE CONTENT */}
 
-        <div
-          id="main-content"
-          tabIndex={-1}
-          className="w-full flex-1 outline-none"
-        >
+        <PageContent>
           <Suspense fallback={<PageLoading />}>
           <Routes>
 
@@ -1021,7 +1036,7 @@ export default function App() {
 
           </Routes>
           </Suspense>
-        </div>
+        </PageContent>
 
         {/* GLOBAL COPYRIGHT FOOTER */}
 
