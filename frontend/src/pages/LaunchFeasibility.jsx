@@ -904,6 +904,26 @@ function ScenarioComparison({
       ? ((currentPrice / originalPrice) - 1) * 100
       : null;
 
+  // With the price unchanged every difference is $0.00, so ask for a
+  // new price instead of showing a grid of zeros.
+  const adjusted = numeric(currentPrice);
+
+  if (
+    adjusted !== null &&
+    Math.abs(adjusted - originalPrice) < 0.005
+  ) {
+    return (
+      <div className="mt-6 border border-ink bg-card p-6">
+        <p className="text-sm text-muted-foreground">
+          Change the selling price in your
+          assumptions to compare it with the
+          original price of{" "}
+          {formatMoney(originalPrice)}.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="mt-6 grid gap-5 lg:grid-cols-3">
