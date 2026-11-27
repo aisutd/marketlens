@@ -20,6 +20,7 @@ import {
   handleRadioGroupKeyDown,
   radioProps,
 } from "../lib/radioGroup";
+import SectionHeading from "./SectionHeading";
 
 const PAGE_SIZE = 500;
 const MAX_SEARCH_RESULTS = 12;
@@ -53,8 +54,8 @@ const inputStyle =
 const cardHover =
   "transition-[background-color,box-shadow,transform] " +
   "duration-200 ease-out " +
-  "hover:-translate-y-[2px] hover:bg-[#F8EEE0] " +
-  "hover:shadow-[4px_4px_0_0_#1D150F] " +
+  "hover:-translate-y-[2px] hover:bg-surface-warm " +
+  "hover:shadow-offset " +
   "motion-reduce:transform-none motion-reduce:transition-none";
 
 function SelectionCard({
@@ -80,7 +81,7 @@ function SelectionCard({
         "focus-visible:outline-2 focus-visible:outline-offset-4 " +
         "focus-visible:outline-primary " +
         (selected
-          ? "bg-[#F8EEE0] shadow-offset "
+          ? "bg-surface-warm shadow-offset "
           : `bg-card ${cardHover} `) +
         (disabled ? "cursor-not-allowed opacity-50 " : "")
       }
@@ -282,26 +283,6 @@ function SelectField({
       </span>
 
       <FieldMessages id={id} error={error} />
-    </div>
-  );
-}
-
-function SectionHeading({ number, title, description }) {
-  return (
-    <div>
-      <p className="eyebrow flex items-center gap-3 text-muted-foreground">
-        <span className="text-primary">{number}</span>
-        <span className="h-px w-8 bg-current" />
-        Analysis setup
-      </p>
-
-      <h2 className="mt-4 font-display text-3xl leading-tight">
-        {title}
-      </h2>
-
-      <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-        {description}
-      </p>
     </div>
   );
 }
@@ -848,6 +829,8 @@ export default function ProductSearch({
     >
       <section>
         <SectionHeading
+          size="form"
+          eyebrow="Analysis setup"
           number="01"
           title="Choose your analysis."
           description="What would you like to evaluate? Select the option that best matches your goal."
@@ -890,6 +873,8 @@ export default function ProductSearch({
       {model === "sales" && (
         <section>
           <SectionHeading
+            size="form"
+            eyebrow="Analysis setup"
             number="02"
             title="What are you forecasting?"
             description="Choose between an existing product and a potential new product launch."
@@ -1284,7 +1269,7 @@ export default function ProductSearch({
                             className={
                               "cursor-pointer border-b border-border px-5 py-4 text-left transition-colors " +
                               (index === activeIndex
-                                ? "bg-[#F8EEE0] outline-2 -outline-offset-2 outline-primary"
+                                ? "bg-surface-warm outline-2 -outline-offset-2 outline-primary"
                                 : "")
                             }
                           >
@@ -1321,7 +1306,7 @@ export default function ProductSearch({
                 </div>
 
                 {selectedProduct && (
-                  <div className="mt-5 flex items-start justify-between gap-4 border border-ink bg-[#F8EEE0] p-5">
+                  <div className="mt-5 flex items-start justify-between gap-4 border border-ink bg-surface-warm p-5">
                     <div>
                       <p className="eyebrow text-primary">
                         Selected product

@@ -27,20 +27,17 @@ import {
   handleRadioGroupKeyDown,
   radioProps,
 } from "../lib/radioGroup";
+import {
+  formatWith,
+  moneyFormat,
+  numberFormat,
+} from "../lib/format";
+import SectionHeading from "../components/SectionHeading";
+import { primaryButton } from "../lib/buttons";
 
 // ========================================
 // FORMATTING
 // ========================================
-
-const currencyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 2,
-});
-
-const numberFormatter = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 0,
-});
 
 function numeric(value) {
   // Field text must be a plain decimal ("  " is not 0); numbers from
@@ -48,21 +45,9 @@ function numeric(value) {
   return parseNumberInput(value);
 }
 
-function currency(value) {
-  const amount = numeric(value);
+const currency = formatWith(moneyFormat, numeric);
 
-  return amount === null
-    ? "—"
-    : currencyFormatter.format(amount);
-}
-
-function formattedNumber(value) {
-  const amount = numeric(value);
-
-  return amount === null
-    ? "—"
-    : numberFormatter.format(amount);
-}
+const formattedNumber = formatWith(numberFormat, numeric);
 
 // Largest first, category-wide factors last (see constants/scoreFactors.js).
 const sortedFactors = rankFactors;
@@ -82,18 +67,9 @@ function rankingFactors(factors) {
 const hoverCard =
   "transition-[background-color,box-shadow,transform] " +
   "duration-200 ease-out hover:-translate-y-[2px] " +
-  "hover:bg-[#F8EEE0] hover:shadow-offset " +
+  "hover:bg-surface-warm hover:shadow-offset " +
   "motion-reduce:transform-none " +
   "motion-reduce:transition-none";
-
-const primaryButton =
-  "inline-flex items-center justify-center gap-3 " +
-  "border border-ink bg-primary px-6 py-3 " +
-  "font-semibold text-primary-foreground shadow-offset " +
-  "transition-transform duration-150 " +
-  "hover:translate-x-[2px] hover:translate-y-[2px] " +
-  "focus-visible:outline-2 focus-visible:outline-offset-4 " +
-  "focus-visible:outline-primary";
 
 // ========================================
 // BUSINESS-FRIENDLY SCORE LANGUAGE
@@ -152,33 +128,6 @@ function getOpportunityMessage(score) {
 // ========================================
 // SHARED SECTION HEADING
 // ========================================
-
-function SectionHeading({
-  number,
-  eyebrow,
-  title,
-  description,
-}) {
-  return (
-    <div>
-      <p className="eyebrow flex items-center gap-3 text-muted-foreground">
-        <span className="text-primary">{number}</span>
-        <span className="h-px w-8 bg-current" />
-        {eyebrow}
-      </p>
-
-      <h2 className="mt-4 font-display text-3xl leading-tight sm:text-4xl">
-        {title}
-      </h2>
-
-      {description && (
-        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          {description}
-        </p>
-      )}
-    </div>
-  );
-}
 
 // ========================================
 // FRIENDLY FACTOR EXPLANATIONS
@@ -276,7 +225,7 @@ function ScoreHero({
             </em>
           </h2>
 
-          <div className="mt-7 inline-flex border border-ink bg-[#F8EEE0] px-4 py-2 text-sm font-semibold">
+          <div className="mt-7 inline-flex border border-ink bg-surface-warm px-4 py-2 text-sm font-semibold">
             {band.label} opportunity
           </div>
 
@@ -294,7 +243,7 @@ function ScoreHero({
               {positive.map((reason, index) => (
                 <span
                   key={`positive-${index}`}
-                  className="border border-[#8AB6A4] bg-[#E8F3EC] px-3 py-2 text-xs text-[#255D49]"
+                  className="border border-signal-up-border bg-signal-up-surface px-3 py-2 text-xs text-signal-up-strong"
                 >
                   +{" "}
                   {factorInterpretation(
@@ -307,7 +256,7 @@ function ScoreHero({
               {negative.map((reason, index) => (
                 <span
                   key={`negative-${index}`}
-                  className="border border-primary/50 bg-[#F8EEE0] px-3 py-2 text-xs text-foreground"
+                  className="border border-primary/50 bg-surface-warm px-3 py-2 text-xs text-foreground"
                 >
                   −{" "}
                   {factorInterpretation(
@@ -331,7 +280,7 @@ function ScoreHero({
 
             <Link
               to="/score-details"
-              className="inline-flex items-center justify-center border border-ink bg-card px-6 py-3 text-sm font-semibold transition-colors hover:bg-[#F8EEE0]"
+              className="inline-flex items-center justify-center border border-ink bg-card px-6 py-3 text-sm font-semibold transition-colors hover:bg-surface-warm"
             >
               Understand your results
             </Link>
@@ -365,6 +314,7 @@ function ScoreSummary({
   return (
     <section className="mt-14">
       <SectionHeading
+        descriptionLeading="relaxed"
         number="01"
         eyebrow="Your results"
         title="Your results, at a glance."
@@ -375,7 +325,7 @@ function ScoreSummary({
       <div className="mt-7 grid gap-5 md:grid-cols-2">
         <article
           className={
-            `flex min-h-52 flex-col justify-between border border-ink bg-[#F8EEE0] p-6 ${hoverCard}`
+            `flex min-h-52 flex-col justify-between border border-ink bg-surface-warm p-6 ${hoverCard}`
           }
         >
           <p className="eyebrow text-muted-foreground">
@@ -443,14 +393,14 @@ function InsightCard({
           setExpanded((value) => !value)
         }
         aria-expanded={expanded}
-        className="flex w-full items-start gap-4 p-5 text-left transition-colors hover:bg-[#F8EEE0] sm:p-6"
+        className="flex w-full items-start gap-4 p-5 text-left transition-colors hover:bg-surface-warm sm:p-6"
       >
         <span
           className={
             "flex size-10 shrink-0 items-center justify-center border border-ink " +
             (positive
-              ? "bg-[#E8F3EC]"
-              : "bg-[#F8EEE0]")
+              ? "bg-signal-up-surface"
+              : "bg-surface-warm")
           }
         >
           {positive ? (
@@ -505,7 +455,7 @@ function InsightCard({
             {guidance.effect}
           </p>
 
-          <div className="mt-5 border-l-2 border-primary bg-[#F8EEE0] p-4">
+          <div className="mt-5 border-l-2 border-primary bg-surface-warm p-4">
             <p className="text-sm font-semibold">
               What you can do next
             </p>
@@ -581,7 +531,7 @@ function ProductInsights({
               className={
                 "border border-ink p-5 text-left " +
                 (active
-                  ? "bg-[#F8EEE0] shadow-offset "
+                  ? "bg-surface-warm shadow-offset "
                   : `bg-card ${hoverCard}`)
               }
             >
@@ -615,7 +565,7 @@ function ProductInsights({
       {error && !loading && (
         <div
           role="alert"
-          className="mt-6 border border-ink bg-[#F8EEE0] p-6"
+          className="mt-6 border border-ink bg-surface-warm p-6"
         >
           <p className="text-sm">
             {error}
@@ -655,7 +605,7 @@ function ProductInsights({
       <div className="mt-6 flex justify-end">
         <Link
           to="/score-details"
-          className="inline-flex items-center gap-2 border border-ink bg-card px-5 py-3 text-sm font-semibold transition-colors hover:bg-[#F8EEE0]"
+          className="inline-flex items-center gap-2 border border-ink bg-card px-5 py-3 text-sm font-semibold transition-colors hover:bg-surface-warm"
         >
           Understand your results
           <ArrowRight size={17} />
@@ -694,6 +644,7 @@ function ProductInformation({ product }) {
   return (
     <section className="mt-14">
       <SectionHeading
+        descriptionLeading="relaxed"
         number="03"
         eyebrow="Product details"
         title="Your product information."
@@ -775,6 +726,7 @@ function PriceScenarioPreview({ product, saveSuggestedPrice }) {
   return (
     <section className="mt-14">
       <SectionHeading
+        descriptionLeading="relaxed"
         number="04"
         eyebrow="Pricing strategy"
         title="Explore a different price."
@@ -806,7 +758,9 @@ function PriceScenarioPreview({ product, saveSuggestedPrice }) {
                 New selling price
               </label>
 
-              <div className="mt-2 flex items-center border border-ink bg-card px-4">
+              {/* The input drops its own outline so the ring can go round
+                  the whole box, "$" included. */}
+              <div className="mt-2 flex items-center border border-ink bg-card px-4 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary">
                 <span className="text-sm">
                   $
                 </span>
@@ -850,7 +804,7 @@ function PriceScenarioPreview({ product, saveSuggestedPrice }) {
             }
             disabled={minPrice >= maxPrice}
             aria-label="Preview selling price"
-            className="mt-9 w-full accent-[#D95332]"
+            className="mt-9 w-full accent-chart-accent"
           />
 
           <div className="mt-3 flex justify-between font-mono text-xs text-muted-foreground">
@@ -877,7 +831,7 @@ function PriceScenarioPreview({ product, saveSuggestedPrice }) {
           </button>
         </div>
 
-        <div className="flex flex-col justify-between border-t border-ink bg-[#F8EEE0] p-6 sm:p-8 lg:border-l lg:border-t-0">
+        <div className="flex flex-col justify-between border-t border-ink bg-surface-warm p-6 sm:p-8 lg:border-l lg:border-t-0">
           <div>
             <p className="eyebrow text-muted-foreground">
               Price adjustment
@@ -970,7 +924,7 @@ function AboutScore({ prediction }) {
               more favorable comparison.
             </p>
 
-            <div className="mt-6 border border-ink bg-[#F8EEE0] p-5">
+            <div className="mt-6 border border-ink bg-surface-warm p-5">
               <p className="eyebrow text-muted-foreground">
                 Your current result
               </p>
@@ -1230,6 +1184,7 @@ export default function Overview({
           className="mt-14 scroll-mt-8"
         >
           <SectionHeading
+            descriptionLeading="relaxed"
             number="02"
             eyebrow="Product findings"
             title="What should you know?"
