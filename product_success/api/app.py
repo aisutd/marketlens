@@ -18,13 +18,13 @@ for one product. Title embeddings are cached (LRU, 1,000 titles), so an edit tha
                        (impact is measured against the products the score ranks against: "category", or
                        "all_products" for a category with fewer than 30 reference products)
     POST /what-if      {product, prices} -> [{price, opportunity_score, probability}], 1 to 20 prices
-    POST /demo/predict, /demo/reasons, /demo/what-if
-                       the same as /predict, /reasons and /what-if with no token, for the landing page's
-                       "Try it live" demo
 
 /predict, /rescore, /reasons and /what-if need a Firebase ID token (Authorization: Bearer <token>, see
-api/firebase_auth.py): 401 without a valid one, 503 if the server cannot check tokens. /health, /categories and
-/demo/* are public.
+api/firebase_auth.py): 401 without a valid one, 503 if the server cannot check tokens. /health and /categories
+are public.
+
+The landing page's "Try it live" demo uses three predefined products and illustrative scoring in the browser.
+Anonymous demo scoring routes have been removed to protect shared scoring resources (GitHub issue #37).
 
 Missing list_price, stars and reviews become 0 as in predict.load_new, so the API and the CLI build the same
 features. No stars and no reviews (or both 0) means a product idea: the launch-time model scores it.
@@ -309,11 +309,3 @@ def what_if(req: WhatIfRequest):
             out.append({"price": price, "opportunity_score": s["opportunity_score"],
                         "probability": s["probability"]})
     return out
-
-
-# The landing page's "Try it live" demo scores without an account: the same handlers as /predict, /reasons and
-# /what-if, with no token check. The app's own pages use the protected routes. The demo does not use /rescore.
-for _path, _endpoint, _model in (("/demo/predict", predict_endpoint, Score),
-                                 ("/demo/reasons", reasons, Reasons),
-                                 ("/demo/what-if", what_if, list[WhatIfPoint])):
-    app.post(_path, response_model=_model, dependencies=[Depends(_require_models)])(_endpoint)

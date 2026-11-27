@@ -186,8 +186,10 @@ The protected scoring endpoints require a Firebase ID token in the
 `Authorization: Bearer` header. A missing token returns `401`. If the server
 cannot load ADC or fetch Firebase verification certificates, a protected request
 with a bearer token returns `503` with a generic response. Server logs identify
-the failure category and which setup to check. Health, categories, and the
-`/demo/*` endpoints do not require Firebase credentials.
+the failure category and which setup to check. Health and categories do not
+require Firebase credentials.
+
+The landing page's "Try it live" demo runs entirely in the browser using three predefined products and illustrative scoring logic. It does not call the scoring API or require Firebase authentication. Anonymous demo scoring endpoints have been removed.
 
 ## Test
 

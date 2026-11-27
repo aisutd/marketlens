@@ -715,8 +715,8 @@ function TryItSection() {
           tone="ink"
           index="02"
           eyebrow="Try it live"
-          title="Score a product idea right now."
-          lede="Choose an example or enter your own product information to explore its opportunity score."
+          title="See how a score responds."
+          lede="Choose one of three example products, adjust its pricing and review information, and see how an illustrative score responds in an interactive preview."
         />
 
         <div className="mt-12">
