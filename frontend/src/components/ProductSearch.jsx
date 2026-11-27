@@ -54,8 +54,8 @@ const inputStyle =
 const cardHover =
   "transition-[background-color,box-shadow,transform] " +
   "duration-200 ease-out " +
-  "hover:-translate-y-[2px] hover:bg-[#F8EEE0] " +
-  "hover:shadow-[4px_4px_0_0_#1D150F] " +
+  "hover:-translate-y-[2px] hover:bg-surface-warm " +
+  "hover:shadow-offset " +
   "motion-reduce:transform-none motion-reduce:transition-none";
 
 function SelectionCard({
@@ -81,7 +81,7 @@ function SelectionCard({
         "focus-visible:outline-2 focus-visible:outline-offset-4 " +
         "focus-visible:outline-primary " +
         (selected
-          ? "bg-[#F8EEE0] shadow-offset "
+          ? "bg-surface-warm shadow-offset "
           : `bg-card ${cardHover} `) +
         (disabled ? "cursor-not-allowed opacity-50 " : "")
       }
@@ -1269,7 +1269,7 @@ export default function ProductSearch({
                             className={
                               "cursor-pointer border-b border-border px-5 py-4 text-left transition-colors " +
                               (index === activeIndex
-                                ? "bg-[#F8EEE0] outline-2 -outline-offset-2 outline-primary"
+                                ? "bg-surface-warm outline-2 -outline-offset-2 outline-primary"
                                 : "")
                             }
                           >
@@ -1306,7 +1306,7 @@ export default function ProductSearch({
                 </div>
 
                 {selectedProduct && (
-                  <div className="mt-5 flex items-start justify-between gap-4 border border-ink bg-[#F8EEE0] p-5">
+                  <div className="mt-5 flex items-start justify-between gap-4 border border-ink bg-surface-warm p-5">
                     <div>
                       <p className="eyebrow text-primary">
                         Selected product

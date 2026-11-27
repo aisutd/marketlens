@@ -175,7 +175,7 @@ export default function Profile() {
 
           <section className="border border-ink bg-card p-6 shadow-offset-sm sm:p-8">
             <div className="flex items-center gap-4">
-              <div className="flex size-14 shrink-0 items-center justify-center rounded-full border border-ink bg-[#F8EEE0]">
+              <div className="flex size-14 shrink-0 items-center justify-center rounded-full border border-ink bg-surface-warm">
                 <UserRound
                   size={27}
                   strokeWidth={1.7}
@@ -267,7 +267,7 @@ export default function Profile() {
               {success && (
                 <div
                   role="status"
-                  className="flex items-center gap-2 border border-border bg-[#E8F3EC] px-4 py-3 text-sm text-[#245B46]"
+                  className="flex items-center gap-2 border border-border bg-signal-up-surface px-4 py-3 text-sm text-signal-up-strong"
                 >
                   <CheckCircle2
                     size={18}

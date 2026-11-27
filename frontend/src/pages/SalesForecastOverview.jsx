@@ -41,11 +41,11 @@ import ChartPanel from "../components/ChartPanel";
 // ========================================
 
 const COLORS = {
-  orange: "#D95332",
-  green: "#47866B",
-  ink: "#1D150F",
-  muted: "#645850", // = --muted-foreground; #776C61 was 4.46:1 on the beige panels
-  cream: "#F8EEE0",
+  orange: "var(--chart-accent)",
+  green: "var(--chart-positive)",
+  ink: "var(--ink)",
+  muted: "var(--muted-foreground)", // #776C61 was 4.46:1 on the beige panels
+  cream: "var(--surface-warm)",
 };
 
 // ========================================
@@ -119,7 +119,7 @@ function ChartValues({ items }) {
           className={
             "flex min-h-[112px] min-w-0 flex-col justify-center border border-border p-4 " +
             (index === 0
-              ? "bg-[#F8EEE0]"
+              ? "bg-surface-warm"
               : "bg-background")
           }
         >
@@ -233,7 +233,7 @@ function FinancialChart({ predictions }) {
           >
             <CartesianGrid
               vertical={false}
-              stroke="#E8DED2"
+              stroke="var(--chart-grid)"
             />
 
             <XAxis
@@ -370,7 +370,7 @@ function DemandChart({ predictions }) {
           >
             <CartesianGrid
               horizontal={false}
-              stroke="#E8DED2"
+              stroke="var(--chart-grid)"
             />
 
             <XAxis
@@ -571,7 +571,7 @@ function DemandDirection({
       />
 
       <div className="mt-7 grid gap-5 lg:grid-cols-2">
-        <article className="border border-ink bg-[#F8EEE0] p-6">
+        <article className="border border-ink bg-surface-warm p-6">
           <p className="eyebrow text-muted-foreground">
             Estimated direction
           </p>
@@ -691,7 +691,7 @@ function SupportingMetric({
       className={
         "flex min-w-0 flex-col border border-ink " +
         (highlighted
-          ? "bg-[#F8EEE0] "
+          ? "bg-surface-warm "
           : "bg-card ") +
         cardHover
       }
@@ -860,7 +860,7 @@ function SupportingDetails({
               "border border-ink px-5 py-3 text-sm font-semibold transition-colors " +
               (category === group.id
                 ? "bg-primary text-primary-foreground shadow-offset"
-                : "bg-card hover:bg-[#F8EEE0]")
+                : "bg-card hover:bg-surface-warm")
             }
           >
             {group.label}
@@ -868,7 +868,7 @@ function SupportingDetails({
         ))}
       </div>
 
-      <div className="mt-7 border border-ink bg-[#F8EEE0] p-6">
+      <div className="mt-7 border border-ink bg-surface-warm p-6">
         <h3 className="font-display text-2xl">
           {activeGroup.heading}
         </h3>
@@ -1042,7 +1042,7 @@ function DecisionGuidance({
               key={step.title}
               className="flex items-start gap-4 border-b border-border pb-6 last:border-b-0 last:pb-0"
             >
-              <span className="flex size-9 shrink-0 items-center justify-center border border-ink bg-[#F8EEE0] font-mono text-xs">
+              <span className="flex size-9 shrink-0 items-center justify-center border border-ink bg-surface-warm font-mono text-xs">
                 {String(index + 1).padStart(2, "0")}
               </span>
 
@@ -1094,7 +1094,7 @@ function AboutForecast({ notes }) {
 
             {Array.isArray(notes) &&
               notes.length > 0 && (
-                <div className="mt-6 border-l-2 border-primary bg-[#F8EEE0] p-4">
+                <div className="mt-6 border-l-2 border-primary bg-surface-warm p-4">
                   <p className="text-sm font-semibold">
                     Additional information
                   </p>
@@ -1275,7 +1275,7 @@ export default function SalesForecastOverview({
                 "px-5 py-3 text-sm font-semibold transition-colors disabled:opacity-40 " +
                 (activeTimeframe === "monthly"
                   ? "bg-primary text-primary-foreground"
-                  : "hover:bg-[#F8EEE0]")
+                  : "hover:bg-surface-warm")
               }
             >
               Monthly
@@ -1294,7 +1294,7 @@ export default function SalesForecastOverview({
                 "px-5 py-3 text-sm font-semibold transition-colors disabled:opacity-40 " +
                 (activeTimeframe === "yearly"
                   ? "bg-primary text-primary-foreground"
-                  : "hover:bg-[#F8EEE0]")
+                  : "hover:bg-surface-warm")
               }
             >
               Yearly
@@ -1341,7 +1341,7 @@ export default function SalesForecastOverview({
 
             {/* MAIN TAKEAWAY */}
 
-            <section className="mt-6 border-l-2 border-primary bg-[#F8EEE0] p-6">
+            <section className="mt-6 border-l-2 border-primary bg-surface-warm p-6">
               <p className="font-semibold">
                 What do these results suggest?
               </p>

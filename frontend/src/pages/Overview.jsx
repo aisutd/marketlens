@@ -67,7 +67,7 @@ function rankingFactors(factors) {
 const hoverCard =
   "transition-[background-color,box-shadow,transform] " +
   "duration-200 ease-out hover:-translate-y-[2px] " +
-  "hover:bg-[#F8EEE0] hover:shadow-offset " +
+  "hover:bg-surface-warm hover:shadow-offset " +
   "motion-reduce:transform-none " +
   "motion-reduce:transition-none";
 
@@ -225,7 +225,7 @@ function ScoreHero({
             </em>
           </h2>
 
-          <div className="mt-7 inline-flex border border-ink bg-[#F8EEE0] px-4 py-2 text-sm font-semibold">
+          <div className="mt-7 inline-flex border border-ink bg-surface-warm px-4 py-2 text-sm font-semibold">
             {band.label} opportunity
           </div>
 
@@ -243,7 +243,7 @@ function ScoreHero({
               {positive.map((reason, index) => (
                 <span
                   key={`positive-${index}`}
-                  className="border border-[#8AB6A4] bg-[#E8F3EC] px-3 py-2 text-xs text-[#255D49]"
+                  className="border border-signal-up-border bg-signal-up-surface px-3 py-2 text-xs text-signal-up-strong"
                 >
                   +{" "}
                   {factorInterpretation(
@@ -256,7 +256,7 @@ function ScoreHero({
               {negative.map((reason, index) => (
                 <span
                   key={`negative-${index}`}
-                  className="border border-primary/50 bg-[#F8EEE0] px-3 py-2 text-xs text-foreground"
+                  className="border border-primary/50 bg-surface-warm px-3 py-2 text-xs text-foreground"
                 >
                   −{" "}
                   {factorInterpretation(
@@ -280,7 +280,7 @@ function ScoreHero({
 
             <Link
               to="/score-details"
-              className="inline-flex items-center justify-center border border-ink bg-card px-6 py-3 text-sm font-semibold transition-colors hover:bg-[#F8EEE0]"
+              className="inline-flex items-center justify-center border border-ink bg-card px-6 py-3 text-sm font-semibold transition-colors hover:bg-surface-warm"
             >
               Understand your results
             </Link>
@@ -325,7 +325,7 @@ function ScoreSummary({
       <div className="mt-7 grid gap-5 md:grid-cols-2">
         <article
           className={
-            `flex min-h-52 flex-col justify-between border border-ink bg-[#F8EEE0] p-6 ${hoverCard}`
+            `flex min-h-52 flex-col justify-between border border-ink bg-surface-warm p-6 ${hoverCard}`
           }
         >
           <p className="eyebrow text-muted-foreground">
@@ -393,14 +393,14 @@ function InsightCard({
           setExpanded((value) => !value)
         }
         aria-expanded={expanded}
-        className="flex w-full items-start gap-4 p-5 text-left transition-colors hover:bg-[#F8EEE0] sm:p-6"
+        className="flex w-full items-start gap-4 p-5 text-left transition-colors hover:bg-surface-warm sm:p-6"
       >
         <span
           className={
             "flex size-10 shrink-0 items-center justify-center border border-ink " +
             (positive
-              ? "bg-[#E8F3EC]"
-              : "bg-[#F8EEE0]")
+              ? "bg-signal-up-surface"
+              : "bg-surface-warm")
           }
         >
           {positive ? (
@@ -455,7 +455,7 @@ function InsightCard({
             {guidance.effect}
           </p>
 
-          <div className="mt-5 border-l-2 border-primary bg-[#F8EEE0] p-4">
+          <div className="mt-5 border-l-2 border-primary bg-surface-warm p-4">
             <p className="text-sm font-semibold">
               What you can do next
             </p>
@@ -531,7 +531,7 @@ function ProductInsights({
               className={
                 "border border-ink p-5 text-left " +
                 (active
-                  ? "bg-[#F8EEE0] shadow-offset "
+                  ? "bg-surface-warm shadow-offset "
                   : `bg-card ${hoverCard}`)
               }
             >
@@ -565,7 +565,7 @@ function ProductInsights({
       {error && !loading && (
         <div
           role="alert"
-          className="mt-6 border border-ink bg-[#F8EEE0] p-6"
+          className="mt-6 border border-ink bg-surface-warm p-6"
         >
           <p className="text-sm">
             {error}
@@ -605,7 +605,7 @@ function ProductInsights({
       <div className="mt-6 flex justify-end">
         <Link
           to="/score-details"
-          className="inline-flex items-center gap-2 border border-ink bg-card px-5 py-3 text-sm font-semibold transition-colors hover:bg-[#F8EEE0]"
+          className="inline-flex items-center gap-2 border border-ink bg-card px-5 py-3 text-sm font-semibold transition-colors hover:bg-surface-warm"
         >
           Understand your results
           <ArrowRight size={17} />
@@ -802,7 +802,7 @@ function PriceScenarioPreview({ product, saveSuggestedPrice }) {
             }
             disabled={minPrice >= maxPrice}
             aria-label="Preview selling price"
-            className="mt-9 w-full accent-[#D95332]"
+            className="mt-9 w-full accent-chart-accent"
           />
 
           <div className="mt-3 flex justify-between font-mono text-xs text-muted-foreground">
@@ -829,7 +829,7 @@ function PriceScenarioPreview({ product, saveSuggestedPrice }) {
           </button>
         </div>
 
-        <div className="flex flex-col justify-between border-t border-ink bg-[#F8EEE0] p-6 sm:p-8 lg:border-l lg:border-t-0">
+        <div className="flex flex-col justify-between border-t border-ink bg-surface-warm p-6 sm:p-8 lg:border-l lg:border-t-0">
           <div>
             <p className="eyebrow text-muted-foreground">
               Price adjustment
@@ -922,7 +922,7 @@ function AboutScore({ prediction }) {
               more favorable comparison.
             </p>
 
-            <div className="mt-6 border border-ink bg-[#F8EEE0] p-5">
+            <div className="mt-6 border border-ink bg-surface-warm p-5">
               <p className="eyebrow text-muted-foreground">
                 Your current result
               </p>

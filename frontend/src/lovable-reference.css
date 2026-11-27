@@ -79,6 +79,30 @@
   --color-ink-muted: var(--ink-muted);
   --color-ink-border: var(--ink-border);
   --color-primary-on-ink: var(--primary-on-ink);
+  --color-surface-warm: var(--surface-warm);
+  --color-signal-up-surface: var(--signal-up-surface);
+  --color-signal-up-strong: var(--signal-up-strong);
+  --color-signal-up-border: var(--signal-up-border);
+  --color-chart-accent: var(--chart-accent);
+  --color-chart-positive: var(--chart-positive);
+  --color-chart-negative: var(--chart-negative);
+  --color-chart-neutral: var(--chart-neutral);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-cost: var(--chart-cost);
+  --color-status-good: var(--status-good);
+  --color-status-good-foreground: var(--status-good-foreground);
+  --color-status-info: var(--status-info);
+  --color-status-info-foreground: var(--status-info-foreground);
+  --color-status-warn: var(--status-warn);
+  --color-status-warn-foreground: var(--status-warn-foreground);
+  --color-logo: var(--logo);
+  --color-logo-foreground: var(--logo-foreground);
+  --color-score-note: var(--score-note);
+  --color-gauge-track: var(--gauge-track);
+  --color-gauge-empty: var(--gauge-empty);
+  --color-backdrop-top: var(--backdrop-top);
+  --color-backdrop-bottom: var(--backdrop-bottom);
+  --color-sign-out: var(--sign-out);
   --font-display: "Fraunces", ui-serif, Georgia, serif;
   --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
@@ -129,6 +153,41 @@
   --ink-border: oklch(0.34 0.02 60);
   /* Primary as text on ink panels: the paper --primary is only 3.2:1 there. */
   --primary-on-ink: oklch(0.7 0.17 40);
+
+  /* Colours that used to be hard-coded hex in the pages (#50). Each value
+     is the old hex in oklch, precise enough to convert back to the same
+     8-bit colour, so moving to tokens changed nothing on screen. */
+  /* Cream panels and hover fills. */
+  --surface-warm: oklch(0.9532 0.0215 76.53); /* #F8EEE0 */
+  /* Positive notes: pale panel, its text and border. */
+  --signal-up-surface: oklch(0.954 0.0149 158.25); /* #E8F3EC */
+  --signal-up-strong: oklch(0.4277 0.0684 165.4); /* #245B46 */
+  --signal-up-border: oklch(0.7394 0.0538 167.83); /* #8AB6A4 */
+  /* Chart series. */
+  --chart-accent: oklch(0.6153 0.1751 34.97); /* #D95332 */
+  --chart-positive: oklch(0.5697 0.0784 164.17); /* #47866B */
+  --chart-negative: oklch(0.5523 0.1481 23.26); /* #B94747 */
+  --chart-neutral: oklch(0.7252 0.0192 64.83); /* #AFA49A */
+  --chart-grid: oklch(0.9053 0.0195 72.56); /* #E8DED2 */
+  --chart-cost: oklch(0.7558 0.0878 60.72); /* #D9A376 */
+  /* Saved-product status badges. */
+  --status-good: oklch(0.9356 0.0234 165.84); /* #DCEFE6 */
+  --status-good-foreground: var(--signal-up-strong);
+  --status-info: oklch(0.9344 0.0213 259.19); /* #E1EAF8 */
+  --status-info-foreground: oklch(0.4183 0.0986 255.54); /* #244D81 */
+  --status-warn: oklch(0.9398 0.0303 69.04); /* #F9E8D6 */
+  --status-warn-foreground: oklch(0.4933 0.0953 60.54); /* #885321 */
+  /* The logo mark. */
+  --logo: oklch(0.8849 0.1456 89.54); /* #FFD45A */
+  --logo-foreground: oklch(0.2301 0.0266 249.05); /* #131E29 */
+  /* Cool slate colours from Tailwind's default palette, kept as they were;
+     whether they should move to the warm tokens is an open design call. */
+  --score-note: oklch(0.4455 0.0374 257.28); /* #475569 */
+  --gauge-track: oklch(0.9288 0.0126 255.51); /* #E2E8F0 */
+  --gauge-empty: oklch(0.8845 0.0593 18.33); /* #FECACA */
+  --backdrop-top: oklch(0.9842 0.0034 247.86); /* #F8FAFC */
+  --backdrop-bottom: oklch(0.9125 0.0122 247.96); /* #DCE3EA */
+  --sign-out: oklch(0.531 0.1443 30.42); /* #B04435 */
 
   --elev-offset: 4px 4px 0 0 var(--ink);
   --elev-offset-sm: 2px 2px 0 0 var(--ink);

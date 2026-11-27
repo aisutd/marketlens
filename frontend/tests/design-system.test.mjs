@@ -148,3 +148,30 @@ test("the landing page and Try It Live share one ScoreDial", () => {
     assert.ok(text.includes(`import ScoreDial from "${from}"`), file);
   }
 });
+
+// ---- colour tokens ----
+
+test("page code uses colour tokens, not hex", async () => {
+  const { readdirSync } = await import("node:fs");
+  const walk = (dir) => readdirSync(new URL(dir, import.meta.url), { withFileTypes: true })
+    .flatMap((e) => e.isDirectory() ? walk(`${dir}${e.name}/`) : e.name.endsWith(".jsx") ? [`${dir}${e.name}`] : []);
+  const files = walk("../src/");
+  assert.ok(files.length > 20, "found the source files");
+  for (const file of files) {
+    const code = read(file).replace(/\/\/[^\n]*|\/\*[\s\S]*?\*\//g, "");
+    assert.deepEqual(code.match(/#[0-9A-Fa-f]{6}\b/g) || [], [], file);
+  }
+});
+
+test("every colour token the code uses is defined", () => {
+  const sheet = css();
+  const used = new Set();
+  for (const file of ["../src/pages/LaunchFeasibility.jsx", "../src/pages/LaunchForecastOverview.jsx",
+    "../src/pages/SalesForecastOverview.jsx", "../src/components/OpportunityGauge.jsx"]) {
+    for (const m of read(file).matchAll(/var\(--([a-z-]+)\)/g)) used.add(m[1]);
+  }
+  assert.ok(used.size >= 8, [...used].join(", "));
+  for (const name of used) {
+    assert.match(sheet, new RegExp(`^\\s*--${name}:`, "m"), name);
+  }
+});

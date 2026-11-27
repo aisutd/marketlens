@@ -45,12 +45,12 @@ import ChartTooltip from "../components/ChartTooltip";
 // ========================================
 
 const COLORS = {
-  orange: "#D95332",
-  ink: "#1D150F",
-  muted: "#645850", // = --muted-foreground; #776C61 was 4.46:1 on the beige panels
-  cream: "#F8EEE0",
-  green: "#47866B",
-  gray: "#AFA49A",
+  orange: "var(--chart-accent)",
+  ink: "var(--ink)",
+  muted: "var(--muted-foreground)", // #776C61 was 4.46:1 on the beige panels
+  cream: "var(--surface-warm)",
+  green: "var(--chart-positive)",
+  gray: "var(--chart-neutral)",
 };
 
 // ========================================
@@ -160,7 +160,7 @@ function CumulativeComparison({
               >
                 <CartesianGrid
                   vertical={false}
-                  stroke="#E8DED2"
+                  stroke="var(--chart-grid)"
                 />
 
                 <XAxis
@@ -208,7 +208,7 @@ function CumulativeComparison({
           </div>
 
           <div className="mt-5 grid grid-cols-2 gap-3">
-            <div className="border border-border bg-[#F8EEE0] p-4">
+            <div className="border border-border bg-surface-warm p-4">
               <p className="text-xs text-muted-foreground">
                 First 12 months
               </p>
@@ -346,7 +346,7 @@ function InvestmentOutlook({ predictions }) {
       />
 
       <div className="mt-7 grid gap-5 md:grid-cols-2">
-        <article className="border border-ink bg-[#F8EEE0] p-6">
+        <article className="border border-ink bg-surface-warm p-6">
           <p className="eyebrow text-muted-foreground">
             Estimated break-even time
           </p>
@@ -390,7 +390,7 @@ function InvestmentOutlook({ predictions }) {
         </article>
       </div>
 
-      <div className="mt-6 flex items-start gap-3 border-l-2 border-primary bg-[#F8EEE0] p-5">
+      <div className="mt-6 flex items-start gap-3 border-l-2 border-primary bg-surface-warm p-5">
         <CircleAlert
           size={19}
           className="mt-0.5 shrink-0 text-primary"
@@ -508,7 +508,7 @@ function AdditionalDetails({
             setExpanded((value) => !value)
           }
           aria-expanded={expanded}
-          className="flex w-full items-center justify-between gap-4 p-6 text-left transition-colors hover:bg-[#F8EEE0]"
+          className="flex w-full items-center justify-between gap-4 p-6 text-left transition-colors hover:bg-surface-warm"
         >
           <div>
             <p className="font-semibold">
@@ -633,7 +633,7 @@ function ForecastNextSteps({ predictions, period }) {
               key={step.title}
               className="flex items-start gap-4 border-b border-border pb-6 last:border-b-0 last:pb-0"
             >
-              <span className="flex size-9 shrink-0 items-center justify-center border border-ink bg-[#F8EEE0] font-mono text-xs">
+              <span className="flex size-9 shrink-0 items-center justify-center border border-ink bg-surface-warm font-mono text-xs">
                 {String(index + 1).padStart(2, "0")}
               </span>
 
@@ -687,7 +687,7 @@ function AboutForecast({ notes }) {
 
             {Array.isArray(notes) &&
               notes.length > 0 && (
-                <div className="mt-6 border-l-2 border-primary bg-[#F8EEE0] p-4">
+                <div className="mt-6 border-l-2 border-primary bg-surface-warm p-4">
                   <p className="font-semibold">
                     Additional forecast information
                   </p>
@@ -871,7 +871,7 @@ export default function LaunchForecastOverview({
                   "px-5 py-3 text-sm font-semibold transition-colors " +
                   (period === option.value
                     ? "bg-primary text-primary-foreground"
-                    : "hover:bg-[#F8EEE0]")
+                    : "hover:bg-surface-warm")
                 }
               >
                 {option.label}
@@ -917,7 +917,7 @@ export default function LaunchForecastOverview({
 
         {/* INITIAL BUSINESS TAKEAWAY */}
 
-        <section className="mt-6 border-l-2 border-primary bg-[#F8EEE0] p-6">
+        <section className="mt-6 border-l-2 border-primary bg-surface-warm p-6">
           <p className="font-semibold">
             What do these numbers suggest?
           </p>

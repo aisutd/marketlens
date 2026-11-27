@@ -379,7 +379,7 @@ export default function Header({
                   onClick={handleLogout}
                   className={
                     menuItemStyle +
-                    " text-[#B04435] hover:bg-secondary"
+                    " text-sign-out hover:bg-secondary"
                   }
                 >
                   <LogOut

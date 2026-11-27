@@ -62,7 +62,7 @@ export default function MetricCard({
     <article
       className={
         "flex min-h-48 min-w-0 flex-col justify-between border border-ink p-6 " +
-        (highlighted ? "bg-[#F8EEE0] " : "bg-card ") +
+        (highlighted ? "bg-surface-warm " : "bg-card ") +
         cardHover
       }
     >

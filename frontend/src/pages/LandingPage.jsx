@@ -185,8 +185,8 @@ const cardHover =
   "transition-[background-color,box-shadow,transform] " +
   "duration-200 ease-out " +
   "hover:z-10 hover:-translate-y-[2px] " +
-  "hover:bg-[#F8EEE0] " +
-  "hover:shadow-[4px_4px_0_0_#1D150F] " +
+  "hover:bg-surface-warm " +
+  "hover:shadow-offset " +
   "motion-reduce:transform-none " +
   "motion-reduce:transition-none";
 

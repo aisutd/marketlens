@@ -118,7 +118,7 @@ function OpportunitySummary({
             </p>
           )}
 
-          <div className="mt-7 inline-flex border border-ink bg-[#F8EEE0] px-4 py-2 text-sm font-semibold">
+          <div className="mt-7 inline-flex border border-ink bg-surface-warm px-4 py-2 text-sm font-semibold">
             {band.label} opportunity
           </div>
 
@@ -169,15 +169,15 @@ function FindingCard({
           setExpanded((previous) => !previous)
         }
         aria-expanded={expanded}
-        className="w-full p-5 text-left transition-colors hover:bg-[#F8EEE0] sm:p-6"
+        className="w-full p-5 text-left transition-colors hover:bg-surface-warm sm:p-6"
       >
         <div className="flex items-start gap-4">
           <span
             className={
               "flex size-10 shrink-0 items-center justify-center border border-ink " +
               (factor.positive
-                ? "bg-[#E8F3EC]"
-                : "bg-[#F8EEE0]")
+                ? "bg-signal-up-surface"
+                : "bg-surface-warm")
             }
           >
             {factor.positive ? (
@@ -225,7 +225,7 @@ function FindingCard({
               className={
                 "h-full transition-[width] duration-300 " +
                 (factor.positive
-                  ? "bg-[#47866B]"
+                  ? "bg-chart-positive"
                   : "bg-primary")
               }
               style={{
@@ -260,7 +260,7 @@ function FindingCard({
             {factor.effect}
           </p>
 
-          <div className="mt-5 border-l-2 border-primary bg-[#F8EEE0] p-4">
+          <div className="mt-5 border-l-2 border-primary bg-surface-warm p-4">
             <p className="text-sm font-semibold">
               What you can do next
             </p>
@@ -294,8 +294,8 @@ function FindingsColumn({
             className={
               "flex size-11 shrink-0 items-center justify-center border border-ink " +
               (positive
-                ? "bg-[#E8F3EC]"
-                : "bg-[#F8EEE0]")
+                ? "bg-signal-up-surface"
+                : "bg-surface-warm")
             }
           >
             {positive ? (
@@ -386,7 +386,7 @@ function ConcernNextSteps({
               key={`${index}-${step}`}
               className="flex items-start gap-4 border-b border-border pb-5 last:border-b-0 last:pb-0"
             >
-              <span className="flex size-9 shrink-0 items-center justify-center border border-ink bg-[#F8EEE0] font-mono text-xs">
+              <span className="flex size-9 shrink-0 items-center justify-center border border-ink bg-surface-warm font-mono text-xs">
                 {String(index + 1).padStart(2, "0")}
               </span>
 
@@ -590,7 +590,7 @@ export default function ScoreDetails({
           {!loading && error && (
             <div
               role="alert"
-              className="mt-7 border border-ink bg-[#F8EEE0] p-6"
+              className="mt-7 border border-ink bg-surface-warm p-6"
             >
               <p className="font-semibold">
                 Detailed findings unavailable

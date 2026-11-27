@@ -16,7 +16,7 @@ export default function MarketLensLogo({
       {/* Existing MarketLens symbol */}
       <span
         aria-hidden="true"
-        className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#FFD45A] text-2xl font-semibold text-[#131E29]"
+        className="flex h-10 w-10 items-center justify-center rounded-lg bg-logo text-2xl font-semibold text-logo-foreground"
       >
         ◈
       </span>

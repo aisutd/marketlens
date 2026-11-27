@@ -368,7 +368,7 @@ function AppLayout({ children }) {
 
   const backgroundClass = isAuthPage
     ? "bg-background text-foreground"
-    : "bg-gradient-to-b from-[#F8FAFC] to-[#DCE3EA]";
+    : "bg-gradient-to-b from-backdrop-top to-backdrop-bottom";
 
   return (
     <div
