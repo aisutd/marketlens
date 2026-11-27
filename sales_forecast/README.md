@@ -75,7 +75,7 @@ Run these from the `sales_forecast/` folder (`cd sales_forecast`):
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 .venv/bin/pip install .            # installs the marketlens package (re-run after changing src/)
-.venv/bin/python -m pytest         # 29 tests
+.venv/bin/python -m pytest         # 110 tests; those marked `models` skip without models/final and data/
 .venv/bin/python scripts/example_predictions.py
 ```
 
@@ -324,6 +324,15 @@ python -m pytest tests/test_auth.py -v
 python -m pytest -q                   # existing ML tests plus API tests
 python -m pytest tests/test_api.py -q # API contracts with real bundled models
 python scripts/example_predictions.py
+```
+
+Most tests need the trained models and data, which are gitignored (`models/final`, `data/`). They are marked
+`models` and are skipped, with a reason, when those folders are missing, for example on a fresh clone or in CI.
+The rest (fee rules, cleaning helpers) run anywhere:
+
+```bash
+python -m pytest -m "not models"      # model-free tests only (18), the set CI can run
+MARKETLENS_ROOT=/path/to/project python -m pytest   # everything, with models/final and data/ in that folder
 ```
 
 API tests cover real launch/monthly/yearly results, exact preservation of the library outputs and uncertainty, catalogue pagination, validation, unknown IDs, unsupported years, CORS, startup loading/failures, internal errors, and OpenAPI documentation.
