@@ -37,6 +37,7 @@ import {
   primaryButton as basePrimaryButton,
   primaryButtonDisabled,
 } from "../lib/buttons";
+import ChartTooltip from "../components/ChartTooltip";
 
 // ========================================
 // DESIGN SYSTEM
@@ -369,37 +370,6 @@ function ScenarioControl({
 // CHART TOOLTIP
 // ========================================
 
-function ChartTooltip({
-  active,
-  payload,
-  unit = "USD",
-}) {
-  if (!active || !payload?.length) {
-    return null;
-  }
-
-  const item = payload[0];
-
-  const display =
-    unit === "USD"
-      ? formatMoney(item.value)
-      : unit === "%"
-        ? formatPercent(item.value)
-        : formatNumber(item.value);
-
-  return (
-    <div className="border border-ink bg-card px-4 py-3 shadow-offset">
-      <p className="text-sm font-semibold">
-        {item.payload?.name || item.name}
-      </p>
-
-      <p className="mt-2 font-mono text-sm">
-        {display}
-      </p>
-    </div>
-  );
-}
-
 // ========================================
 // REVENUE VS COSTS CHART
 // ========================================
@@ -471,7 +441,7 @@ function RevenueCostChart({ financials }) {
           />
 
           <Tooltip
-            content={<ChartTooltip />}
+            content={<ChartTooltip format={formatMoney} />}
             cursor={{ fill: COLORS.cream }}
           />
 

@@ -131,3 +131,12 @@ test("the forecast pages share one ChartPanel", () => {
     assert.match(text, /import ChartPanel from "\.\.\/components\/ChartPanel"/, file);
   }
 });
+
+test("charts share one ChartTooltip", () => {
+  for (const file of ["../src/pages/LaunchForecastOverview.jsx", "../src/pages/LaunchFeasibility.jsx"]) {
+    const text = read(file);
+    assert.doesNotMatch(text, /^function ChartTooltip/m, file);
+    assert.match(text, /import ChartTooltip from "\.\.\/components\/ChartTooltip"/, file);
+    assert.match(text, /<ChartTooltip format=\{formatMoney\} \/>/, file);
+  }
+});

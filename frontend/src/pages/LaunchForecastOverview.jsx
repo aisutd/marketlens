@@ -38,6 +38,7 @@ import SectionHeading from "../components/SectionHeading";
 import { primaryButton } from "../lib/buttons";
 import MetricCard, { RangeText } from "../components/MetricCard";
 import ChartPanel from "../components/ChartPanel";
+import ChartTooltip from "../components/ChartTooltip";
 
 // ========================================
 // DESIGN SYSTEM
@@ -87,26 +88,6 @@ function formatMetric(metric, fallbackUnit) {
 // ========================================
 // SHARED PAGE COMPONENTS
 // ========================================
-
-function ChartTooltip({ active, payload }) {
-  if (!active || !payload?.length) {
-    return null;
-  }
-
-  const entry = payload[0];
-
-  return (
-    <div className="border border-ink bg-card px-4 py-3 shadow-offset">
-      <p className="text-sm font-semibold">
-        {entry.payload?.name || entry.name}
-      </p>
-
-      <p className="mt-2 font-mono text-sm">
-        {formatMoney(entry.value)}
-      </p>
-    </div>
-  );
-}
 
 // ========================================
 // 12-MONTH / 24-MONTH COMPARISONS
@@ -207,7 +188,7 @@ function CumulativeComparison({
                 />
 
                 <Tooltip
-                  content={<ChartTooltip />}
+                  content={<ChartTooltip format={formatMoney} />}
                   cursor={{ fill: COLORS.cream }}
                 />
 
