@@ -973,7 +973,7 @@ export default function LandingPage({ userId }) {
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader userId={userId} />
 
-      <main id="main-content">
+      <main>
         <HeroSection />
         <TechnicalTicker />
         <HowItWorks />
