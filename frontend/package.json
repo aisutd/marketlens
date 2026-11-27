@@ -14,7 +14,8 @@
     "test:price-history": "node --test tests/suggested-price-history.test.mjs",
     "test:login-return": "node --test tests/login-return-path.test.mjs",
     "test:forecast-numbers": "node --test tests/forecast-numbers.test.mjs",
-    "test:feasibility-costs": "node --test tests/feasibility-costs.test.mjs"
+    "test:feasibility-costs": "node --test tests/feasibility-costs.test.mjs",
+    "test:demo-preview": "node --test tests/demo-preview.test.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
