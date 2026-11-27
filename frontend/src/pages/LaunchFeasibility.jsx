@@ -26,21 +26,33 @@ import {
   simulatePrices,
 } from "../services/marketlensApi";
 import { parseNumberInput } from "../lib/numberInput";
+import {
+  compactFormat,
+  formatWith,
+  moneyFormat,
+  numberFormat,
+} from "../lib/format";
+import SectionHeading from "../components/SectionHeading";
+import {
+  primaryButton as basePrimaryButton,
+  primaryButtonDisabled,
+} from "../lib/buttons";
+import ChartTooltip from "../components/ChartTooltip";
 
 // ========================================
 // DESIGN SYSTEM
 // ========================================
 
 const COLORS = {
-  orange: "#D95332",
-  green: "#47866B",
-  ink: "#1D150F",
-  muted: "#645850", // = --muted-foreground; #776C61 was 4.46:1 on the beige panels
-  cream: "#F8EEE0",
-  background: "#F8F3EA",
-  gray: "#AFA49A",
-  grid: "#E8DED2",
-  red: "#B94747",
+  orange: "var(--chart-accent)",
+  green: "var(--chart-positive)",
+  ink: "var(--ink)",
+  muted: "var(--muted-foreground)", // #776C61 was 4.46:1 on the beige panels
+  cream: "var(--surface-warm)",
+  background: "var(--background)",
+  gray: "var(--chart-neutral)",
+  grid: "var(--chart-grid)",
+  red: "var(--chart-negative)",
 };
 
 // Units and costs start empty: the page calculates nothing until the user
@@ -75,7 +87,7 @@ const COST_FIELDS = [
     id: "shipping",
     label: "Shipping",
     description: "Shipping cost per unit",
-    color: "#D9A376",
+    color: "var(--chart-cost)",
   },
   {
     id: "amazonFees",
@@ -92,21 +104,13 @@ const COST_FIELDS = [
 ];
 
 const primaryButton =
-  "inline-flex items-center justify-center gap-3 " +
-  "border border-ink bg-primary px-6 py-3 " +
-  "text-sm font-semibold text-primary-foreground " +
-  "shadow-offset transition-transform duration-150 " +
-  "hover:translate-x-[2px] hover:translate-y-[2px] " +
-  "focus-visible:outline-2 focus-visible:outline-offset-4 " +
-  "focus-visible:outline-primary disabled:cursor-not-allowed " +
-  "disabled:opacity-50 disabled:hover:translate-x-0 " +
-  "disabled:hover:translate-y-0";
+  `${basePrimaryButton} text-sm ${primaryButtonDisabled}`;
 
 const secondaryButton =
   "inline-flex items-center justify-center gap-2 " +
   "border border-ink bg-card px-4 py-2.5 " +
   "text-sm font-semibold text-foreground " +
-  "transition-colors hover:bg-[#F8EEE0] " +
+  "transition-colors hover:bg-surface-warm " +
   "focus-visible:outline-2 focus-visible:outline-offset-4 " +
   "focus-visible:outline-primary";
 
@@ -114,43 +118,15 @@ const secondaryButton =
 // FORMATTING
 // ========================================
 
-const moneyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
-const numberFormatter = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 0,
-});
-
-const compactFormatter = new Intl.NumberFormat("en-US", {
-  notation: "compact",
-  maximumFractionDigits: 1,
-});
-
 function numeric(value) {
   // Field text must be a plain decimal ("  " is not 0); numbers from
   // the API pass through when finite.
   return parseNumberInput(value);
 }
 
-function formatMoney(value) {
-  const number = numeric(value);
+const formatMoney = formatWith(moneyFormat, numeric);
 
-  return number === null
-    ? "—"
-    : moneyFormatter.format(number);
-}
-
-function formatNumber(value) {
-  const number = numeric(value);
-
-  return number === null
-    ? "—"
-    : numberFormatter.format(number);
-}
+const formatNumber = formatWith(numberFormat, numeric);
 
 function formatPercent(value) {
   const number = numeric(value);
@@ -229,37 +205,6 @@ function calculateFinancials(values) {
 // ========================================
 // SECTION HEADING
 // ========================================
-
-function SectionHeading({
-  number,
-  eyebrow,
-  title,
-  description,
-}) {
-  return (
-    <div>
-      <p className="eyebrow flex items-center gap-3 text-muted-foreground">
-        <span className="text-primary">
-          {number}
-        </span>
-
-        <span className="h-px w-8 bg-current" />
-
-        {eyebrow}
-      </p>
-
-      <h2 className="mt-4 font-display text-3xl leading-tight sm:text-4xl">
-        {title}
-      </h2>
-
-      {description && (
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground">
-          {description}
-        </p>
-      )}
-    </div>
-  );
-}
 
 // ========================================
 // SHARED WORKSPACE HEADER
@@ -400,10 +345,10 @@ function ScenarioControl({
           onChange={(event) =>
             onChange(event.target.value)
           }
-          className="block w-full cursor-pointer accent-[#D95332] disabled:cursor-not-allowed"
+          className="block w-full cursor-pointer accent-chart-accent disabled:cursor-not-allowed"
         />
 
-        <div className="mt-1 flex justify-between gap-3 font-mono text-[10px] text-muted-foreground">
+        <div className="mt-1 flex justify-between gap-3 font-mono text-xs text-muted-foreground">
           <span>
             {prefix}
             {step === 1
@@ -424,37 +369,6 @@ function ScenarioControl({
 // ========================================
 // CHART TOOLTIP
 // ========================================
-
-function ChartTooltip({
-  active,
-  payload,
-  unit = "USD",
-}) {
-  if (!active || !payload?.length) {
-    return null;
-  }
-
-  const item = payload[0];
-
-  const display =
-    unit === "USD"
-      ? formatMoney(item.value)
-      : unit === "%"
-        ? formatPercent(item.value)
-        : formatNumber(item.value);
-
-  return (
-    <div className="border border-ink bg-card px-4 py-3 shadow-offset">
-      <p className="text-sm font-semibold">
-        {item.payload?.name || item.name}
-      </p>
-
-      <p className="mt-2 font-mono text-sm">
-        {display}
-      </p>
-    </div>
-  );
-}
 
 // ========================================
 // REVENUE VS COSTS CHART
@@ -508,7 +422,7 @@ function RevenueCostChart({ financials }) {
             tickLine={false}
             tick={{
               fill: COLORS.muted,
-              fontSize: 11,
+              fontSize: 12,
             }}
           />
 
@@ -519,15 +433,15 @@ function RevenueCostChart({ financials }) {
             width={58}
             tick={{
               fill: COLORS.muted,
-              fontSize: 10,
+              fontSize: 12,
             }}
             tickFormatter={(value) =>
-              `$${compactFormatter.format(value)}`
+              `$${compactFormat.format(value)}`
             }
           />
 
           <Tooltip
-            content={<ChartTooltip />}
+            content={<ChartTooltip format={formatMoney} />}
             cursor={{ fill: COLORS.cream }}
           />
 
@@ -564,11 +478,11 @@ function LiveMetric({
         "flex min-h-[102px] min-w-0 flex-col " +
         "justify-between border border-border p-3 " +
         (featured
-          ? "bg-[#F8EEE0]"
+          ? "bg-surface-warm"
           : "bg-background")
       }
     >
-      <p className="text-[11px] leading-4 text-muted-foreground">
+      <p className="text-xs leading-4 text-muted-foreground">
         {label}
       </p>
 
@@ -673,7 +587,7 @@ function LiveResults({
         ) : needsInput ? (
           <div
             role="status"
-            className="mt-4 border-l-2 border-primary bg-[#F8EEE0] p-4 text-xs leading-6 text-foreground"
+            className="mt-4 border-l-2 border-primary bg-surface-warm p-4 text-xs leading-6 text-foreground"
           >
             Enter your costs to see profit and
             margin.
@@ -701,10 +615,10 @@ function MobileLiveSummary({
   isValid,
 }) {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-ink bg-[#F8F3EA] px-4 py-3 shadow-[0_-6px_20px_rgba(29,21,15,0.10)] lg:hidden">
+    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-ink bg-background px-4 py-3 shadow-[0_-6px_20px_rgba(29,21,15,0.10)] lg:hidden">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Monthly profit after variable costs
           </p>
 
@@ -723,7 +637,7 @@ function MobileLiveSummary({
         </div>
 
         <div className="text-right">
-          <p className="text-[10px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Margin
           </p>
 
@@ -937,7 +851,7 @@ function ScenarioComparison({
               className={
                 "border border-ink p-5 " +
                 (index === 0
-                  ? "bg-[#F8EEE0]"
+                  ? "bg-surface-warm"
                   : "bg-card")
               }
             >
@@ -993,7 +907,7 @@ function ScenarioComparison({
         })}
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-5 border border-ink bg-[#F8EEE0] p-5">
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-5 border border-ink bg-surface-warm p-5">
         <div>
           <p className="eyebrow text-muted-foreground">
             Price change
@@ -1194,7 +1108,7 @@ function AIPriceSimulation({
                 className={
                   "border border-ink p-5 " +
                   (index === 0
-                    ? "bg-[#F8EEE0]"
+                    ? "bg-surface-warm"
                     : "bg-background")
                 }
               >
@@ -1258,7 +1172,7 @@ function AIPriceSimulation({
                     tickLine={false}
                     tick={{
                       fill: COLORS.muted,
-                      fontSize: 11,
+                      fontSize: 12,
                     }}
                     tickFormatter={formatMoney}
                   />
@@ -1269,7 +1183,7 @@ function AIPriceSimulation({
                     tickLine={false}
                     tick={{
                       fill: COLORS.muted,
-                      fontSize: 11,
+                      fontSize: 12,
                     }}
                   />
 
@@ -1807,7 +1721,7 @@ export default function LaunchFeasibility({
               {needsInput && (
                 <div
                   role="status"
-                  className="mt-5 flex items-start gap-3 border-l-2 border-primary bg-[#F8EEE0] p-4"
+                  className="mt-5 flex items-start gap-3 border-l-2 border-primary bg-surface-warm p-4"
                 >
                   <CircleAlert
                     size={18}
@@ -2038,7 +1952,7 @@ export default function LaunchFeasibility({
                   key={step.title}
                   className="flex items-start gap-4 border-b border-border pb-6 last:border-b-0 last:pb-0"
                 >
-                  <span className="flex size-9 shrink-0 items-center justify-center border border-ink bg-[#F8EEE0] font-mono text-xs">
+                  <span className="flex size-9 shrink-0 items-center justify-center border border-ink bg-surface-warm font-mono text-xs">
                     {String(index + 1).padStart(
                       2,
                       "0"

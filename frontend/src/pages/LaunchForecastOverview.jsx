@@ -26,101 +26,47 @@ import {
   handleRadioGroupKeyDown,
   radioProps,
 } from "../lib/radioGroup";
+import {
+  compactFormat,
+  formatWith,
+  moneyFormat,
+  numberFormat,
+  toNumber as numeric,
+  wholeMoneyFormat,
+} from "../lib/format";
+import SectionHeading from "../components/SectionHeading";
+import { primaryButton } from "../lib/buttons";
+import MetricCard, { RangeText } from "../components/MetricCard";
+import ChartPanel from "../components/ChartPanel";
+import ChartTooltip from "../components/ChartTooltip";
 
 // ========================================
 // DESIGN SYSTEM
 // ========================================
 
 const COLORS = {
-  orange: "#D95332",
-  ink: "#1D150F",
-  muted: "#645850", // = --muted-foreground; #776C61 was 4.46:1 on the beige panels
-  cream: "#F8EEE0",
-  green: "#47866B",
-  gray: "#AFA49A",
+  orange: "var(--chart-accent)",
+  ink: "var(--ink)",
+  muted: "var(--muted-foreground)", // #776C61 was 4.46:1 on the beige panels
+  cream: "var(--surface-warm)",
+  green: "var(--chart-positive)",
+  gray: "var(--chart-neutral)",
 };
-
-const primaryButton =
-  "inline-flex items-center justify-center gap-3 " +
-  "border border-ink bg-primary px-6 py-3 " +
-  "font-semibold text-primary-foreground shadow-offset " +
-  "transition-transform duration-150 " +
-  "hover:translate-x-[2px] hover:translate-y-[2px] " +
-  "focus-visible:outline-2 focus-visible:outline-offset-4 " +
-  "focus-visible:outline-primary";
-
-const cardHover =
-  "transition-[background-color,box-shadow,transform] " +
-  "duration-200 hover:-translate-y-[2px] " +
-  "hover:shadow-offset motion-reduce:transform-none";
 
 // ========================================
 // FORMATTING
 // ========================================
 
-const moneyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
-
 // Prices to the cent ($24.99 stays $24.99); totals above stay whole dollars.
-const priceFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
-const numberFormatter = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 0,
-});
-
-const compactFormatter = new Intl.NumberFormat("en-US", {
-  notation: "compact",
-  maximumFractionDigits: 1,
-});
-
-function numeric(value) {
-  if (
-    value === null ||
-    value === undefined ||
-    value === "" ||
-    !Number.isFinite(Number(value))
-  ) {
-    return null;
-  }
-
-  return Number(value);
-}
-
 function metricValue(metric) {
   return numeric(metric?.value);
 }
 
-function formatMoney(value) {
-  const amount = numeric(value);
+const formatMoney = formatWith(wholeMoneyFormat);
 
-  return amount === null
-    ? "—"
-    : moneyFormatter.format(amount);
-}
+const formatPrice = formatWith(moneyFormat);
 
-function formatPrice(value) {
-  const amount = numeric(value);
-
-  return amount === null
-    ? "—"
-    : priceFormatter.format(amount);
-}
-
-function formatNumber(value) {
-  const amount = numeric(value);
-
-  return amount === null
-    ? "—"
-    : numberFormatter.format(amount);
-}
+const formatNumber = formatWith(numberFormat);
 
 function formatMetric(metric, fallbackUnit) {
   const value = metricValue(metric);
@@ -139,157 +85,9 @@ function formatMetric(metric, fallbackUnit) {
   return formatNumber(value);
 }
 
-function validRange(metric) {
-  const range = metric?.range;
-  const value = metricValue(metric);
-
-  if (
-    !Array.isArray(range) ||
-    range.length !== 2 ||
-    value === null
-  ) {
-    return null;
-  }
-
-  const low = numeric(range[0]);
-  const high = numeric(range[1]);
-
-  if (
-    low === null ||
-    high === null ||
-    low > high ||
-    value < low ||
-    value > high
-  ) {
-    return null;
-  }
-
-  return [low, high];
-}
-
-function RangeText({ metric }) {
-  const range = validRange(metric);
-
-  if (!range) return null;
-
-  const low = formatMetric({ value: range[0], unit: metric.unit });
-  const high = formatMetric({ value: range[1], unit: metric.unit });
-
-  // Both ends print the same (e.g. "under 0.1%"): the range adds nothing.
-  if (low === high) return null;
-
-  return (
-    <p className="mt-3 text-xs leading-6 text-muted-foreground">
-      Estimated range: {low} – {high}
-    </p>
-  );
-}
-
 // ========================================
 // SHARED PAGE COMPONENTS
 // ========================================
-
-function SectionHeading({
-  number,
-  eyebrow,
-  title,
-  description,
-}) {
-  return (
-    <div>
-      <p className="eyebrow flex items-center gap-3 text-muted-foreground">
-        <span className="text-primary">{number}</span>
-        <span className="h-px w-8 bg-current" />
-        {eyebrow}
-      </p>
-
-      <h2 className="mt-4 font-display text-3xl leading-tight sm:text-4xl">
-        {title}
-      </h2>
-
-      {description && (
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground">
-          {description}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function MetricCard({
-  label,
-  metric,
-  description,
-  featured = false,
-}) {
-  return (
-    <article
-      className={
-        "flex min-h-48 min-w-0 flex-col justify-between border border-ink p-6 " +
-        (featured ? "bg-[#F8EEE0] " : "bg-card ") +
-        cardHover
-      }
-    >
-      <p className="eyebrow text-muted-foreground">
-        {label}
-      </p>
-
-      <div className="mt-8">
-        <p className="break-words font-display text-3xl leading-tight sm:text-4xl">
-          {formatMetric(metric)}
-        </p>
-
-        <p className="mt-3 text-sm leading-6 text-muted-foreground">
-          {description}
-        </p>
-
-        <RangeText metric={metric} />
-      </div>
-    </article>
-  );
-}
-
-function ChartPanel({
-  title,
-  description,
-  children,
-}) {
-  return (
-    <article className="min-w-0 border border-ink bg-card p-5 sm:p-7">
-      <h3 className="font-display text-2xl">
-        {title}
-      </h3>
-
-      <p className="mt-3 text-sm leading-7 text-muted-foreground">
-        {description}
-      </p>
-
-      <div className="mt-6">
-        {children}
-      </div>
-    </article>
-  );
-}
-
-function ChartTooltip({ active, payload }) {
-  if (!active || !payload?.length) {
-    return null;
-  }
-
-  const entry = payload[0];
-
-  return (
-    <div className="border border-ink bg-card px-4 py-3 shadow-offset">
-      <p className="text-sm font-semibold">
-        {entry.payload?.name || entry.name}
-      </p>
-
-      <p className="mt-2 font-mono text-sm">
-        {formatMoney(entry.value)}
-      </p>
-    </div>
-  );
-}
 
 // ========================================
 // 12-MONTH / 24-MONTH COMPARISONS
@@ -362,7 +160,7 @@ function CumulativeComparison({
               >
                 <CartesianGrid
                   vertical={false}
-                  stroke="#E8DED2"
+                  stroke="var(--chart-grid)"
                 />
 
                 <XAxis
@@ -382,15 +180,15 @@ function CumulativeComparison({
                   tickLine={false}
                   tick={{
                     fill: COLORS.muted,
-                    fontSize: 11,
+                    fontSize: 12,
                   }}
                   tickFormatter={(value) =>
-                    `$${compactFormatter.format(value)}`
+                    `$${compactFormat.format(value)}`
                   }
                 />
 
                 <Tooltip
-                  content={<ChartTooltip />}
+                  content={<ChartTooltip format={formatMoney} />}
                   cursor={{ fill: COLORS.cream }}
                 />
 
@@ -410,7 +208,7 @@ function CumulativeComparison({
           </div>
 
           <div className="mt-5 grid grid-cols-2 gap-3">
-            <div className="border border-border bg-[#F8EEE0] p-4">
+            <div className="border border-border bg-surface-warm p-4">
               <p className="text-xs text-muted-foreground">
                 First 12 months
               </p>
@@ -472,19 +270,22 @@ function ProfitabilitySection({
 
       <div className="mt-7 grid gap-5 md:grid-cols-3">
         <MetricCard
+          format={formatMetric}
           label="Net profit"
           metric={predictions?.[`profit_${suffix}`]}
           description="What may remain from sales after estimated expenses."
-          featured
+          highlighted
         />
 
         <MetricCard
+          format={formatMetric}
           label="Profit margin"
           metric={predictions?.[`margin_pct_${suffix}`]}
           description="How much of each sales dollar may remain after estimated costs."
         />
 
         <MetricCard
+          format={formatMetric}
           label="Return on investment"
           metric={predictions?.[`roi_pct_${suffix}`]}
           description="How the estimated financial return compares with the money invested."
@@ -545,7 +346,7 @@ function InvestmentOutlook({ predictions }) {
       />
 
       <div className="mt-7 grid gap-5 md:grid-cols-2">
-        <article className="border border-ink bg-[#F8EEE0] p-6">
+        <article className="border border-ink bg-surface-warm p-6">
           <p className="eyebrow text-muted-foreground">
             Estimated break-even time
           </p>
@@ -561,7 +362,7 @@ function InvestmentOutlook({ predictions }) {
             assumptions.
           </p>
 
-          <RangeText metric={breakEven} />
+          <RangeText metric={breakEven} format={formatMetric} />
         </article>
 
         <article className="border border-ink bg-card p-6">
@@ -589,7 +390,7 @@ function InvestmentOutlook({ predictions }) {
         </article>
       </div>
 
-      <div className="mt-6 flex items-start gap-3 border-l-2 border-primary bg-[#F8EEE0] p-5">
+      <div className="mt-6 flex items-start gap-3 border-l-2 border-primary bg-surface-warm p-5">
         <CircleAlert
           size={19}
           className="mt-0.5 shrink-0 text-primary"
@@ -622,19 +423,22 @@ function DemandSection({ predictions }) {
 
       <div className="mt-7 grid gap-5 md:grid-cols-3">
         <MetricCard
+          format={formatMetric}
           label="Estimated demand"
           metric={predictions?.demand_units_12m}
           description="The estimated number of units customers may want in the first year."
-          featured
+          highlighted
         />
 
         <MetricCard
+          format={formatMetric}
           label="Average monthly demand"
           metric={predictions?.avg_monthly_demand_12m}
           description="Estimated average demand per month across the first year."
         />
 
         <MetricCard
+          format={formatMetric}
           label="Share of category demand"
           metric={predictions?.demand_share_pct_12m}
           description="The estimated share of demand in this product category."
@@ -704,7 +508,7 @@ function AdditionalDetails({
             setExpanded((value) => !value)
           }
           aria-expanded={expanded}
-          className="flex w-full items-center justify-between gap-4 p-6 text-left transition-colors hover:bg-[#F8EEE0]"
+          className="flex w-full items-center justify-between gap-4 p-6 text-left transition-colors hover:bg-surface-warm"
         >
           <div>
             <p className="font-semibold">
@@ -757,7 +561,7 @@ function AdditionalDetails({
 // PRACTICAL BUSINESS GUIDANCE
 // ========================================
 
-function NextSteps({ predictions, period }) {
+function ForecastNextSteps({ predictions, period }) {
   const suffix = period === "12m" ? "12m" : "24m";
 
   const profit = metricValue(
@@ -829,7 +633,7 @@ function NextSteps({ predictions, period }) {
               key={step.title}
               className="flex items-start gap-4 border-b border-border pb-6 last:border-b-0 last:pb-0"
             >
-              <span className="flex size-9 shrink-0 items-center justify-center border border-ink bg-[#F8EEE0] font-mono text-xs">
+              <span className="flex size-9 shrink-0 items-center justify-center border border-ink bg-surface-warm font-mono text-xs">
                 {String(index + 1).padStart(2, "0")}
               </span>
 
@@ -883,7 +687,7 @@ function AboutForecast({ notes }) {
 
             {Array.isArray(notes) &&
               notes.length > 0 && (
-                <div className="mt-6 border-l-2 border-primary bg-[#F8EEE0] p-4">
+                <div className="mt-6 border-l-2 border-primary bg-surface-warm p-4">
                   <p className="font-semibold">
                     Additional forecast information
                   </p>
@@ -1067,7 +871,7 @@ export default function LaunchForecastOverview({
                   "px-5 py-3 text-sm font-semibold transition-colors " +
                   (period === option.value
                     ? "bg-primary text-primary-foreground"
-                    : "hover:bg-[#F8EEE0]")
+                    : "hover:bg-surface-warm")
                 }
               >
                 {option.label}
@@ -1088,19 +892,22 @@ export default function LaunchForecastOverview({
 
           <div className="mt-7 grid gap-5 md:grid-cols-3">
             <MetricCard
+              format={formatMetric}
               label="Projected revenue"
               metric={selectedMetric("revenue")}
               description="Total estimated sales before costs."
-              featured
+              highlighted
             />
 
             <MetricCard
+              format={formatMetric}
               label="Projected net profit"
               metric={selectedMetric("profit")}
               description="What may remain from sales after estimated expenses."
             />
 
             <MetricCard
+              format={formatMetric}
               label="Units sold"
               metric={selectedMetric("units_sold")}
               description="Estimated number of products sold."
@@ -1110,7 +917,7 @@ export default function LaunchForecastOverview({
 
         {/* INITIAL BUSINESS TAKEAWAY */}
 
-        <section className="mt-6 border-l-2 border-primary bg-[#F8EEE0] p-6">
+        <section className="mt-6 border-l-2 border-primary bg-surface-warm p-6">
           <p className="font-semibold">
             What do these numbers suggest?
           </p>
@@ -1184,7 +991,7 @@ export default function LaunchForecastOverview({
 
         {/* BUSINESS GUIDANCE */}
 
-        <NextSteps
+        <ForecastNextSteps
           predictions={predictions}
           period={period}
         />
