@@ -53,3 +53,7 @@ test("the landing page's in-page links scroll themselves", () => {
   // Header nav (desktop and mobile) and the hero's "#try" link.
   assert.equal((landing.match(/scrollToSection\(event\)|onClick=\{scrollToSection\}/g) || []).length, 3);
 });
+
+test("no template leftovers point at files that do not exist", () => {
+  assert.doesNotMatch(css(), /routes\/__root\.tsx/);
+});

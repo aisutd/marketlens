@@ -2,8 +2,9 @@
  * Tailwind v4 entry: config lives here, with no tailwind.config.js or PostCSS plugin.
  * - Keep every @import in this top block, above @theme and the rest of the file. Install an
  *   npm package before @importing its CSS. Never @import a remote URL (web fonts, CDN CSS): the
- *   build resolves @import from the filesystem. Load those with a <link> in the head() of
- *   src/routes/__root.tsx and name the family in a --font-* token in @theme inline below.
+ *   build resolves @import from the filesystem. Load those with a <link> in the <head> of
+ *   index.html (the web fonts are there) and name the family in a --font-* token in @theme
+ *   inline below.
  */
 @import "tailwindcss";
 @import "tw-animate-css";
