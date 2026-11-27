@@ -965,7 +965,9 @@ export default function LandingPage({ userId }) {
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader userId={userId} />
 
-      <main id="main-content">
+      {/* The skip link's target on this page; App leaves the id off its
+          own wrapper here. */}
+      <main id="main-content" tabIndex={-1} className="outline-none">
         <HeroSection />
         <TechnicalTicker />
         <HowItWorks />

@@ -56,6 +56,7 @@ const SignUp = lazy(() => import("./pages/SignUp"));
 const Login = lazy(() => import("./pages/Login"));
 const SavedProducts = lazy(() => import("./pages/SavedProducts"));
 const Profile = lazy(() => import("./pages/Profile"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 const SaveProductButton = lazy(() =>
   import("./components/SaveProductButton")
 );
@@ -225,11 +226,32 @@ const PAGE_TITLES = {
   "/launch-feasibility": "Launch feasibility",
 };
 
+// Every path with a route below. Anything else renders NotFound, which
+// must work signed out, so the header must not send the visitor to /login.
+const KNOWN_PATHS = new Set([
+  "/",
+  "/overview",
+  ...Object.keys(PAGE_TITLES),
+]);
+
+// The router ignores case and a trailing slash ("/Discover/" opens
+// Discover), so the lookup must too.
+function routePath(pathname) {
+  const path = pathname.toLowerCase().replace(/\/+$/, "");
+  return path || "/";
+}
+
+function isKnownPath(pathname) {
+  return KNOWN_PATHS.has(routePath(pathname));
+}
+
 function RouteEffects() {
   const { pathname, hash } = useLocation();
 
   useEffect(() => {
-    const page = PAGE_TITLES[pathname];
+    const page = isKnownPath(pathname)
+      ? PAGE_TITLES[routePath(pathname)]
+      : "Page not found";
 
     document.title = page
       ? `${page} · MarketLens`
@@ -294,6 +316,17 @@ function AppHeader({
 
   if (publicPages.includes(location.pathname)) {
     return null;
+  }
+
+  // An unknown address shows NotFound to everyone: with the app header
+  // when signed in, without it (and without a redirect) otherwise.
+  if (!isKnownPath(location.pathname)) {
+    return userId ? (
+      <Header
+        hasAnalysis={hasAnalysis}
+        onNewAnalysis={onNewAnalysis}
+      />
+    ) : null;
   }
 
   return (
@@ -373,6 +406,26 @@ function AppLayout({ children }) {
   return (
     <div
       className={`flex min-h-screen flex-col ${backgroundClass}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ========================================
+// PAGE CONTENT (SKIP LINK TARGET)
+// ========================================
+
+// The landing page brings its own header, main and footer, so there the
+// skip link must point at its <main>, not at this wrapper around all three.
+function PageContent({ children }) {
+  const location = useLocation();
+
+  return (
+    <div
+      id={location.pathname === "/" ? undefined : "main-content"}
+      tabIndex={-1}
+      className="w-full flex-1 outline-none"
     >
       {children}
     </div>
@@ -755,11 +808,7 @@ export default function App() {
 
         {/* PAGE CONTENT */}
 
-        <div
-          id="main-content"
-          tabIndex={-1}
-          className="w-full flex-1 outline-none"
-        >
+        <PageContent>
           <Suspense fallback={<PageLoading />}>
           <Routes>
 
@@ -978,21 +1027,16 @@ export default function App() {
               }
             />
 
-            {/* FALLBACK ROUTE */}
+            {/* NOT FOUND */}
 
             <Route
               path="*"
-              element={
-                <Navigate
-                  to="/discover"
-                  replace
-                />
-              }
+              element={<NotFound userId={userId} />}
             />
 
           </Routes>
           </Suspense>
-        </div>
+        </PageContent>
 
         {/* GLOBAL COPYRIGHT FOOTER */}
 
