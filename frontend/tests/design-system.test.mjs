@@ -112,3 +112,14 @@ test("every shared primary button has a keyboard focus outline", async () => {
   assert.ok(primaryButton.includes(focusRing));
   assert.match(focusRing, /focus-visible:outline-2/);
 });
+
+test("the forecast pages share one MetricCard", () => {
+  for (const file of ["../src/pages/LaunchForecastOverview.jsx", "../src/pages/SalesForecastOverview.jsx"]) {
+    const text = read(file);
+    for (const name of ["MetricCard", "RangeText", "validRange", "metricRange"]) {
+      assert.doesNotMatch(text, new RegExp(`^function ${name}\\(`, "m"), `${file}: ${name}`);
+    }
+    assert.doesNotMatch(text, /^const cardHover =/m, file);
+    assert.match(text, /import MetricCard, \{ RangeText \} from "\.\.\/components\/MetricCard"/, file);
+  }
+});

@@ -32,6 +32,8 @@ import {
 } from "../lib/format";
 import SectionHeading from "../components/SectionHeading";
 import { primaryButton } from "../lib/buttons";
+import MetricCard, { RangeText } from "../components/MetricCard";
+import { cardHover } from "../lib/cards";
 
 // ========================================
 // COLORS AND STYLES
@@ -44,11 +46,6 @@ const COLORS = {
   muted: "#645850", // = --muted-foreground; #776C61 was 4.46:1 on the beige panels
   cream: "#F8EEE0",
 };
-
-const cardHover =
-  "transition-[background-color,box-shadow,transform] " +
-  "duration-200 hover:-translate-y-[2px] " +
-  "hover:shadow-offset motion-reduce:transform-none";
 
 // ========================================
 // FORMATTING
@@ -80,34 +77,6 @@ function formatMetric(metric) {
   return formatNumber(value);
 }
 
-function metricRange(metric) {
-  const range = metric?.range;
-  const value = metricValue(metric);
-
-  if (
-    !Array.isArray(range) ||
-    range.length !== 2 ||
-    value === null
-  ) {
-    return null;
-  }
-
-  const low = numeric(range[0]);
-  const high = numeric(range[1]);
-
-  if (
-    low === null ||
-    high === null ||
-    low > high ||
-    value < low ||
-    value > high
-  ) {
-    return null;
-  }
-
-  return [low, high];
-}
-
 function formatPeriod(period) {
   if (period == null) {
     return "Unavailable";
@@ -135,59 +104,6 @@ function formatPeriod(period) {
 // ========================================
 // SHARED COMPONENTS
 // ========================================
-
-function RangeText({ metric }) {
-  const range = metricRange(metric);
-
-  if (!range) return null;
-
-  const low = formatMetric({ value: range[0], unit: metric.unit });
-  const high = formatMetric({ value: range[1], unit: metric.unit });
-
-  // Both ends print the same (e.g. "under 0.1%"): the range adds nothing.
-  if (low === high) return null;
-
-  return (
-    <p className="mt-3 text-xs leading-6 text-muted-foreground">
-      Estimated range: {low} – {high}
-    </p>
-  );
-}
-
-function MetricCard({
-  label,
-  metric,
-  description,
-  highlighted = false,
-}) {
-  return (
-    <article
-      className={
-        "flex min-h-48 min-w-0 flex-col justify-between border border-ink p-6 " +
-        (highlighted
-          ? "bg-[#F8EEE0] "
-          : "bg-card ") +
-        cardHover
-      }
-    >
-      <p className="eyebrow text-muted-foreground">
-        {label}
-      </p>
-
-      <div className="mt-8">
-        <p className="break-words font-display text-4xl leading-tight">
-          {formatMetric(metric)}
-        </p>
-
-        <p className="mt-3 text-sm leading-6 text-muted-foreground">
-          {description}
-        </p>
-
-        <RangeText metric={metric} />
-      </div>
-    </article>
-  );
-}
 
 // ========================================
 // ALIGNED CHART CARD
@@ -582,6 +498,7 @@ function ProfitabilitySection({
 
       <div className="mt-7 grid gap-5 md:grid-cols-2">
         <MetricCard
+          format={formatMetric}
           label="Profit margin"
           metric={predictions?.profit_margin_pct}
           description="The estimated portion of sales revenue remaining as profit."
@@ -589,6 +506,7 @@ function ProfitabilitySection({
         />
 
         <MetricCard
+          format={formatMetric}
           label="Return on investment"
           metric={periodROI}
           description={
@@ -810,7 +728,7 @@ function SupportingMetric({
           {formatMetric(metric)}
         </p>
 
-        <RangeText metric={metric} />
+        <RangeText metric={metric} format={formatMetric} />
       </div>
 
       <div className="flex flex-1 flex-col gap-5 border-t border-border p-6">
@@ -1421,6 +1339,7 @@ export default function SalesForecastOverview({
 
               <div className="mt-7 grid gap-5 md:grid-cols-3">
                 <MetricCard
+                  format={formatMetric}
                   label="Gross revenue"
                   metric={predictions.gross_revenue}
                   description="Estimated sales revenue before costs."
@@ -1428,12 +1347,14 @@ export default function SalesForecastOverview({
                 />
 
                 <MetricCard
+                  format={formatMetric}
                   label="Net profit"
                   metric={predictions.net_profit}
                   description="Estimated earnings after costs."
                 />
 
                 <MetricCard
+                  format={formatMetric}
                   label="Units sold"
                   metric={predictions.units_sold}
                   description="Estimated sales volume, not confirmed orders."

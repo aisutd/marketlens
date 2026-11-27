@@ -36,6 +36,7 @@ import {
 } from "../lib/format";
 import SectionHeading from "../components/SectionHeading";
 import { primaryButton } from "../lib/buttons";
+import MetricCard, { RangeText } from "../components/MetricCard";
 
 // ========================================
 // DESIGN SYSTEM
@@ -49,11 +50,6 @@ const COLORS = {
   green: "#47866B",
   gray: "#AFA49A",
 };
-
-const cardHover =
-  "transition-[background-color,box-shadow,transform] " +
-  "duration-200 hover:-translate-y-[2px] " +
-  "hover:shadow-offset motion-reduce:transform-none";
 
 // ========================================
 // FORMATTING
@@ -87,88 +83,9 @@ function formatMetric(metric, fallbackUnit) {
   return formatNumber(value);
 }
 
-function validRange(metric) {
-  const range = metric?.range;
-  const value = metricValue(metric);
-
-  if (
-    !Array.isArray(range) ||
-    range.length !== 2 ||
-    value === null
-  ) {
-    return null;
-  }
-
-  const low = numeric(range[0]);
-  const high = numeric(range[1]);
-
-  if (
-    low === null ||
-    high === null ||
-    low > high ||
-    value < low ||
-    value > high
-  ) {
-    return null;
-  }
-
-  return [low, high];
-}
-
-function RangeText({ metric }) {
-  const range = validRange(metric);
-
-  if (!range) return null;
-
-  const low = formatMetric({ value: range[0], unit: metric.unit });
-  const high = formatMetric({ value: range[1], unit: metric.unit });
-
-  // Both ends print the same (e.g. "under 0.1%"): the range adds nothing.
-  if (low === high) return null;
-
-  return (
-    <p className="mt-3 text-xs leading-6 text-muted-foreground">
-      Estimated range: {low} – {high}
-    </p>
-  );
-}
-
 // ========================================
 // SHARED PAGE COMPONENTS
 // ========================================
-
-function MetricCard({
-  label,
-  metric,
-  description,
-  featured = false,
-}) {
-  return (
-    <article
-      className={
-        "flex min-h-48 min-w-0 flex-col justify-between border border-ink p-6 " +
-        (featured ? "bg-[#F8EEE0] " : "bg-card ") +
-        cardHover
-      }
-    >
-      <p className="eyebrow text-muted-foreground">
-        {label}
-      </p>
-
-      <div className="mt-8">
-        <p className="break-words font-display text-3xl leading-tight sm:text-4xl">
-          {formatMetric(metric)}
-        </p>
-
-        <p className="mt-3 text-sm leading-6 text-muted-foreground">
-          {description}
-        </p>
-
-        <RangeText metric={metric} />
-      </div>
-    </article>
-  );
-}
 
 function ChartPanel({
   title,
@@ -393,19 +310,22 @@ function ProfitabilitySection({
 
       <div className="mt-7 grid gap-5 md:grid-cols-3">
         <MetricCard
+          format={formatMetric}
           label="Net profit"
           metric={predictions?.[`profit_${suffix}`]}
           description="What may remain from sales after estimated expenses."
-          featured
+          highlighted
         />
 
         <MetricCard
+          format={formatMetric}
           label="Profit margin"
           metric={predictions?.[`margin_pct_${suffix}`]}
           description="How much of each sales dollar may remain after estimated costs."
         />
 
         <MetricCard
+          format={formatMetric}
           label="Return on investment"
           metric={predictions?.[`roi_pct_${suffix}`]}
           description="How the estimated financial return compares with the money invested."
@@ -482,7 +402,7 @@ function InvestmentOutlook({ predictions }) {
             assumptions.
           </p>
 
-          <RangeText metric={breakEven} />
+          <RangeText metric={breakEven} format={formatMetric} />
         </article>
 
         <article className="border border-ink bg-card p-6">
@@ -543,19 +463,22 @@ function DemandSection({ predictions }) {
 
       <div className="mt-7 grid gap-5 md:grid-cols-3">
         <MetricCard
+          format={formatMetric}
           label="Estimated demand"
           metric={predictions?.demand_units_12m}
           description="The estimated number of units customers may want in the first year."
-          featured
+          highlighted
         />
 
         <MetricCard
+          format={formatMetric}
           label="Average monthly demand"
           metric={predictions?.avg_monthly_demand_12m}
           description="Estimated average demand per month across the first year."
         />
 
         <MetricCard
+          format={formatMetric}
           label="Share of category demand"
           metric={predictions?.demand_share_pct_12m}
           description="The estimated share of demand in this product category."
@@ -1009,19 +932,22 @@ export default function LaunchForecastOverview({
 
           <div className="mt-7 grid gap-5 md:grid-cols-3">
             <MetricCard
+              format={formatMetric}
               label="Projected revenue"
               metric={selectedMetric("revenue")}
               description="Total estimated sales before costs."
-              featured
+              highlighted
             />
 
             <MetricCard
+              format={formatMetric}
               label="Projected net profit"
               metric={selectedMetric("profit")}
               description="What may remain from sales after estimated expenses."
             />
 
             <MetricCard
+              format={formatMetric}
               label="Units sold"
               metric={selectedMetric("units_sold")}
               description="Estimated number of products sold."
