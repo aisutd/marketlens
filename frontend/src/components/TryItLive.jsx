@@ -113,7 +113,7 @@ function ScoreDial({
         viewBox="0 0 200 116"
         className="w-full"
         role="img"
-        aria-label={`Opportunity score: ${value} out of 100`}
+        aria-label={`Illustrative preview score: ${value} out of 100`}
       >
         {ticks.map((tick) => {
           const angle =
@@ -309,7 +309,7 @@ function PriceCurve({ points, current }) {
         viewBox={`0 0 ${width} ${height}`}
         className="w-full"
         role="img"
-        aria-label="Opportunity score at different selling prices"
+        aria-label="Illustrative preview score at different selling prices"
       >
         {[0, 50, 100].map((score) => (
           <g key={score}>
@@ -763,7 +763,7 @@ export default function TryItLive() {
         >
           <Sparkles size={17} />
 
-          Score this idea
+          Preview the score
         </button>
       </form>
 
@@ -776,14 +776,14 @@ export default function TryItLive() {
             <div className="w-56 opacity-40">
               <ScoreDial
                 score={0}
-                caption="awaiting idea"
+                caption="awaiting preview"
               />
             </div>
 
             <p className="mt-6 max-w-xs text-sm text-muted-foreground">
-              Your score, the reasons behind it,
-              and how it moves with price will
-              show up here.
+              An illustrative score, the factors
+              behind it, and how it moves with
+              price will show up here.
             </p>
           </div>
         )}
@@ -792,7 +792,7 @@ export default function TryItLive() {
           <div className="animate-rise space-y-6">
             <div className="flex items-center justify-between gap-3">
               <span className="eyebrow text-muted-foreground">
-                Opportunity Score
+                Preview score
               </span>
 
               <span className="rounded-full border border-border px-2.5 py-0.5 font-mono text-[11px] text-muted-foreground">
