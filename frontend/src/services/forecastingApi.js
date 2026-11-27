@@ -1,7 +1,12 @@
 import { ApiError, requestJson } from "./apiClient";
 import { auth } from "./firebase";
+import { resolveApiBase } from "./apiBase";
 
-const BASE_URL = "/api/forecasting/api/v1";
+// Dev: the Vite proxy path. Production build: VITE_FORECASTING_API_URL.
+const BASE_URL = `${resolveApiBase(
+  import.meta.env.VITE_FORECASTING_API_URL,
+  "/api/forecasting"
+)}/api/v1`;
 
 // ========================================
 // AUTHENTICATED API REQUEST
@@ -21,7 +26,12 @@ async function request(endpoint, options = {}) {
 
   const headers = new Headers(options.headers);
 
-  headers.set("Content-Type", "application/json");
+  // Content-Type only when there is a body: on a GET it is meaningless
+  // and, off the dev proxy, turns every request into a CORS preflight
+  // (#39).
+  if (options.body !== undefined && options.body !== null) {
+    headers.set("Content-Type", "application/json");
+  }
   headers.set("Authorization", `Bearer ${token}`);
 
   const result = await requestJson(`${BASE_URL}${endpoint}`, {

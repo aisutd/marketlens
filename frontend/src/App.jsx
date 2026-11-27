@@ -1,5 +1,11 @@
 
-import { useEffect, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -23,24 +29,51 @@ import {
 
 import Header from "./components/Header";
 import ProtectedRoute from "./components/ProtectedRoute";
-import SaveProductButton from "./components/SaveProductButton";
 import { returnPathFrom } from "./services/returnPath";
 
 // ========================================
 // PAGES
 // ========================================
 
+// The landing page loads with the app. Every other page, and with them
+// Recharts and the forecast and feasibility code, loads on first visit,
+// so a visitor who never signs in does not download them (#49).
 import LandingPage from "./pages/LandingPage";
-import Discover from "./pages/Discover";
-import Overview from "./pages/Overview";
-import SalesForecastOverview from "./pages/SalesForecastOverview";
-import LaunchForecastOverview from "./pages/LaunchForecastOverview";
-import ScoreDetails from "./pages/ScoreDetails";
-import LaunchFeasibility from "./pages/LaunchFeasibility";
-import SignUp from "./pages/SignUp";
-import Login from "./pages/Login";
-import SavedProducts from "./pages/SavedProducts";
-import Profile from "./pages/Profile";
+
+const Discover = lazy(() => import("./pages/Discover"));
+const Overview = lazy(() => import("./pages/Overview"));
+const SalesForecastOverview = lazy(() =>
+  import("./pages/SalesForecastOverview")
+);
+const LaunchForecastOverview = lazy(() =>
+  import("./pages/LaunchForecastOverview")
+);
+const ScoreDetails = lazy(() => import("./pages/ScoreDetails"));
+const LaunchFeasibility = lazy(() =>
+  import("./pages/LaunchFeasibility")
+);
+const SignUp = lazy(() => import("./pages/SignUp"));
+const Login = lazy(() => import("./pages/Login"));
+const SavedProducts = lazy(() => import("./pages/SavedProducts"));
+const Profile = lazy(() => import("./pages/Profile"));
+const SaveProductButton = lazy(() =>
+  import("./components/SaveProductButton")
+);
+
+// Shown while a page's code downloads, in the same style as the
+// session check in ProtectedRoute.
+function PageLoading() {
+  return (
+    <div
+      role="status"
+      className="flex min-h-[60vh] items-center justify-center"
+    >
+      <p className="text-sm text-muted-foreground">
+        Loading...
+      </p>
+    </div>
+  );
+}
 
 // ========================================
 // LOCAL STORAGE
@@ -416,10 +449,12 @@ function ForecastSaveAction({ forecast }) {
 
   return createPortal(
     <div className="mt-4">
-      <SaveProductButton
-        key={JSON.stringify(forecast)}
-        forecast={forecast}
-      />
+      <Suspense fallback={null}>
+        <SaveProductButton
+          key={JSON.stringify(forecast)}
+          forecast={forecast}
+        />
+      </Suspense>
     </div>,
     target
   );
@@ -726,6 +761,7 @@ export default function App() {
           tabIndex={-1}
           className="w-full flex-1 outline-none"
         >
+          <Suspense fallback={<PageLoading />}>
           <Routes>
 
             {/* LANDING PAGE */}
@@ -956,6 +992,7 @@ export default function App() {
             />
 
           </Routes>
+          </Suspense>
         </div>
 
         {/* GLOBAL COPYRIGHT FOOTER */}

@@ -2,8 +2,13 @@
 import { categoryUsesReviews } from "../constants/reviewCategories";
 import { ApiError, requestJson } from "./apiClient";
 import { auth } from "./firebase";
+import { resolveApiBase } from "./apiBase";
 
-const API_BASE_URL = "/api";
+// Dev: the Vite proxy path. Production build: VITE_MARKETLENS_API_URL.
+const API_BASE_URL = resolveApiBase(
+  import.meta.env.VITE_MARKETLENS_API_URL,
+  "/api"
+);
 
 // ========================================
 // BUILD PRODUCT PAYLOAD

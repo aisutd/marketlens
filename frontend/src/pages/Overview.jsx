@@ -17,11 +17,16 @@ import { getScoreBand } from "../constants/scoreBands";
 import InfoDialog from "../components/InfoDialog";
 import OpportunityGauge from "../components/OpportunityGauge";
 import SaveProductButton from "../components/SaveProductButton";
+import { parseNumberInput } from "../lib/numberInput";
 import {
   factorInfo,
   isCategoryWide,
   rankFactors,
 } from "../constants/scoreFactors";
+import {
+  handleRadioGroupKeyDown,
+  radioProps,
+} from "../lib/radioGroup";
 
 // ========================================
 // FORMATTING
@@ -38,16 +43,9 @@ const numberFormatter = new Intl.NumberFormat("en-US", {
 });
 
 function numeric(value) {
-  if (
-    value === null ||
-    value === undefined ||
-    value === "" ||
-    !Number.isFinite(Number(value))
-  ) {
-    return null;
-  }
-
-  return Number(value);
+  // Field text must be a plain decimal ("  " is not 0); numbers from
+  // the API pass through when finite.
+  return parseNumberInput(value);
 }
 
 function currency(value) {
@@ -551,8 +549,9 @@ function ProductInsights({
   return (
     <div className="mt-7">
       <div
-        role="group"
+        role="radiogroup"
         aria-label="Product findings"
+        onKeyDown={handleRadioGroupKeyDown}
         className="grid gap-4 sm:grid-cols-2"
       >
         {[
@@ -578,7 +577,7 @@ function ProductInsights({
               onClick={() =>
                 setCategory(option.id)
               }
-              aria-pressed={active}
+              {...radioProps(active)}
               className={
                 "border border-ink p-5 text-left " +
                 (active
@@ -814,10 +813,8 @@ function PriceScenarioPreview({ product, saveSuggestedPrice }) {
 
                 <input
                   id="preview-price"
-                  type="number"
-                  min="0.01"
-                  max="100000"
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
                   value={selectedPrice}
                   onChange={(event) =>
                     setSelectedPrice(

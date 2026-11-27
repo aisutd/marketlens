@@ -15,6 +15,11 @@ import ApiErrorNotice from "./ApiErrorNotice";
 import { FORECAST_CATEGORIES } from "../constants/forecastCategoryMap";
 import { categoryUsesReviews } from "../constants/reviewCategories";
 import { getForecastProducts } from "../services/forecastingApi";
+import { isBlank, parseNumberInput } from "../lib/numberInput";
+import {
+  handleRadioGroupKeyDown,
+  radioProps,
+} from "../lib/radioGroup";
 
 const PAGE_SIZE = 500;
 const MAX_SEARCH_RESULTS = 12;
@@ -60,13 +65,15 @@ function SelectionCard({
   icon: Icon,
   onClick,
   disabled = false,
+  isFirst = false,
+  anyChecked = true,
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-pressed={selected}
+      {...radioProps(selected, isFirst, anyChecked)}
       className={
         "group relative flex h-full w-full flex-col " +
         "rounded-md border border-ink p-6 text-left " +
@@ -190,9 +197,6 @@ function Field({
   placeholder,
   type = "text",
   inputMode,
-  min,
-  max,
-  step,
   disabled,
   required = false,
   hint,
@@ -217,9 +221,6 @@ function Field({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        min={min}
-        max={max}
-        step={step}
         disabled={disabled}
         aria-required={required || undefined}
         aria-invalid={error ? true : undefined}
@@ -345,6 +346,12 @@ export default function ProductSearch({
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [productsError, setProductsError] = useState("");
   const [catalogueAttempt, setCatalogueAttempt] = useState(0);
+  // The catalogue (about 1,350 products in pages of 500) is fetched only
+  // once the person first focuses the product search, not when the
+  // "Existing Product" workflow opens: someone who types a Product ID
+  // never waits for it, and a cold-starting forecasting service is not
+  // hit until it is needed (#49).
+  const [catalogueWanted, setCatalogueWanted] = useState(false);
 
   const [activeIndex, setActiveIndex] = useState(-1);
 
@@ -358,7 +365,11 @@ export default function ProductSearch({
     model === "sales" && forecastWorkflow === "existing";
 
   useEffect(() => {
-    if (!isExisting || products.length > 0) {
+    if (
+      !isExisting ||
+      !catalogueWanted ||
+      products.length > 0
+    ) {
       return;
     }
 
@@ -448,7 +459,12 @@ export default function ProductSearch({
     return () => {
       active = false;
     };
-  }, [isExisting, products.length, catalogueAttempt]);
+  }, [
+    isExisting,
+    catalogueWanted,
+    products.length,
+    catalogueAttempt,
+  ]);
 
   const filteredProducts = useMemo(() => {
     const query = productQuery.trim().toLowerCase();
@@ -606,23 +622,22 @@ export default function ProductSearch({
   );
 
   function validatePrice(priceString) {
-    const price = Number(priceString);
+    const price = parseNumberInput(priceString);
 
     return (
-      priceString !== "" &&
-      Number.isFinite(price) &&
+      price !== null &&
       price > 0 &&
       price <= 100000
     );
   }
 
   function validateListPrice(listPriceString, price) {
-    if (listPriceString === "") return true;
+    if (isBlank(listPriceString)) return true;
 
-    const listPrice = Number(listPriceString);
+    const listPrice = parseNumberInput(listPriceString);
 
     return (
-      Number.isFinite(listPrice) &&
+      listPrice !== null &&
       listPrice >= price &&
       listPrice <= 100000
     );
@@ -639,10 +654,10 @@ export default function ProductSearch({
   }
 
   function validateCount(value, noun) {
-    const count = Number(value);
+    const count = parseNumberInput(value);
 
     if (
-      value === "" ||
+      count === null ||
       !Number.isSafeInteger(count) ||
       count < 0
     ) {
@@ -691,13 +706,15 @@ export default function ProductSearch({
           String(item.id) === String(details.category)
       );
 
-      const price = Number(details.price);
-      const reviews = Number(details.review_count);
+      const price = parseNumberInput(details.price);
+      const reviews = parseNumberInput(details.review_count);
 
-      const stars =
-        details.stars === ""
-          ? null
-          : Number(details.stars);
+      // Text that is not a number is an error, not "no rating": only an
+      // empty field means the product has no rating yet.
+      const starsBlank = isBlank(details.stars);
+      const stars = starsBlank
+        ? null
+        : parseNumberInput(details.stars);
 
       // Insertion order is the on-screen order, so the first key is the
       // first field the person meets.
@@ -717,8 +734,8 @@ export default function ProductSearch({
       const reviewsError = validateCount(details.review_count, "reviews");
       if (reviewsError) errors["details-review_count"] = reviewsError;
       if (
-        stars !== null &&
-        (!Number.isFinite(stars) || stars < 1 || stars > 5)
+        !starsBlank &&
+        (stars === null || stars < 1 || stars > 5)
       ) {
         errors["details-stars"] =
           "Enter a rating from 1 to 5, or leave it empty.";
@@ -734,9 +751,9 @@ export default function ProductSearch({
           categoryName: category.name,
           price,
           originalPrice:
-            details.list_price === ""
+            isBlank(details.list_price)
               ? ""
-              : Number(details.list_price),
+              : parseNumberInput(details.list_price),
           reviews,
           stars,
         },
@@ -746,9 +763,9 @@ export default function ProductSearch({
     }
 
     if (isLaunch) {
-      const price = Number(launch.price);
-      const reviews = Number(launch.review_count);
-      const months = Number(launch.months_on_market);
+      const price = parseNumberInput(launch.price);
+      const reviews = parseNumberInput(launch.review_count);
+      const months = parseNumberInput(launch.months_on_market);
 
       const errors = {};
       const nameError = validateName(launch.name);
@@ -778,8 +795,8 @@ export default function ProductSearch({
           name: launch.name.trim(),
           category: launch.category,
           price,
-          ...(launch.list_price !== "" && {
-            list_price: Number(launch.list_price),
+          ...(!isBlank(launch.list_price) && {
+            list_price: parseNumberInput(launch.list_price),
           }),
           review_count: reviews,
           months_on_market: months,
@@ -826,6 +843,7 @@ export default function ProductSearch({
       ref={formRef}
       onSubmit={handleSubmit}
       noValidate
+      aria-busy={loading || undefined}
       className="space-y-12"
     >
       <section>
@@ -837,8 +855,9 @@ export default function ProductSearch({
 
         <div
           className="mt-7 grid gap-5 md:grid-cols-2"
-          role="group"
+          role="radiogroup"
           aria-label="Analysis type"
+          onKeyDown={handleRadioGroupKeyDown}
         >
           <SelectionCard
             selected={isOpportunity}
@@ -878,8 +897,9 @@ export default function ProductSearch({
 
           <div
             className="mt-7 grid gap-5 md:grid-cols-2"
-            role="group"
+            role="radiogroup"
             aria-label="Forecasting workflow"
+            onKeyDown={handleRadioGroupKeyDown}
           >
             <SelectionCard
               selected={isExisting}
@@ -958,11 +978,8 @@ export default function ProductSearch({
                   <Field
                     name="details-price"
                     label="Selling price (USD)"
-                    type="number"
+                    type="text"
                     inputMode="decimal"
-                    min="0.01"
-                    max="100000"
-                    step="0.01"
                     placeholder="24.99"
                     value={details.price}
                     onChange={(value) =>
@@ -976,11 +993,8 @@ export default function ProductSearch({
                   <Field
                     name="details-list_price"
                     label="List price before discount (optional)"
-                    type="number"
+                    type="text"
                     inputMode="decimal"
-                    min="0.01"
-                    max="100000"
-                    step="0.01"
                     placeholder="29.99"
                     value={details.list_price}
                     onChange={(value) =>
@@ -993,10 +1007,8 @@ export default function ProductSearch({
                   <Field
                     name="details-review_count"
                     label="Review count"
-                    type="number"
+                    type="text"
                     inputMode="numeric"
-                    min="0"
-                    step="1"
                     value={details.review_count}
                     onChange={(value) =>
                       updateDetails("review_count", value)
@@ -1009,11 +1021,8 @@ export default function ProductSearch({
                   <Field
                     name="details-stars"
                     label="Star rating (optional)"
-                    type="number"
+                    type="text"
                     inputMode="decimal"
-                    min="1"
-                    max="5"
-                    step="0.1"
                     placeholder="4.5"
                     value={details.stars}
                     onChange={(value) =>
@@ -1030,8 +1039,8 @@ export default function ProductSearch({
                     for this category's opportunity score.
                   </Note>
                 ) : (
-                  Number(details.review_count) > 0 &&
-                  details.stars === "" && (
+                  parseNumberInput(details.review_count) > 0 &&
+                  isBlank(details.stars) && (
                     <Note>
                       Add a star rating to include review
                       signals. Otherwise, the product is
@@ -1079,11 +1088,8 @@ export default function ProductSearch({
                   <Field
                     name="launch-price"
                     label="Expected selling price (USD)"
-                    type="number"
+                    type="text"
                     inputMode="decimal"
-                    min="0.01"
-                    max="100000"
-                    step="0.01"
                     placeholder="24.99"
                     value={launch.price}
                     onChange={(value) =>
@@ -1097,11 +1103,8 @@ export default function ProductSearch({
                   <Field
                     name="launch-list_price"
                     label="List price before discount (optional)"
-                    type="number"
+                    type="text"
                     inputMode="decimal"
-                    min="0.01"
-                    max="100000"
-                    step="0.01"
                     placeholder="29.99"
                     value={launch.list_price}
                     onChange={(value) =>
@@ -1114,10 +1117,8 @@ export default function ProductSearch({
                   <Field
                     name="launch-review_count"
                     label="Review count"
-                    type="number"
+                    type="text"
                     inputMode="numeric"
-                    min="0"
-                    step="1"
                     value={launch.review_count}
                     onChange={(value) =>
                       updateLaunch("review_count", value)
@@ -1130,10 +1131,8 @@ export default function ProductSearch({
                   <Field
                     name="launch-months_on_market"
                     label="Months on market"
-                    type="number"
+                    type="text"
                     inputMode="numeric"
-                    min="0"
-                    step="1"
                     value={launch.months_on_market}
                     onChange={(value) =>
                       updateLaunch("months_on_market", value)
@@ -1179,6 +1178,8 @@ export default function ProductSearch({
                       autoComplete="off"
                       disabled={loading}
                       onFocus={() => {
+                        setCatalogueWanted(true);
+
                         if (!selectedProduct) {
                           setShowDropdown(true);
                         }
@@ -1339,9 +1340,9 @@ export default function ProductSearch({
                       type="button"
                       onClick={() => handleManualProductId("")}
                       aria-label="Remove selected product"
-                      className="text-muted-foreground transition-colors hover:text-primary"
+                      className="-m-2 flex size-10 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-primary"
                     >
-                      <X size={19} />
+                      <X size={19} aria-hidden="true" />
                     </button>
                   </div>
                 )}
@@ -1404,6 +1405,17 @@ export default function ProductSearch({
       />
 
       <div className="border-t border-ink pt-8">
+        {/* The live region is always in the DOM so screen readers pick up
+            the change when an analysis starts; the visible button text
+            alone is not announced, since the button is disabled. */}
+        <p role="status" className="sr-only">
+          {loading
+            ? isOpportunity
+              ? "Analyzing opportunity, please wait."
+              : "Generating forecast, please wait."
+            : ""}
+        </p>
+
         <button
           type="submit"
           disabled={loading}

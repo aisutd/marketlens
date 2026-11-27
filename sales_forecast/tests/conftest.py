@@ -2,7 +2,18 @@ import pandas as pd
 import pytest
 
 from marketlens import MarketLensPredictor, ProductInput
-from marketlens.config import FINAL
+from marketlens import config as ml_config
+
+
+def pytest_collection_modifyitems(config, items):
+    """Skip tests marked `models` when models/final and data/ are not present (they are gitignored), so a clean
+    checkout runs the pure unit tests and reports the rest as skipped. `pytest -m "not models"` deselects them."""
+    if ml_config.has_root():
+        return
+    skip = pytest.mark.skip(reason="needs models/final and data/ (gitignored); set MARKETLENS_ROOT to run")
+    for item in items:
+        if "models" in item.keywords:
+            item.add_marker(skip)
 
 
 @pytest.fixture(scope="session")
@@ -18,4 +29,4 @@ def power_bank():
 
 @pytest.fixture(scope="session")
 def product_train():
-    return pd.read_csv(FINAL / "product_train.csv")
+    return pd.read_csv(ml_config.FINAL / "product_train.csv")

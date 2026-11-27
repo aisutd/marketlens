@@ -3,9 +3,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from marketlens.config import INTERIM, PROCESSED
+from marketlens import config
 from marketlens.features import ProductInput, build_next_month_features, build_product_features, category_info
 from marketlens.models import predict_target
+
+# Every test here needs the trained models (directly or through the API lifespan).
+pytestmark = pytest.mark.models
 
 DRIFT_FREE = {"everyday_price", "avg_price", "log_avg_price"}   # month length makes the price drift differ by a few cents
 
@@ -32,8 +35,8 @@ def test_next_month_builder_matches_stored_september_row(predictor):
 
 
 def test_product_builder_matches_training_features(predictor, product_train):
-    clean = pd.read_csv(INTERIM / "amazon_us_clean.csv").set_index("product_id")
-    pf = pd.read_csv(PROCESSED / "product_features.csv").set_index("product_id")
+    clean = pd.read_csv(config.INTERIM / "amazon_us_clean.csv").set_index("product_id")
+    pf = pd.read_csv(config.PROCESSED / "product_features.csv").set_index("product_id")
     for pid in product_train.product_id.iloc[:25]:
         c, f = clean.loc[pid], pf.loc[pid]
         inp = ProductInput(category=c.us_category, price=c.price_usd, list_price=c.list_price_usd,

@@ -233,6 +233,11 @@ gcloud run deploy marketlens-api --source product_success --region us-central1 -
 Public Cloud Run invocation allows the anonymous demo to work. FastAPI still
 enforces Firebase ID tokens on the protected scoring routes.
 
+`ALLOWED_ORIGINS` lists the frontend origins allowed to call the API from a browser. A production frontend calls
+it cross-origin, so add its origin (see "Production build" in `frontend/README.md`). The list contains commas, so
+pass it with another delimiter, for example
+`--update-env-vars "^@^ALLOWED_ORIGINS=https://marketlens.web.app,http://localhost:3000@FIREBASE_PROJECT_ID=FIREBASE_PROJECT_ID"`.
+
 `gcloud meta list-files-for-upload product_success` lists exactly what would be uploaded.
 
 ## Results
