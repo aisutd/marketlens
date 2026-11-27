@@ -278,16 +278,8 @@ function ScoreHero({
             </em>
           </h2>
 
-          <div className="mt-7 flex flex-wrap items-center gap-4">
-            <span className="border border-ink bg-[#F8EEE0] px-4 py-2 font-mono text-sm font-semibold">
-              {score === null
-                ? "—"
-                : `${score}/100`}
-            </span>
-
-            <span className="text-sm font-semibold">
-              {band.label} opportunity
-            </span>
+          <div className="mt-7 inline-flex border border-ink bg-[#F8EEE0] px-4 py-2 text-sm font-semibold">
+            {band.label} opportunity
           </div>
 
           <h3 className="mt-6 font-display text-2xl">
@@ -381,33 +373,11 @@ function ScoreSummary({
         description="Start with the overall opportunity, then explore what deserves more attention."
       />
 
-      <div className="mt-7 grid gap-5 md:grid-cols-3">
+      {/* The score itself is shown once, in the dial above. */}
+      <div className="mt-7 grid gap-5 md:grid-cols-2">
         <article
           className={
             `flex min-h-52 flex-col justify-between border border-ink bg-[#F8EEE0] p-6 ${hoverCard}`
-          }
-        >
-          <p className="eyebrow text-muted-foreground">
-            Opportunity score
-          </p>
-
-          <div className="mt-8">
-            <p className="font-display text-4xl leading-tight">
-              {score === null
-                ? "—"
-                : `${score}/100`}
-            </p>
-
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              How this product compares within its
-              category.
-            </p>
-          </div>
-        </article>
-
-        <article
-          className={
-            `flex min-h-52 flex-col justify-between border border-ink bg-card p-6 ${hoverCard}`
           }
         >
           <p className="eyebrow text-muted-foreground">
