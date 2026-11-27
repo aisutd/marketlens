@@ -348,7 +348,7 @@ function ScenarioControl({
           className="block w-full cursor-pointer accent-chart-accent disabled:cursor-not-allowed"
         />
 
-        <div className="mt-1 flex justify-between gap-3 font-mono text-[10px] text-muted-foreground">
+        <div className="mt-1 flex justify-between gap-3 font-mono text-xs text-muted-foreground">
           <span>
             {prefix}
             {step === 1
@@ -422,7 +422,7 @@ function RevenueCostChart({ financials }) {
             tickLine={false}
             tick={{
               fill: COLORS.muted,
-              fontSize: 11,
+              fontSize: 12,
             }}
           />
 
@@ -433,7 +433,7 @@ function RevenueCostChart({ financials }) {
             width={58}
             tick={{
               fill: COLORS.muted,
-              fontSize: 10,
+              fontSize: 12,
             }}
             tickFormatter={(value) =>
               `$${compactFormat.format(value)}`
@@ -482,7 +482,7 @@ function LiveMetric({
           : "bg-background")
       }
     >
-      <p className="text-[11px] leading-4 text-muted-foreground">
+      <p className="text-xs leading-4 text-muted-foreground">
         {label}
       </p>
 
@@ -618,7 +618,7 @@ function MobileLiveSummary({
     <div className="fixed inset-x-0 bottom-0 z-30 border-t border-ink bg-background px-4 py-3 shadow-[0_-6px_20px_rgba(29,21,15,0.10)] lg:hidden">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Monthly profit after variable costs
           </p>
 
@@ -637,7 +637,7 @@ function MobileLiveSummary({
         </div>
 
         <div className="text-right">
-          <p className="text-[10px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Margin
           </p>
 
@@ -1172,7 +1172,7 @@ function AIPriceSimulation({
                     tickLine={false}
                     tick={{
                       fill: COLORS.muted,
-                      fontSize: 11,
+                      fontSize: 12,
                     }}
                     tickFormatter={formatMoney}
                   />
@@ -1183,7 +1183,7 @@ function AIPriceSimulation({
                     tickLine={false}
                     tick={{
                       fill: COLORS.muted,
-                      fontSize: 11,
+                      fontSize: 12,
                     }}
                   />
 

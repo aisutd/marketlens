@@ -16,6 +16,7 @@
     "test:forecast-numbers": "node --test tests/forecast-numbers.test.mjs",
     "test:feasibility-costs": "node --test tests/feasibility-costs.test.mjs",
     "test:design-system": "node --test tests/design-system.test.mjs",
+    "test:text-size": "node --test tests/text-size.test.mjs",
     "test:opportunity-pages": "node --test tests/opportunity-pages.test.mjs",
     "test:discover-form": "node --test tests/discover-form.test.mjs",
     "test:load-on-demand": "node --test tests/load-on-demand.test.mjs",

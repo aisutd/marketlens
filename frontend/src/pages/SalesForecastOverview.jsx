@@ -252,7 +252,7 @@ function FinancialChart({ predictions }) {
               width={66}
               tick={{
                 fill: COLORS.muted,
-                fontSize: 11,
+                fontSize: 12,
               }}
               tickFormatter={(value) =>
                 `$${formatCompact(value)}`
@@ -379,7 +379,7 @@ function DemandChart({ predictions }) {
               axisLine={false}
               tick={{
                 fill: COLORS.muted,
-                fontSize: 11,
+                fontSize: 12,
               }}
               tickFormatter={formatCompact}
             />

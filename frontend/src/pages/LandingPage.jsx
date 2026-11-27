@@ -476,7 +476,7 @@ function ReasonBars({ up, down }) {
 function HeroCard() {
   return (
     <div className="relative">
-      <div className="absolute -bottom-4 -left-4 z-10 -rotate-2 border border-ink bg-accent px-3 py-1 font-mono text-[11px] uppercase tracking-widest text-accent-foreground shadow-offset-sm">
+      <div className="absolute -bottom-4 -left-4 z-10 -rotate-2 border border-ink bg-accent px-3 py-1 font-mono text-xs uppercase tracking-widest text-accent-foreground shadow-offset-sm">
         Illustrative example
       </div>
 
@@ -486,7 +486,7 @@ function HeroCard() {
             Product opportunity
           </span>
 
-          <span className="font-mono text-[11px] text-muted-foreground">
+          <span className="font-mono text-xs text-muted-foreground">
             Analysis preview
           </span>
         </div>
@@ -801,7 +801,7 @@ function ForecastSection() {
                 Financial outlook
               </span>
 
-              <span className="font-mono text-[11px] text-muted-foreground">
+              <span className="font-mono text-xs text-muted-foreground">
                 Planning tools
               </span>
             </div>
@@ -895,7 +895,7 @@ function DecisionSection() {
                         {item.title}
                       </h3>
 
-                      <span className="font-mono text-[11px] text-muted-foreground">
+                      <span className="font-mono text-xs text-muted-foreground">
                         {String(index + 1).padStart(2, "0")}
                       </span>
                     </div>

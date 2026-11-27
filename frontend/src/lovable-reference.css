@@ -270,7 +270,7 @@
 
 @utility eyebrow {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.75rem; /* 12px: the smallest text size in the app (#50) */
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }

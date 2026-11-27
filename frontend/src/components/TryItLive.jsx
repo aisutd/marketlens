@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 import {
   ArrowDownRight,
@@ -182,14 +182,52 @@ function FactorBars({ up = [], down = [] }) {
   );
 }
 
-function PriceCurve({ points, current }) {
-  if (points.length < 2) return null;
+// Smallest rendered size for the chart's axis labels (#50: 12px floor).
+const MIN_LABEL_PX = 12;
 
+// The chart's on-screen pixels per viewBox unit, kept up to date as it resizes.
+function useSvgScale(viewBoxWidth) {
+  const ref = useRef(null);
+  const [scale, setScale] = useState(1);
+
+  useLayoutEffect(() => {
+    const svg = ref.current;
+    if (!svg) return undefined;
+
+    const measure = () => {
+      const rendered = svg.getBoundingClientRect().width;
+      if (rendered > 0) setScale(rendered / viewBoxWidth);
+    };
+
+    measure();
+
+    if (typeof ResizeObserver === "undefined") return undefined;
+    const observer = new ResizeObserver(measure);
+    observer.observe(svg);
+    return () => observer.disconnect();
+  }, [viewBoxWidth]);
+
+  return [ref, scale];
+}
+
+function PriceCurve({ points, current }) {
   const width = 320;
   const height = 150;
 
+  const [svgRef, scale] = useSvgScale(width);
+
+  if (points.length < 2) return null;
+
+  // The SVG scales with the card, and its text with it: 9 units is 13px
+  // on a 1280px screen but 8.4px on a 390px phone. Grow the labels in
+  // viewBox units so they never render below 12px...
+  const labelSize = Math.max(9, MIN_LABEL_PX / scale);
+  const labelStyle = { fontSize: labelSize };
+
   const pad = {
-    left: 28,
+    // ...and widen the left margin to fit "100" in the monospace font
+    // (about 0.6em a character) plus the 6-unit gap: 28 at 9 units.
+    left: Math.max(28, Math.ceil(6 + 3 * 0.62 * labelSize + 2)),
     right: 10,
     top: 12,
     bottom: 26,
@@ -235,6 +273,7 @@ function PriceCurve({ points, current }) {
   return (
     <figure>
       <svg
+        ref={svgRef}
         viewBox={`0 0 ${width} ${height}`}
         className="w-full"
         role="img"
@@ -255,7 +294,8 @@ function PriceCurve({ points, current }) {
               x={pad.left - 6}
               y={y(score) + 3}
               textAnchor="end"
-              className="fill-muted-foreground font-mono text-[9px]"
+              className="fill-muted-foreground font-mono"
+              style={labelStyle}
             >
               {score}
             </text>
@@ -305,7 +345,8 @@ function PriceCurve({ points, current }) {
         <text
           x={pad.left}
           y={height - 8}
-          className="fill-muted-foreground font-mono text-[9px]"
+          className="fill-muted-foreground font-mono"
+          style={labelStyle}
         >
           ${first.price.toFixed(2)}
         </text>
@@ -314,7 +355,8 @@ function PriceCurve({ points, current }) {
           x={width - pad.right}
           y={height - 8}
           textAnchor="end"
-          className="fill-muted-foreground font-mono text-[9px]"
+          className="fill-muted-foreground font-mono"
+          style={labelStyle}
         >
           ${last.price.toFixed(2)}
         </text>
@@ -730,7 +772,7 @@ export default function TryItLive() {
                 Preview score
               </span>
 
-              <span className="rounded-full border border-border px-2.5 py-0.5 font-mono text-[11px] text-muted-foreground">
+              <span className="rounded-full border border-border px-2.5 py-0.5 font-mono text-xs text-muted-foreground">
                 {result.model === "launch"
                   ? "launch-time preview"
                   : "full-model preview"}

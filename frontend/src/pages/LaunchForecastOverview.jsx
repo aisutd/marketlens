@@ -180,7 +180,7 @@ function CumulativeComparison({
                   tickLine={false}
                   tick={{
                     fill: COLORS.muted,
-                    fontSize: 11,
+                    fontSize: 12,
                   }}
                   tickFormatter={(value) =>
                     `$${compactFormat.format(value)}`
