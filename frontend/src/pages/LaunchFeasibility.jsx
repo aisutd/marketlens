@@ -26,6 +26,12 @@ import {
   simulatePrices,
 } from "../services/marketlensApi";
 import { parseNumberInput } from "../lib/numberInput";
+import {
+  compactFormat,
+  formatWith,
+  moneyFormat,
+  numberFormat,
+} from "../lib/format";
 
 // ========================================
 // DESIGN SYSTEM
@@ -114,43 +120,15 @@ const secondaryButton =
 // FORMATTING
 // ========================================
 
-const moneyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
-const numberFormatter = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 0,
-});
-
-const compactFormatter = new Intl.NumberFormat("en-US", {
-  notation: "compact",
-  maximumFractionDigits: 1,
-});
-
 function numeric(value) {
   // Field text must be a plain decimal ("  " is not 0); numbers from
   // the API pass through when finite.
   return parseNumberInput(value);
 }
 
-function formatMoney(value) {
-  const number = numeric(value);
+const formatMoney = formatWith(moneyFormat, numeric);
 
-  return number === null
-    ? "—"
-    : moneyFormatter.format(number);
-}
-
-function formatNumber(value) {
-  const number = numeric(value);
-
-  return number === null
-    ? "—"
-    : numberFormatter.format(number);
-}
+const formatNumber = formatWith(numberFormat, numeric);
 
 function formatPercent(value) {
   const number = numeric(value);
@@ -522,7 +500,7 @@ function RevenueCostChart({ financials }) {
               fontSize: 10,
             }}
             tickFormatter={(value) =>
-              `$${compactFormatter.format(value)}`
+              `$${compactFormat.format(value)}`
             }
           />
 

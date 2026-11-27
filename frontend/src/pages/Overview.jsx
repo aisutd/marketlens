@@ -27,20 +27,15 @@ import {
   handleRadioGroupKeyDown,
   radioProps,
 } from "../lib/radioGroup";
+import {
+  formatWith,
+  moneyFormat,
+  numberFormat,
+} from "../lib/format";
 
 // ========================================
 // FORMATTING
 // ========================================
-
-const currencyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 2,
-});
-
-const numberFormatter = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 0,
-});
 
 function numeric(value) {
   // Field text must be a plain decimal ("  " is not 0); numbers from
@@ -48,21 +43,9 @@ function numeric(value) {
   return parseNumberInput(value);
 }
 
-function currency(value) {
-  const amount = numeric(value);
+const currency = formatWith(moneyFormat, numeric);
 
-  return amount === null
-    ? "—"
-    : currencyFormatter.format(amount);
-}
-
-function formattedNumber(value) {
-  const amount = numeric(value);
-
-  return amount === null
-    ? "—"
-    : numberFormatter.format(amount);
-}
+const formattedNumber = formatWith(numberFormat, numeric);
 
 // Largest first, category-wide factors last (see constants/scoreFactors.js).
 const sortedFactors = rankFactors;

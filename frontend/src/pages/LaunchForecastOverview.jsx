@@ -26,6 +26,14 @@ import {
   handleRadioGroupKeyDown,
   radioProps,
 } from "../lib/radioGroup";
+import {
+  compactFormat,
+  formatWith,
+  moneyFormat,
+  numberFormat,
+  toNumber as numeric,
+  wholeMoneyFormat,
+} from "../lib/format";
 
 // ========================================
 // DESIGN SYSTEM
@@ -58,69 +66,16 @@ const cardHover =
 // FORMATTING
 // ========================================
 
-const moneyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
-
 // Prices to the cent ($24.99 stays $24.99); totals above stay whole dollars.
-const priceFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
-const numberFormatter = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 0,
-});
-
-const compactFormatter = new Intl.NumberFormat("en-US", {
-  notation: "compact",
-  maximumFractionDigits: 1,
-});
-
-function numeric(value) {
-  if (
-    value === null ||
-    value === undefined ||
-    value === "" ||
-    !Number.isFinite(Number(value))
-  ) {
-    return null;
-  }
-
-  return Number(value);
-}
-
 function metricValue(metric) {
   return numeric(metric?.value);
 }
 
-function formatMoney(value) {
-  const amount = numeric(value);
+const formatMoney = formatWith(wholeMoneyFormat);
 
-  return amount === null
-    ? "—"
-    : moneyFormatter.format(amount);
-}
+const formatPrice = formatWith(moneyFormat);
 
-function formatPrice(value) {
-  const amount = numeric(value);
-
-  return amount === null
-    ? "—"
-    : priceFormatter.format(amount);
-}
-
-function formatNumber(value) {
-  const amount = numeric(value);
-
-  return amount === null
-    ? "—"
-    : numberFormatter.format(amount);
-}
+const formatNumber = formatWith(numberFormat);
 
 function formatMetric(metric, fallbackUnit) {
   const value = metricValue(metric);
@@ -385,7 +340,7 @@ function CumulativeComparison({
                     fontSize: 11,
                   }}
                   tickFormatter={(value) =>
-                    `$${compactFormatter.format(value)}`
+                    `$${compactFormat.format(value)}`
                   }
                 />
 

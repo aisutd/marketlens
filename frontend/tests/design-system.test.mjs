@@ -57,3 +57,37 @@ test("the landing page's in-page links scroll themselves", () => {
 test("no template leftovers point at files that do not exist", () => {
   assert.doesNotMatch(css(), /routes\/__root\.tsx/);
 });
+
+// ---- shared formatting (src/lib/format.js) ----
+
+test("shared formatters keep each page's output", async () => {
+  const f = await import("../src/lib/format.js");
+  const { parseNumberInput } = await import("../src/lib/numberInput.js");
+  const money = f.formatWith(f.moneyFormat);
+  const whole = f.formatWith(f.wholeMoneyFormat);
+  const number = f.formatWith(f.numberFormat);
+  const compact = f.formatWith(f.compactFormat);
+  assert.equal(money(24.99), "$24.99");
+  assert.equal(money(129948), "$129,948.00");
+  assert.equal(money("23.5"), "$23.50");
+  assert.equal(whole(5400.4), "$5,400");
+  assert.equal(number(5200.6), "5,201");
+  assert.equal(compact(5200), "5.2K");
+  assert.equal(money(-1255), "-$1,255.00");
+  for (const missing of [null, undefined, "", "abc", Infinity]) {
+    assert.equal(money(missing), f.MISSING);
+  }
+  // With the strict field parser, blank text is missing, not $0.00.
+  const strict = f.formatWith(f.moneyFormat, parseNumberInput);
+  assert.equal(strict("   "), f.MISSING);
+  assert.equal(strict("12.5"), "$12.50");
+});
+
+test("number and money formats are defined once", () => {
+  for (const file of [
+    "../src/pages/LaunchFeasibility.jsx", "../src/pages/LaunchForecastOverview.jsx",
+    "../src/pages/SalesForecastOverview.jsx", "../src/pages/Overview.jsx",
+  ]) {
+    assert.doesNotMatch(read(file), /new Intl\.NumberFormat/, file);
+  }
+});

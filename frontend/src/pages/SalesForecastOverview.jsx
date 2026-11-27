@@ -23,6 +23,13 @@ import {
   handleRadioGroupKeyDown,
   radioProps,
 } from "../lib/radioGroup";
+import {
+  compactFormat,
+  formatWith,
+  moneyFormat,
+  numberFormat,
+  toNumber as numeric,
+} from "../lib/format";
 
 // ========================================
 // COLORS AND STYLES
@@ -52,61 +59,15 @@ const cardHover =
 // FORMATTING
 // ========================================
 
-function numeric(value) {
-  if (
-    value === null ||
-    value === undefined ||
-    value === "" ||
-    !Number.isFinite(Number(value))
-  ) {
-    return null;
-  }
-
-  return Number(value);
-}
-
 function metricValue(metric) {
   return numeric(metric?.value);
 }
 
-const numberFormatter = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 0,
-});
+const formatNumber = formatWith(numberFormat);
 
-const moneyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 2,
-});
+const formatMoney = formatWith(moneyFormat);
 
-const compactFormatter = new Intl.NumberFormat("en-US", {
-  notation: "compact",
-  maximumFractionDigits: 1,
-});
-
-function formatNumber(value) {
-  const result = numeric(value);
-
-  return result === null
-    ? "—"
-    : numberFormatter.format(result);
-}
-
-function formatMoney(value) {
-  const result = numeric(value);
-
-  return result === null
-    ? "—"
-    : moneyFormatter.format(result);
-}
-
-function formatCompact(value) {
-  const result = numeric(value);
-
-  return result === null
-    ? "—"
-    : compactFormatter.format(result);
-}
+const formatCompact = formatWith(compactFormat);
 
 function formatMetric(metric) {
   const value = metricValue(metric);
