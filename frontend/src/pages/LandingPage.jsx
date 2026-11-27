@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowDownRight,
   ArrowRight,
@@ -214,10 +214,59 @@ function PrimaryButton({
   );
 }
 
+// Click handler for in-page links (href="#how" and so on). The page has no
+// global smooth scrolling (#50: it also animated find-in-page and history
+// jumps), so these links scroll smoothly themselves, or jump when the
+// visitor prefers reduced motion. The hash still goes into the URL, and
+// focus moves to the section, as a native anchor jump would do for
+// keyboard users. Modified clicks (new tab and so on) are left alone.
+function useSectionLink() {
+  const navigate = useNavigate();
+
+  return (event) => {
+    const id = event.currentTarget.hash.slice(1);
+    const target = id && document.getElementById(id);
+
+    if (
+      !target ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    navigate({ hash: id });
+
+    target.scrollIntoView({
+      behavior: reduceMotion ? "instant" : "smooth",
+      block: "start",
+    });
+
+    // tabindex -1 makes the section focusable without adding a Tab stop;
+    // data-section-target hides the outline a whole focused section would
+    // otherwise get (lovable-reference.css).
+    if (!target.hasAttribute("tabindex")) {
+      target.setAttribute("tabindex", "-1");
+    }
+    target.setAttribute("data-section-target", "");
+    target.focus({ preventScroll: true });
+  };
+}
+
 // userId comes from App's auth check: null when logged out, undefined
 // while the check is still running (then nothing extra is shown).
 function SiteHeader({ userId }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const scrollToSection = useSectionLink();
 
   const loggedOut = userId === null;
   const startHref = loggedOut ? "/signup" : "/discover";
@@ -254,6 +303,7 @@ function SiteHeader({ userId }) {
             <a
               key={href}
               href={href}
+              onClick={scrollToSection}
               className="transition-colors hover:text-foreground focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
             >
               {label}
@@ -293,7 +343,10 @@ function SiteHeader({ userId }) {
             <a
               key={href}
               href={href}
-              onClick={() => setMenuOpen(false)}
+              onClick={(event) => {
+                setMenuOpen(false);
+                scrollToSection(event);
+              }}
             >
               {label}
             </a>
@@ -537,6 +590,7 @@ function HeroCard() {
 }
 
 function HeroSection() {
+  const scrollToSection = useSectionLink();
   return (
     <section className="relative overflow-hidden border-b border-ink bg-ledger">
       <div className="mx-auto grid max-w-6xl items-center gap-14 px-5 pb-20 pt-14 sm:px-8 lg:grid-cols-[1.15fr_1fr] lg:pb-24 lg:pt-20">
@@ -563,6 +617,7 @@ function HeroSection() {
           <div className="mt-9 flex flex-wrap gap-4">
             <a
               href="#try"
+              onClick={scrollToSection}
               className="inline-flex items-center justify-center gap-2 rounded-md border border-ink bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-offset transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-offset-sm"
             >
               Score a quick idea

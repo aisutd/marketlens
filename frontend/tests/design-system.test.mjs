@@ -41,3 +41,15 @@ test("every translate in the app is a hover state", () => {
     }
   }
 });
+
+test("smooth scrolling is not global", () => {
+  const rules = css().replace(/\/\*[\s\S]*?\*\//g, "");
+  assert.doesNotMatch(rules, /scroll-behavior:\s*smooth/);
+});
+
+test("the landing page's in-page links scroll themselves", () => {
+  const landing = read("../src/pages/LandingPage.jsx");
+  assert.match(landing, /behavior: reduceMotion \? "instant" : "smooth"/);
+  // Header nav (desktop and mobile) and the hero's "#try" link.
+  assert.equal((landing.match(/scrollToSection\(event\)|onClick=\{scrollToSection\}/g) || []).length, 3);
+});

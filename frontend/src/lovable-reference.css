@@ -160,8 +160,13 @@
 }
 
 @layer base {
-  html {
-    scroll-behavior: smooth;
+  /* No global scroll-behavior: smooth. It also animated find-in-page, history jumps and the
+     skip link. The landing page's in-page links scroll smoothly themselves (useSectionLink in
+     LandingPage.jsx) and respect reduced motion there. */
+  /* Those links move focus to the section, as a native anchor jump does for keyboard users;
+     the section itself is not a control, so it gets no focus outline. */
+  [data-section-target]:focus {
+    outline: none;
   }
   body {
     font-family: var(--font-sans);
@@ -250,8 +255,5 @@
      in the app is a hover state, so cancelling it on hover moves no layout. */
   *:hover {
     translate: none !important;
-  }
-  html {
-    scroll-behavior: auto;
   }
 }
