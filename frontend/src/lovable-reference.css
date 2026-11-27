@@ -242,6 +242,14 @@
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+  }
+  /* Hover lift and press effects move elements with the translate property (Tailwind v4's
+     translate-* utilities), which motion-reduce:transform-none does not reset. Every translate
+     in the app is a hover state, so cancelling it on hover moves no layout. */
+  *:hover {
+    translate: none !important;
   }
   html {
     scroll-behavior: auto;
