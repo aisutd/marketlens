@@ -5,6 +5,9 @@ import pytest
 
 from marketlens.predictor import LAUNCH_METRICS, MONTHLY_METRICS, YEARLY_METRICS
 
+# Every test here needs the trained models (directly or through the API lifespan).
+pytestmark = pytest.mark.models
+
 
 def test_launch_returns_every_metric_in_sensible_ranges(predictor, power_bank):
     r = predictor.predict_launch(power_bank)

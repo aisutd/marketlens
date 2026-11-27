@@ -10,6 +10,9 @@ from google.auth.exceptions import DefaultCredentialsError
 from marketlens.api.app import create_app
 from marketlens.api.firebase_auth import firebase_app
 
+# Every test here needs the trained models (directly or through the API lifespan).
+pytestmark = pytest.mark.models
+
 
 BASE = "/api/v1/predictions"
 

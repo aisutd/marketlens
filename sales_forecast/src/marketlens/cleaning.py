@@ -8,9 +8,10 @@ architectures, which would shuffle the noise between them.)
 import numpy as np
 import pandas as pd
 
-from .config import DISCOUNT_CAP_PCT, FX_INR_PER_USD, REFERENCE, SEED
+from . import config
+from .config import DISCOUNT_CAP_PCT, FX_INR_PER_USD, SEED
 
-ROW_ORDER_FILE = REFERENCE / "cleaning_row_order.csv"
+ROW_ORDER_NAME = "cleaning_row_order.csv"   # in config.REFERENCE, looked up when cleaning runs
 
 TEXT_COLS = ["review_title", "review_content", "user_id", "review_id"]
 BRAND_FIX = {"boAt": "boAt", "MI": "Xiaomi", "Redmi": "Xiaomi", "Mi": "Xiaomi"}
@@ -66,9 +67,10 @@ def _join_unique(s: pd.Series) -> str:
 
 def _pinned_rows(raw: pd.DataFrame):
     """Raw row labels (in order) behind the committed cleaned data, if this is that same raw file."""
-    if not ROW_ORDER_FILE.exists():
+    row_order_file = config.REFERENCE / ROW_ORDER_NAME
+    if not row_order_file.exists():
         return None
-    pinned = pd.read_csv(ROW_ORDER_FILE)
+    pinned = pd.read_csv(row_order_file)
     rows = pinned.raw_row.tolist()
     if not raw.index.is_unique or not set(rows) <= set(raw.index) or (raw.loc[rows, "product_id"].values != pinned.product_id.values).any():
         return None
