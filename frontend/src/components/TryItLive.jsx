@@ -824,7 +824,7 @@ export default function TryItLive() {
                 />
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  No explanation factors were returned.
+                  No factor moved this example's score.
                 </p>
               )}
             </div>
@@ -841,7 +841,7 @@ export default function TryItLive() {
                 />
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  No price curve was returned.
+                  Not enough price points to draw a curve.
                 </p>
               )}
             </div>

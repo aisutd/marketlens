@@ -241,9 +241,5 @@ export function previewScore(product, prices) {
     reasonsDown,
 
     curve,
-
-    reasonsUnavailable: false,
-
-    curveUnavailable: false,
   };
 }
