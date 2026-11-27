@@ -34,6 +34,7 @@ import SectionHeading from "../components/SectionHeading";
 import { primaryButton } from "../lib/buttons";
 import MetricCard, { RangeText } from "../components/MetricCard";
 import { cardHover } from "../lib/cards";
+import ChartPanel from "../components/ChartPanel";
 
 // ========================================
 // COLORS AND STYLES
@@ -108,30 +109,6 @@ function formatPeriod(period) {
 // ========================================
 // ALIGNED CHART CARD
 // ========================================
-
-function ChartPanel({
-  title,
-  description,
-  children,
-}) {
-  return (
-    <article className="flex h-full min-w-0 flex-col border border-ink bg-card p-5 sm:p-7">
-      <div className="min-h-[120px]">
-        <h3 className="font-display text-2xl leading-tight">
-          {title}
-        </h3>
-
-        <p className="mt-3 text-sm leading-7 text-muted-foreground">
-          {description}
-        </p>
-      </div>
-
-      <div className="mt-5 flex flex-1 flex-col">
-        {children}
-      </div>
-    </article>
-  );
-}
 
 function ChartValues({ items }) {
   return (
@@ -1394,6 +1371,7 @@ export default function SalesForecastOverview({
                 <ChartPanel
                   title="Where could the revenue go?"
                   description="Compare estimated revenue with costs calculated from the forecast."
+                  alignCharts
                 >
                   <FinancialChart
                     predictions={predictions}
@@ -1403,6 +1381,7 @@ export default function SalesForecastOverview({
                 <ChartPanel
                   title="How do sales and demand compare?"
                   description="These projections describe possible outcomes, not confirmed customer purchases."
+                  alignCharts
                 >
                   <DemandChart
                     predictions={predictions}

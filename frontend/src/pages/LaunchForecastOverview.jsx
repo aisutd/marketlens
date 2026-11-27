@@ -37,6 +37,7 @@ import {
 import SectionHeading from "../components/SectionHeading";
 import { primaryButton } from "../lib/buttons";
 import MetricCard, { RangeText } from "../components/MetricCard";
+import ChartPanel from "../components/ChartPanel";
 
 // ========================================
 // DESIGN SYSTEM
@@ -86,28 +87,6 @@ function formatMetric(metric, fallbackUnit) {
 // ========================================
 // SHARED PAGE COMPONENTS
 // ========================================
-
-function ChartPanel({
-  title,
-  description,
-  children,
-}) {
-  return (
-    <article className="min-w-0 border border-ink bg-card p-5 sm:p-7">
-      <h3 className="font-display text-2xl">
-        {title}
-      </h3>
-
-      <p className="mt-3 text-sm leading-7 text-muted-foreground">
-        {description}
-      </p>
-
-      <div className="mt-6">
-        {children}
-      </div>
-    </article>
-  );
-}
 
 function ChartTooltip({ active, payload }) {
   if (!active || !payload?.length) {

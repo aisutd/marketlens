@@ -123,3 +123,11 @@ test("the forecast pages share one MetricCard", () => {
     assert.match(text, /import MetricCard, \{ RangeText \} from "\.\.\/components\/MetricCard"/, file);
   }
 });
+
+test("the forecast pages share one ChartPanel", () => {
+  for (const file of ["../src/pages/LaunchForecastOverview.jsx", "../src/pages/SalesForecastOverview.jsx"]) {
+    const text = read(file);
+    assert.doesNotMatch(text, /^function ChartPanel/m, file);
+    assert.match(text, /import ChartPanel from "\.\.\/components\/ChartPanel"/, file);
+  }
+});
