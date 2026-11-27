@@ -61,3 +61,18 @@ test("price panels ask for a new price instead of showing zeros", () => {
   );
   assert.match(comparison, /Change the selling price in your/);
 });
+
+test("each opportunity page carries one general disclaimer", () => {
+  const count = (text) => (text.match(/guarantee/gi) || []).length;
+
+  // ScoreDetails: only the page footer.
+  assert.equal(count(source("../src/pages/ScoreDetails.jsx")), 1);
+
+  // Overview: the page footer, plus the About dialog's own explanation,
+  // which is only seen on request.
+  const overview = source("../src/pages/Overview.jsx");
+  const start = overview.indexOf("function AboutScore");
+  const end = overview.indexOf("export default function Overview");
+  const outsideDialog = overview.slice(0, start) + overview.slice(end);
+  assert.equal(count(outsideDialog), 1);
+});

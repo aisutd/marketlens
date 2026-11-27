@@ -163,19 +163,6 @@ function OpportunitySummary({
           <p className="mt-3 max-w-xl text-sm leading-7 text-muted-foreground">
             {getScoreMessage(score)}
           </p>
-
-          <div className="mt-6 flex items-start gap-3 border-l-2 border-primary bg-[#F8EEE0] p-4">
-            <Info
-              size={18}
-              className="mt-0.5 shrink-0 text-primary"
-            />
-
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              This evaluation helps you compare
-              product ideas. It does not guarantee
-              sales or profitability.
-            </p>
-          </div>
         </div>
       </div>
     </section>
@@ -442,11 +429,6 @@ function NextSteps({
             </div>
           ))}
         </div>
-
-        <p className="mt-7 border-t border-border pt-5 text-xs leading-relaxed text-muted-foreground">
-          These are research suggestions, not guaranteed
-          ways to improve your score or product sales.
-        </p>
       </div>
     </section>
   );
