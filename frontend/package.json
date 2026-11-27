@@ -20,7 +20,8 @@
     "test:load-on-demand": "node --test tests/load-on-demand.test.mjs",
     "test:api-headers": "node --test tests/api-headers.test.mjs",
     "test:api-base": "node --test tests/api-base.test.mjs",
-    "test:demo-preview": "node --test tests/demo-preview.test.mjs"
+    "test:demo-preview": "node --test tests/demo-preview.test.mjs",
+    "test:not-found": "node --test tests/not-found.test.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

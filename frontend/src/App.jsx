@@ -56,6 +56,7 @@ const SignUp = lazy(() => import("./pages/SignUp"));
 const Login = lazy(() => import("./pages/Login"));
 const SavedProducts = lazy(() => import("./pages/SavedProducts"));
 const Profile = lazy(() => import("./pages/Profile"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 const SaveProductButton = lazy(() =>
   import("./components/SaveProductButton")
 );
@@ -225,11 +226,32 @@ const PAGE_TITLES = {
   "/launch-feasibility": "Launch feasibility",
 };
 
+// Every path with a route below. Anything else renders NotFound, which
+// must work signed out, so the header must not send the visitor to /login.
+const KNOWN_PATHS = new Set([
+  "/",
+  "/overview",
+  ...Object.keys(PAGE_TITLES),
+]);
+
+// The router ignores case and a trailing slash ("/Discover/" opens
+// Discover), so the lookup must too.
+function routePath(pathname) {
+  const path = pathname.toLowerCase().replace(/\/+$/, "");
+  return path || "/";
+}
+
+function isKnownPath(pathname) {
+  return KNOWN_PATHS.has(routePath(pathname));
+}
+
 function RouteEffects() {
   const { pathname, hash } = useLocation();
 
   useEffect(() => {
-    const page = PAGE_TITLES[pathname];
+    const page = isKnownPath(pathname)
+      ? PAGE_TITLES[routePath(pathname)]
+      : "Page not found";
 
     document.title = page
       ? `${page} · MarketLens`
@@ -295,6 +317,17 @@ function AppHeader({
 
   if (publicPages.includes(location.pathname)) {
     return null;
+  }
+
+  // An unknown address shows NotFound to everyone: with the app header
+  // when signed in, without it (and without a redirect) otherwise.
+  if (!isKnownPath(location.pathname)) {
+    return userId ? (
+      <Header
+        hasAnalysis={hasAnalysis}
+        onNewAnalysis={onNewAnalysis}
+      />
+    ) : null;
   }
 
   return (
@@ -979,16 +1012,11 @@ export default function App() {
               }
             />
 
-            {/* FALLBACK ROUTE */}
+            {/* NOT FOUND */}
 
             <Route
               path="*"
-              element={
-                <Navigate
-                  to="/discover"
-                  replace
-                />
-              }
+              element={<NotFound userId={userId} />}
             />
 
           </Routes>
