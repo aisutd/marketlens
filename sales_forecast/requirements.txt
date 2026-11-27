@@ -22,4 +22,7 @@ uvicorn==0.54.0
 httpx==0.28.1
 
 # Firebase ID token verification
-firebase-admin==7.8.0slowapi==0.1.10
+firebase-admin==7.8.0
+
+# Per-user rate limits
+slowapi==0.1.10
