@@ -14,6 +14,9 @@ from marketlens.api.rate_limit import (
     PREDICTIONS_PER_DAY,
 )
 
+# Every test here needs the trained models (directly or through the API lifespan).
+pytestmark = pytest.mark.models
+
 
 BASE = "/api/v1/predictions"
 

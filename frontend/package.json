@@ -16,6 +16,8 @@
     "test:forecast-numbers": "node --test tests/forecast-numbers.test.mjs",
     "test:feasibility-costs": "node --test tests/feasibility-costs.test.mjs",
     "test:load-on-demand": "node --test tests/load-on-demand.test.mjs",
+    "test:api-headers": "node --test tests/api-headers.test.mjs",
+    "test:api-base": "node --test tests/api-base.test.mjs",
     "test:demo-preview": "node --test tests/demo-preview.test.mjs"
   },
   "dependencies": {

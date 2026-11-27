@@ -12,16 +12,48 @@ def _find_root() -> Path:
     raise FileNotFoundError("Can't find the MarketLens project folder (models/final). Set MARKETLENS_ROOT to its path.")
 
 
-ROOT = _find_root()
+# The data and model paths are resolved on first use, not at import, so the
+# package (and its pure unit tests: economics, cleaning helpers, features) can
+# be imported on a checkout without the gitignored models/final and data/.
+# `from marketlens.config import FINAL` still works; it resolves the root then.
+_PATHS = {
+    "DATA": ("data",),
+    "RAW_CSV": ("amazon.csv",),
+    "INTERIM": ("data", "interim"),
+    "PROCESSED": ("data", "processed"),
+    "FINAL": ("data", "final"),
+    "REFERENCE": ("data", "reference"),
+    "MODELS": ("models", "final"),
+    "INFERENCE_REFERENCE": ("models", "final", "inference_reference.json"),
+}
 
-DATA = ROOT / "data"
-RAW_CSV = ROOT / "amazon.csv"
-INTERIM = DATA / "interim"
-PROCESSED = DATA / "processed"
-FINAL = DATA / "final"
-REFERENCE = DATA / "reference"
-MODELS = ROOT / "models" / "final"
-INFERENCE_REFERENCE = MODELS / "inference_reference.json"
+_root = None
+
+
+def find_root() -> Path:
+    """The project root, found once and cached. Raises FileNotFoundError when there is none."""
+    global _root
+    if _root is None:
+        _root = _find_root()
+    return _root
+
+
+def has_root() -> bool:
+    """True when models/final can be found (the model and data files are present)."""
+    try:
+        find_root()
+    except FileNotFoundError:
+        return False
+    return True
+
+
+def __getattr__(name):
+    if name == "ROOT":
+        return find_root()
+    if name in _PATHS:
+        return find_root().joinpath(*_PATHS[name])
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 SEED = 42
 FX_INR_PER_USD = 83.0
