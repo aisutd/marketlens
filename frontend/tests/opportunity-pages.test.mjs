@@ -39,3 +39,25 @@ test("no opportunity screen shows the model's raw probability", () => {
     /prediction\??\.probability/
   );
 });
+
+test("Overview shows its findings without an extra click", () => {
+  const text = source("../src/pages/Overview.jsx");
+  assert.doesNotMatch(text, /Explore findings/);
+  assert.doesNotMatch(text, /showExplanations/);
+});
+
+test("price panels ask for a new price instead of showing zeros", () => {
+  const overview = source("../src/pages/Overview.jsx");
+  assert.match(overview, /const unchanged =/);
+  assert.match(overview, /\{unchanged \? \(/);
+
+  const feasibility = source("../src/pages/LaunchFeasibility.jsx");
+  const comparison = feasibility.slice(
+    feasibility.indexOf("function ScenarioComparison")
+  );
+  assert.match(
+    comparison,
+    /Math\.abs\(adjusted - originalPrice\) < 0\.005/
+  );
+  assert.match(comparison, /Change the selling price in your/);
+});

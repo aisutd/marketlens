@@ -759,6 +759,12 @@ function PriceScenarioPreview({ product, saveSuggestedPrice }) {
     adjustedPrice >= 0.01 &&
     adjustedPrice <= 100000;
 
+  // Until the price moves there is nothing to compare, so the panel asks
+  // for a new price instead of showing "0.0%" at display size.
+  const unchanged =
+    validPrice &&
+    Math.abs(adjustedPrice - originalPrice) < 0.005;
+
   const change =
     validPrice && originalPrice > 0
       ? (
@@ -880,17 +886,26 @@ function PriceScenarioPreview({ product, saveSuggestedPrice }) {
               Price adjustment
             </p>
 
-            <p className="mt-5 font-display text-5xl">
-              {change === null
-                ? "—"
-                : `${change > 0 ? "+" : ""}${change.toFixed(1)}%`}
-            </p>
+            {unchanged ? (
+              <p className="mt-5 max-w-xs text-sm leading-relaxed text-muted-foreground">
+                Move the slider or enter a new selling
+                price to compare it with the original.
+              </p>
+            ) : (
+              <>
+                <p className="mt-5 font-display text-5xl">
+                  {change === null
+                    ? "—"
+                    : `${change > 0 ? "+" : ""}${change.toFixed(1)}%`}
+                </p>
 
-            <p className="mt-4 text-sm text-muted-foreground">
-              {validPrice
-                ? `New price: ${currency(adjustedPrice)}`
-                : "Enter a valid selling price."}
-            </p>
+                <p className="mt-4 text-sm text-muted-foreground">
+                  {validPrice
+                    ? `New price: ${currency(adjustedPrice)}`
+                    : "Enter a valid selling price."}
+                </p>
+              </>
+            )}
           </div>
 
           <Link
@@ -1007,11 +1022,6 @@ export default function Overview({
   saveSuggestedPrice,
 }) {
   const [
-    showExplanations,
-    setShowExplanations,
-  ] = useState(false);
-
-  const [
     loadedReasons,
     setLoadedReasons,
   ] = useState(null);
@@ -1110,18 +1120,14 @@ export default function Overview({
   }
 
   function exploreInsights() {
-    setShowExplanations(true);
-
-    requestAnimationFrame(() => {
-      document
-        .getElementById(
-          "opportunity-product-insights"
-        )
-        ?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-    });
+    document
+      .getElementById(
+        "opportunity-product-insights"
+      )
+      ?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
   }
 
   // ----------------------------------------
@@ -1226,49 +1232,19 @@ export default function Overview({
           id="opportunity-product-insights"
           className="mt-14 scroll-mt-8"
         >
-          <div className="flex flex-wrap items-end justify-between gap-5">
-            <SectionHeading
-              number="02"
-              eyebrow="Product findings"
-              title="What should you know?"
-              description="Explore the characteristics helping your product's evaluation and the areas that may need more research."
-            />
+          <SectionHeading
+            number="02"
+            eyebrow="Product findings"
+            title="What should you know?"
+            description="Explore the characteristics helping your product's evaluation and the areas that may need more research."
+          />
 
-            <button
-              type="button"
-              onClick={() =>
-                setShowExplanations(
-                  (value) => !value
-                )
-              }
-              aria-expanded={
-                showExplanations
-              }
-              aria-controls="opportunity-insights-content"
-              className="inline-flex items-center gap-2 border border-ink bg-card px-5 py-3 text-sm font-semibold transition-colors hover:bg-[#F8EEE0]"
-            >
-              {showExplanations
-                ? "Hide findings"
-                : "Explore findings"}
-
-              {showExplanations ? (
-                <ChevronUp size={17} />
-              ) : (
-                <ChevronDown size={17} />
-              )}
-            </button>
-          </div>
-
-          {showExplanations && (
-            <div id="opportunity-insights-content">
-              <ProductInsights
-                reasons={reasons}
-                loading={loadingReasons}
-                error={reasonsError}
-                onRetry={retryExplanations}
-              />
-            </div>
-          )}
+          <ProductInsights
+            reasons={reasons}
+            loading={loadingReasons}
+            error={reasonsError}
+            onRetry={retryExplanations}
+          />
         </section>
 
         {/* PRODUCT INFORMATION */}
