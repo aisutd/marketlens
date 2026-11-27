@@ -15,6 +15,10 @@ import ApiErrorNotice from "./ApiErrorNotice";
 import { FORECAST_CATEGORIES } from "../constants/forecastCategoryMap";
 import { categoryUsesReviews } from "../constants/reviewCategories";
 import { getForecastProducts } from "../services/forecastingApi";
+import {
+  handleRadioGroupKeyDown,
+  radioProps,
+} from "../lib/radioGroup";
 
 const PAGE_SIZE = 500;
 const MAX_SEARCH_RESULTS = 12;
@@ -60,13 +64,15 @@ function SelectionCard({
   icon: Icon,
   onClick,
   disabled = false,
+  isFirst = false,
+  anyChecked = true,
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-pressed={selected}
+      {...radioProps(selected, isFirst, anyChecked)}
       className={
         "group relative flex h-full w-full flex-col " +
         "rounded-md border border-ink p-6 text-left " +
@@ -837,8 +843,9 @@ export default function ProductSearch({
 
         <div
           className="mt-7 grid gap-5 md:grid-cols-2"
-          role="group"
+          role="radiogroup"
           aria-label="Analysis type"
+          onKeyDown={handleRadioGroupKeyDown}
         >
           <SelectionCard
             selected={isOpportunity}
@@ -878,8 +885,9 @@ export default function ProductSearch({
 
           <div
             className="mt-7 grid gap-5 md:grid-cols-2"
-            role="group"
+            role="radiogroup"
             aria-label="Forecasting workflow"
+            onKeyDown={handleRadioGroupKeyDown}
           >
             <SelectionCard
               selected={isExisting}

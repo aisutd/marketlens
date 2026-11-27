@@ -22,6 +22,10 @@ import {
   isCategoryWide,
   rankFactors,
 } from "../constants/scoreFactors";
+import {
+  handleRadioGroupKeyDown,
+  radioProps,
+} from "../lib/radioGroup";
 
 // ========================================
 // FORMATTING
@@ -581,8 +585,9 @@ function ProductInsights({
   return (
     <div className="mt-7">
       <div
-        role="group"
+        role="radiogroup"
         aria-label="Product findings"
+        onKeyDown={handleRadioGroupKeyDown}
         className="grid gap-4 sm:grid-cols-2"
       >
         {[
@@ -608,7 +613,7 @@ function ProductInsights({
               onClick={() =>
                 setCategory(option.id)
               }
-              aria-pressed={active}
+              {...radioProps(active)}
               className={
                 "border border-ink p-5 text-left " +
                 (active

@@ -22,6 +22,10 @@ import {
 
 import InfoDialog from "../components/InfoDialog";
 import { formatPercent } from "../services/formatPercent";
+import {
+  handleRadioGroupKeyDown,
+  radioProps,
+} from "../lib/radioGroup";
 
 // ========================================
 // DESIGN SYSTEM
@@ -1035,8 +1039,9 @@ export default function LaunchForecastOverview({
           </div>
 
           <div
-            role="group"
+            role="radiogroup"
             aria-label="Forecast period"
+            onKeyDown={handleRadioGroupKeyDown}
             className="flex border border-ink bg-card p-1"
           >
             {[
@@ -1055,9 +1060,9 @@ export default function LaunchForecastOverview({
                 onClick={() =>
                   setPeriod(option.value)
                 }
-                aria-pressed={
+                {...radioProps(
                   period === option.value
-                }
+                )}
                 className={
                   "px-5 py-3 text-sm font-semibold transition-colors " +
                   (period === option.value
