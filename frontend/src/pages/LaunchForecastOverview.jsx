@@ -34,6 +34,8 @@ import {
   toNumber as numeric,
   wholeMoneyFormat,
 } from "../lib/format";
+import SectionHeading from "../components/SectionHeading";
+import { primaryButton } from "../lib/buttons";
 
 // ========================================
 // DESIGN SYSTEM
@@ -47,15 +49,6 @@ const COLORS = {
   green: "#47866B",
   gray: "#AFA49A",
 };
-
-const primaryButton =
-  "inline-flex items-center justify-center gap-3 " +
-  "border border-ink bg-primary px-6 py-3 " +
-  "font-semibold text-primary-foreground shadow-offset " +
-  "transition-transform duration-150 " +
-  "hover:translate-x-[2px] hover:translate-y-[2px] " +
-  "focus-visible:outline-2 focus-visible:outline-offset-4 " +
-  "focus-visible:outline-primary";
 
 const cardHover =
   "transition-[background-color,box-shadow,transform] " +
@@ -143,33 +136,6 @@ function RangeText({ metric }) {
 // ========================================
 // SHARED PAGE COMPONENTS
 // ========================================
-
-function SectionHeading({
-  number,
-  eyebrow,
-  title,
-  description,
-}) {
-  return (
-    <div>
-      <p className="eyebrow flex items-center gap-3 text-muted-foreground">
-        <span className="text-primary">{number}</span>
-        <span className="h-px w-8 bg-current" />
-        {eyebrow}
-      </p>
-
-      <h2 className="mt-4 font-display text-3xl leading-tight sm:text-4xl">
-        {title}
-      </h2>
-
-      {description && (
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground">
-          {description}
-        </p>
-      )}
-    </div>
-  );
-}
 
 function MetricCard({
   label,

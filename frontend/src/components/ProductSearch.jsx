@@ -20,6 +20,7 @@ import {
   handleRadioGroupKeyDown,
   radioProps,
 } from "../lib/radioGroup";
+import SectionHeading from "./SectionHeading";
 
 const PAGE_SIZE = 500;
 const MAX_SEARCH_RESULTS = 12;
@@ -282,26 +283,6 @@ function SelectField({
       </span>
 
       <FieldMessages id={id} error={error} />
-    </div>
-  );
-}
-
-function SectionHeading({ number, title, description }) {
-  return (
-    <div>
-      <p className="eyebrow flex items-center gap-3 text-muted-foreground">
-        <span className="text-primary">{number}</span>
-        <span className="h-px w-8 bg-current" />
-        Analysis setup
-      </p>
-
-      <h2 className="mt-4 font-display text-3xl leading-tight">
-        {title}
-      </h2>
-
-      <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-        {description}
-      </p>
     </div>
   );
 }
@@ -848,6 +829,8 @@ export default function ProductSearch({
     >
       <section>
         <SectionHeading
+          size="form"
+          eyebrow="Analysis setup"
           number="01"
           title="Choose your analysis."
           description="What would you like to evaluate? Select the option that best matches your goal."
@@ -890,6 +873,8 @@ export default function ProductSearch({
       {model === "sales" && (
         <section>
           <SectionHeading
+            size="form"
+            eyebrow="Analysis setup"
             number="02"
             title="What are you forecasting?"
             description="Choose between an existing product and a potential new product launch."

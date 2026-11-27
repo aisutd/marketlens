@@ -91,3 +91,17 @@ test("number and money formats are defined once", () => {
     assert.doesNotMatch(read(file), /new Intl\.NumberFormat/, file);
   }
 });
+
+// ---- shared UI pieces ----
+
+test("SectionHeading has one definition", () => {
+  for (const file of [
+    "../src/components/ProductSearch.jsx", "../src/pages/LaunchFeasibility.jsx",
+    "../src/pages/LaunchForecastOverview.jsx", "../src/pages/Overview.jsx",
+    "../src/pages/SalesForecastOverview.jsx", "../src/pages/ScoreDetails.jsx",
+  ]) {
+    const text = read(file);
+    assert.doesNotMatch(text, /^function SectionHeading\(/m, file);
+    assert.match(text, /import SectionHeading from "(\.\.\/components|\.)\/SectionHeading"/, file);
+  }
+});

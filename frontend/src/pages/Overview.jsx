@@ -32,6 +32,8 @@ import {
   moneyFormat,
   numberFormat,
 } from "../lib/format";
+import SectionHeading from "../components/SectionHeading";
+import { primaryButton } from "../lib/buttons";
 
 // ========================================
 // FORMATTING
@@ -68,15 +70,6 @@ const hoverCard =
   "hover:bg-[#F8EEE0] hover:shadow-offset " +
   "motion-reduce:transform-none " +
   "motion-reduce:transition-none";
-
-const primaryButton =
-  "inline-flex items-center justify-center gap-3 " +
-  "border border-ink bg-primary px-6 py-3 " +
-  "font-semibold text-primary-foreground shadow-offset " +
-  "transition-transform duration-150 " +
-  "hover:translate-x-[2px] hover:translate-y-[2px] " +
-  "focus-visible:outline-2 focus-visible:outline-offset-4 " +
-  "focus-visible:outline-primary";
 
 // ========================================
 // BUSINESS-FRIENDLY SCORE LANGUAGE
@@ -135,33 +128,6 @@ function getOpportunityMessage(score) {
 // ========================================
 // SHARED SECTION HEADING
 // ========================================
-
-function SectionHeading({
-  number,
-  eyebrow,
-  title,
-  description,
-}) {
-  return (
-    <div>
-      <p className="eyebrow flex items-center gap-3 text-muted-foreground">
-        <span className="text-primary">{number}</span>
-        <span className="h-px w-8 bg-current" />
-        {eyebrow}
-      </p>
-
-      <h2 className="mt-4 font-display text-3xl leading-tight sm:text-4xl">
-        {title}
-      </h2>
-
-      {description && (
-        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          {description}
-        </p>
-      )}
-    </div>
-  );
-}
 
 // ========================================
 // FRIENDLY FACTOR EXPLANATIONS
@@ -348,6 +314,7 @@ function ScoreSummary({
   return (
     <section className="mt-14">
       <SectionHeading
+        descriptionLeading="relaxed"
         number="01"
         eyebrow="Your results"
         title="Your results, at a glance."
@@ -677,6 +644,7 @@ function ProductInformation({ product }) {
   return (
     <section className="mt-14">
       <SectionHeading
+        descriptionLeading="relaxed"
         number="03"
         eyebrow="Product details"
         title="Your product information."
@@ -758,6 +726,7 @@ function PriceScenarioPreview({ product, saveSuggestedPrice }) {
   return (
     <section className="mt-14">
       <SectionHeading
+        descriptionLeading="relaxed"
         number="04"
         eyebrow="Pricing strategy"
         title="Explore a different price."
@@ -1213,6 +1182,7 @@ export default function Overview({
           className="mt-14 scroll-mt-8"
         >
           <SectionHeading
+            descriptionLeading="relaxed"
             number="02"
             eyebrow="Product findings"
             title="What should you know?"
