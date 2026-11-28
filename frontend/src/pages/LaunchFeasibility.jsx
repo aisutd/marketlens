@@ -501,6 +501,41 @@ function LiveMetric({
 }
 
 // ========================================
+// SCREEN READER SUMMARY OF THE LIVE RESULTS
+// ========================================
+
+// How long input has to pause before the summary is read out.
+const LIVE_ANNOUNCE_DELAY_MS = 1000;
+
+// The visible metrics update on every keystroke and slider step. Reading
+// all four out each time queued many announcements (#93), so screen
+// readers get a short summary of the figures people act on, profit and
+// margin, once the input has paused.
+function LiveAnnouncement({ financials, isValid }) {
+  const summary = isValid
+    ? `Profit after variable costs ${formatMoney(financials.profit)}, ` +
+      `profit margin ${formatPercent(financials.margin)}.`
+    : "";
+
+  // Starts as the current summary, so nothing is read out on page load.
+  const [announced, setAnnounced] = useState(summary);
+
+  useEffect(() => {
+    const timer = setTimeout(
+      () => setAnnounced(summary),
+      LIVE_ANNOUNCE_DELAY_MS
+    );
+    return () => clearTimeout(timer);
+  }, [summary]);
+
+  return (
+    <p role="status" className="sr-only">
+      {announced}
+    </p>
+  );
+}
+
+// ========================================
 // STICKY LIVE RESULTS
 // ========================================
 
@@ -520,11 +555,12 @@ function LiveResults({
           description="Recalculates as you adjust the inputs."
         />
 
-        <div
-          className="mt-5 grid grid-cols-2 gap-3"
-          aria-live="polite"
-          aria-atomic="true"
-        >
+        <LiveAnnouncement
+          financials={financials}
+          isValid={isValid}
+        />
+
+        <div className="mt-5 grid grid-cols-2 gap-3">
           <LiveMetric
             label="Monthly revenue"
             value={
