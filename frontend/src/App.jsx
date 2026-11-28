@@ -28,7 +28,10 @@ import {
 // ========================================
 
 import Header from "./components/Header";
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute, {
+  LOADING_HEIGHT_CLASS,
+} from "./components/ProtectedRoute";
+import HeaderPlaceholder from "./components/HeaderPlaceholder";
 import { returnPathFrom } from "./services/returnPath";
 
 // ========================================
@@ -61,13 +64,14 @@ const SaveProductButton = lazy(() =>
   import("./components/SaveProductButton")
 );
 
-// Shown while a page's code downloads, in the same style as the
-// session check in ProtectedRoute.
+// Shown while a page's code downloads, in the same style and height as the
+// session check in ProtectedRoute. Both fill the screen below the header so
+// the footer stays out of view and nothing jumps when the page arrives (#84).
 function PageLoading() {
   return (
     <div
       role="status"
-      className="flex min-h-[60vh] items-center justify-center"
+      className={`flex items-center justify-center ${LOADING_HEIGHT_CLASS}`}
     >
       <p className="text-sm text-muted-foreground">
         Loading...
@@ -327,6 +331,12 @@ function AppHeader({
         onNewAnalysis={onNewAnalysis}
       />
     ) : null;
+  }
+
+  // While the session check runs, hold the header's space so the page
+  // doesn't jump up when the real header appears (#84).
+  if (userId === undefined) {
+    return <HeaderPlaceholder />;
   }
 
   return (
