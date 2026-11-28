@@ -19,6 +19,7 @@ import OpportunityGauge from "../components/OpportunityGauge";
 import { factorInfo } from "../constants/scoreFactors";
 import SectionHeading from "../components/SectionHeading";
 import { primaryButton } from "../lib/buttons";
+import { focusSlotAfter } from "../lib/focus";
 
 function normalizeGroup(items, positive) {
   if (!Array.isArray(items)) return [];
@@ -602,9 +603,13 @@ export default function ScoreDetails({
 
               <button
                 type="button"
-                onClick={() =>
-                  setRetryCount((count) => count + 1)
-                }
+                onClick={(event) => {
+                  // The notice goes away while retrying; keep focus where
+                  // it was instead of losing it to the page (#86).
+                  const notice = event.currentTarget.parentElement;
+                  focusSlotAfter(notice.previousElementSibling, notice.parentElement);
+                  setRetryCount((count) => count + 1);
+                }}
                 className="mt-4 font-semibold text-primary underline"
               >
                 Try again

@@ -17,6 +17,10 @@ export const primaryButton =
 
 // Disabled styling for a primaryButton that can be disabled: no press
 // effect, dimmed, not-allowed cursor.
+// aria-disabled="true" looks the same: buttons that are busy use it instead
+// of disabled so they keep keyboard focus (#86).
 export const primaryButtonDisabled =
   "disabled:cursor-not-allowed disabled:opacity-50 " +
-  "disabled:hover:translate-x-0 disabled:hover:translate-y-0";
+  "disabled:hover:translate-x-0 disabled:hover:translate-y-0 " +
+  "aria-disabled:cursor-not-allowed aria-disabled:opacity-50 " +
+  "aria-disabled:hover:translate-x-0 aria-disabled:hover:translate-y-0";

@@ -34,6 +34,7 @@ import {
 } from "../lib/format";
 import SectionHeading from "../components/SectionHeading";
 import { primaryButton } from "../lib/buttons";
+import { focusSlotAfter } from "../lib/focus";
 
 // ========================================
 // FORMATTING
@@ -573,7 +574,13 @@ function ProductInsights({
 
           <button
             type="button"
-            onClick={onRetry}
+            onClick={(event) => {
+              // The notice goes away while retrying; keep focus where it
+              // was instead of losing it to the page (#86).
+              const notice = event.currentTarget.parentElement;
+              focusSlotAfter(notice.previousElementSibling, notice.parentElement);
+              onRetry();
+            }}
             className="mt-3 text-sm font-semibold text-primary underline"
           >
             Try again
