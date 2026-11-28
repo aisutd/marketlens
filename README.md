@@ -202,16 +202,3 @@ See the [Sales Forecasting README](sales_forecast/README.md) for model tests, AP
 The root `docker-compose.yml` currently defines a placeholder development container. It does not start the frontend or either backend API.
 
 Use the component-specific instructions to run the application locally.
-
-## Contributing
-
-Contributions are welcome.
-
-1. Create a new branch from the latest `main`.
-2. Keep changes focused on the relevant project component.
-3. Run applicable lint checks, builds, and tests.
-4. Open a pull request targeting `main`.
-
-Do not commit credentials, local environment files, datasets, or trained model artifacts.
-
-Keep component-specific changes within their respective directories and consult the relevant README before modifying backend services.
