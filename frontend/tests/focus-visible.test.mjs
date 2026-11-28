@@ -136,9 +136,12 @@ async function textBoxesWithoutFocusStyle(page) {
     if (stop.seen) break;
     if (!stop.isTextBox) continue;
 
-    await page.keyboard.press("End");
+    // Move the caret in code, not with the End key: in an empty box (the
+    // feasibility costs start empty) End isn't used by the box and scrolls
+    // the whole page instead, so the screenshot would miss the box.
     const clip = await page.evaluate(() => {
       const el = document.activeElement;
+      el.setSelectionRange?.(el.value.length, el.value.length);
       el.scrollIntoView({ block: "center", behavior: "instant" });
       const box = (el.closest("label, div") || el).getBoundingClientRect();
       const pad = 8;
