@@ -225,7 +225,9 @@
      LandingPage.jsx) and respect reduced motion there. */
   /* Those links move focus to the section, as a native anchor jump does for keyboard users;
      the section itself is not a control, so it gets no focus outline. */
-  [data-section-target]:focus {
+  /* The same goes for a page heading that gets focus after a page change (#85). */
+  [data-section-target]:focus,
+  [data-route-target]:focus {
     outline: none;
   }
   body {
