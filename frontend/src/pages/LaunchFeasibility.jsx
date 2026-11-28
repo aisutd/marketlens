@@ -1046,14 +1046,16 @@ function AIPriceSimulation({
             </fieldset>
           </div>
 
+          {/* While it runs the button is aria-disabled, not disabled, so it
+              keeps focus (#86); runSimulation ignores presses meanwhile. */}
           <button
             type="button"
             disabled={
               !isValid ||
-              loading ||
               !product ||
               !prediction
             }
+            aria-disabled={loading || undefined}
             onClick={onRun}
             className={primaryButton}
           >

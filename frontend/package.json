@@ -28,7 +28,8 @@
     "test:skip-link": "node --test tests/skip-link.test.mjs",
     "test:focus-visible": "node --test tests/focus-visible.test.mjs",
     "test:layout-shift": "node --test tests/layout-shift.test.mjs",
-    "test:route-focus": "node --test tests/route-focus.test.mjs"
+    "test:route-focus": "node --test tests/route-focus.test.mjs",
+    "test:busy-focus": "node --test tests/busy-focus.test.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

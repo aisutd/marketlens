@@ -310,6 +310,7 @@ export default function ProductSearch({
   submitError = null,
 }) {
   const formRef = useRef(null);
+  const submitRef = useRef(null);
   const [model, setModel] = useState("opportunity");
 
   const [forecastWorkflow, setForecastWorkflow] =
@@ -656,6 +657,16 @@ export default function ProductSearch({
 
     if (keys.length === 0) {
       setError("");
+      // The fields are disabled while the request runs, and a disabled
+      // field drops focus to the page. If the form was sent from a field
+      // (Enter), hand focus to the submit button, which stays focusable
+      // (#86).
+      if (
+        formRef.current?.contains(document.activeElement) &&
+        document.activeElement !== submitRef.current
+      ) {
+        submitRef.current?.focus({ preventScroll: true });
+      }
       return true;
     }
 
@@ -1392,7 +1403,7 @@ export default function ProductSearch({
       <div className="border-t border-ink pt-8">
         {/* The live region is always in the DOM so screen readers pick up
             the change when an analysis starts; the visible button text
-            alone is not announced, since the button is disabled. */}
+            alone is not announced. */}
         <p role="status" className="sr-only">
           {loading
             ? isOpportunity
@@ -1401,9 +1412,13 @@ export default function ProductSearch({
             : ""}
         </p>
 
+        {/* aria-disabled, not disabled, while loading: a disabled button
+            loses focus to the page (#86). handleSubmit ignores presses
+            while loading. */}
         <button
+          ref={submitRef}
           type="submit"
-          disabled={loading}
+          aria-disabled={loading || undefined}
           className={
             "flex min-h-14 w-full items-center justify-center gap-3 " +
             "rounded-md border border-ink bg-primary px-6 py-4 " +
@@ -1414,7 +1429,9 @@ export default function ProductSearch({
             "focus-visible:outline-2 focus-visible:outline-offset-4 " +
             "focus-visible:outline-primary " +
             "disabled:cursor-not-allowed disabled:opacity-50 " +
-            "disabled:shadow-none"
+            "disabled:shadow-none " +
+            "aria-disabled:cursor-not-allowed aria-disabled:opacity-50 " +
+            "aria-disabled:shadow-none"
           }
         >
           {loading
