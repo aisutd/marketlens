@@ -9,16 +9,6 @@ import {
   RotateCcw,
   SlidersHorizontal,
 } from "lucide-react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 
 import ApiErrorNotice from "../components/ApiErrorNotice";
 import {
@@ -33,6 +23,7 @@ import {
   numberFormat,
 } from "../lib/format";
 import SectionHeading from "../components/SectionHeading";
+import LazyChart from "../components/LazyChart";
 import {
   primaryButton as basePrimaryButton,
   primaryButtonDisabled,
@@ -398,66 +389,70 @@ function RevenueCostChart({ financials }) {
         financials.totalCosts
       )}.`}
     >
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          // The labelled role="img" wrapper carries the values; Recharts'
-          // accessibility layer would add an unnamed role="application" tab stop.
-          accessibilityLayer={false}
-          data={data}
-          margin={{
-            top: 12,
-            right: 8,
-            bottom: 0,
-            left: 0,
-          }}
-        >
-          <CartesianGrid
-            vertical={false}
-            stroke={COLORS.grid}
-          />
-
-          <XAxis
-            dataKey="name"
-            axisLine={false}
-            tickLine={false}
-            tick={{
-              fill: COLORS.muted,
-              fontSize: 12,
-            }}
-          />
-
-          <YAxis
-            domain={[0, "auto"]}
-            axisLine={false}
-            tickLine={false}
-            width={58}
-            tick={{
-              fill: COLORS.muted,
-              fontSize: 12,
-            }}
-            tickFormatter={(value) =>
-              `$${compactFormat.format(value)}`
-            }
-          />
-
-          <Tooltip
-            content={<ChartTooltip format={formatMoney} />}
-            cursor={{ fill: COLORS.cream }}
-          />
-
-          <Bar
-            dataKey="value"
-            maxBarSize={64}
-          >
-            {data.map((item) => (
-              <Cell
-                key={item.name}
-                fill={item.color}
+      <LazyChart>
+        {({ Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis }) => (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              // The labelled role="img" wrapper carries the values; Recharts'
+              // accessibility layer would add an unnamed role="application" tab stop.
+              accessibilityLayer={false}
+              data={data}
+              margin={{
+                top: 12,
+                right: 8,
+                bottom: 0,
+                left: 0,
+              }}
+            >
+              <CartesianGrid
+                vertical={false}
+                stroke={COLORS.grid}
               />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+
+              <XAxis
+                dataKey="name"
+                axisLine={false}
+                tickLine={false}
+                tick={{
+                  fill: COLORS.muted,
+                  fontSize: 12,
+                }}
+              />
+
+              <YAxis
+                domain={[0, "auto"]}
+                axisLine={false}
+                tickLine={false}
+                width={58}
+                tick={{
+                  fill: COLORS.muted,
+                  fontSize: 12,
+                }}
+                tickFormatter={(value) =>
+                  `$${compactFormat.format(value)}`
+                }
+              />
+
+              <Tooltip
+                content={<ChartTooltip format={formatMoney} />}
+                cursor={{ fill: COLORS.cream }}
+              />
+
+              <Bar
+                dataKey="value"
+                maxBarSize={64}
+              >
+                {data.map((item) => (
+                  <Cell
+                    key={item.name}
+                    fill={item.color}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </LazyChart>
     </div>
   );
 }
@@ -1183,84 +1178,88 @@ function AIPriceSimulation({
                 )
                 .join(". ")}
             >
-              <ResponsiveContainer
-                width="100%"
-                height="100%"
-              >
-                <BarChart
-                  // The labelled role="img" wrapper carries the values; Recharts'
-                  // accessibility layer would add an unnamed role="application" tab stop.
-                  accessibilityLayer={false}
-                  data={chartData}
-                  margin={{
-                    top: 12,
-                    right: 12,
-                    bottom: 0,
-                    left: 0,
-                  }}
-                >
-                  <CartesianGrid
-                    vertical={false}
-                    stroke={COLORS.grid}
-                  />
+              <LazyChart>
+                {({ Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis }) => (
+                  <ResponsiveContainer
+                    width="100%"
+                    height="100%"
+                  >
+                    <BarChart
+                      // The labelled role="img" wrapper carries the values; Recharts'
+                      // accessibility layer would add an unnamed role="application" tab stop.
+                      accessibilityLayer={false}
+                      data={chartData}
+                      margin={{
+                        top: 12,
+                        right: 12,
+                        bottom: 0,
+                        left: 0,
+                      }}
+                    >
+                      <CartesianGrid
+                        vertical={false}
+                        stroke={COLORS.grid}
+                      />
 
-                  <XAxis
-                    dataKey="price"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{
-                      fill: COLORS.muted,
-                      fontSize: 12,
-                    }}
-                    tickFormatter={formatMoney}
-                  />
+                      <XAxis
+                        dataKey="price"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{
+                          fill: COLORS.muted,
+                          fontSize: 12,
+                        }}
+                        tickFormatter={formatMoney}
+                      />
 
-                  <YAxis
-                    domain={[0, 100]}
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{
-                      fill: COLORS.muted,
-                      fontSize: 12,
-                    }}
-                  />
+                      <YAxis
+                        domain={[0, 100]}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{
+                          fill: COLORS.muted,
+                          fontSize: 12,
+                        }}
+                      />
 
-                  <Tooltip
-                    content={({
-                      active,
-                      payload,
-                    }) => {
-                      if (
-                        !active ||
-                        !payload?.length
-                      ) {
-                        return null;
-                      }
+                      <Tooltip
+                        content={({
+                          active,
+                          payload,
+                        }) => {
+                          if (
+                            !active ||
+                            !payload?.length
+                          ) {
+                            return null;
+                          }
 
-                      const item =
-                        payload[0].payload;
+                          const item =
+                            payload[0].payload;
 
-                      return (
-                        <div className="border border-ink bg-card px-4 py-3 shadow-offset">
-                          <p className="font-semibold">
-                            {formatMoney(item.price)}
-                          </p>
+                          return (
+                            <div className="border border-ink bg-card px-4 py-3 shadow-offset">
+                              <p className="font-semibold">
+                                {formatMoney(item.price)}
+                              </p>
 
-                          <p className="mt-2 text-sm">
-                            Score: {item.score}/100
-                          </p>
-                        </div>
-                      );
-                    }}
-                  />
+                              <p className="mt-2 text-sm">
+                                Score: {item.score}/100
+                              </p>
+                            </div>
+                          );
+                        }}
+                      />
 
-                  <Bar
-                    dataKey="score"
-                    maxBarSize={85}
-                    fill={COLORS.orange}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+                      <Bar
+                        dataKey="score"
+                        maxBarSize={85}
+                        fill={COLORS.orange}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </LazyChart>
             </div>
 
             {/* Score only: the model's raw probability is a relative number,

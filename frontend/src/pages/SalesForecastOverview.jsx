@@ -2,16 +2,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  BarChart,
-  Bar,
-  Cell,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import {
   ArrowLeft,
   ArrowRight,
   CircleHelp,
@@ -31,6 +21,7 @@ import {
   toNumber as numeric,
 } from "../lib/format";
 import SectionHeading from "../components/SectionHeading";
+import LazyChart from "../components/LazyChart";
 import { primaryButton } from "../lib/buttons";
 import MetricCard, { RangeText } from "../components/MetricCard";
 import { cardHover } from "../lib/cards";
@@ -218,65 +209,69 @@ function FinancialChart({ predictions }) {
         role="img"
         aria-label={`Estimated revenue ${formatMoney(revenue)} and calculated costs ${formatMoney(calculatedCosts)}`}
       >
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            // The labelled role="img" wrapper carries the values; Recharts'
-            // accessibility layer would add an unnamed role="application" tab stop.
-            accessibilityLayer={false}
-            data={data}
-            margin={{
-              top: 12,
-              right: 12,
-              bottom: 0,
-              left: 0,
-            }}
-          >
-            <CartesianGrid
-              vertical={false}
-              stroke="var(--chart-grid)"
-            />
-
-            <XAxis
-              dataKey="name"
-              tickLine={false}
-              axisLine={false}
-              tick={{
-                fill: COLORS.muted,
-                fontSize: 12,
-              }}
-            />
-
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              width={66}
-              tick={{
-                fill: COLORS.muted,
-                fontSize: 12,
-              }}
-              tickFormatter={(value) =>
-                `$${formatCompact(value)}`
-              }
-            />
-
-            <Tooltip
-              content={<ForecastTooltip money />}
-              cursor={{ fill: COLORS.cream }}
-            />
-
-            <Bar
-              dataKey="value"
-              maxBarSize={90}
-            >
-              {data.map((entry) => (
-                <Cell
-                  key={entry.name}
-                  fill={entry.color}
+        <LazyChart>
+          {({ BarChart, Bar, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis }) => (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                // The labelled role="img" wrapper carries the values; Recharts'
+                // accessibility layer would add an unnamed role="application" tab stop.
+                accessibilityLayer={false}
+                data={data}
+                margin={{
+                  top: 12,
+                  right: 12,
+                  bottom: 0,
+                  left: 0,
+                }}
+              >
+                <CartesianGrid
+                  vertical={false}
+                  stroke="var(--chart-grid)"
                 />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+
+                <XAxis
+                  dataKey="name"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{
+                    fill: COLORS.muted,
+                    fontSize: 12,
+                  }}
+                />
+
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  width={66}
+                  tick={{
+                    fill: COLORS.muted,
+                    fontSize: 12,
+                  }}
+                  tickFormatter={(value) =>
+                    `$${formatCompact(value)}`
+                  }
+                />
+
+                <Tooltip
+                  content={<ForecastTooltip money />}
+                  cursor={{ fill: COLORS.cream }}
+                />
+
+                <Bar
+                  dataKey="value"
+                  maxBarSize={90}
+                >
+                  {data.map((entry) => (
+                    <Cell
+                      key={entry.name}
+                      fill={entry.color}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </LazyChart>
       </div>
 
       <div className="mt-5">
@@ -354,66 +349,70 @@ function DemandChart({ predictions }) {
         role="img"
         aria-label={`Estimated sales ${formatNumber(sales)} units; estimated demand ${formatNumber(demand)} units`}
       >
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            // The labelled role="img" wrapper carries the values; Recharts'
-            // accessibility layer would add an unnamed role="application" tab stop.
-            accessibilityLayer={false}
-            layout="vertical"
-            data={data}
-            margin={{
-              top: 10,
-              right: 22,
-              bottom: 0,
-              left: 0,
-            }}
-          >
-            <CartesianGrid
-              horizontal={false}
-              stroke="var(--chart-grid)"
-            />
-
-            <XAxis
-              type="number"
-              tickLine={false}
-              axisLine={false}
-              tick={{
-                fill: COLORS.muted,
-                fontSize: 12,
-              }}
-              tickFormatter={formatCompact}
-            />
-
-            <YAxis
-              type="category"
-              dataKey="name"
-              width={70}
-              tickLine={false}
-              axisLine={false}
-              tick={{
-                fill: COLORS.muted,
-                fontSize: 12,
-              }}
-            />
-
-            <Tooltip
-              content={<ForecastTooltip />}
-              cursor={{ fill: COLORS.cream }}
-            />
-
-            <Bar
-              dataKey="value"
-              maxBarSize={54}
-            >
-              {data.map((entry) => (
-                <Cell
-                  key={entry.name}
-                  fill={entry.color}
+        <LazyChart>
+          {({ BarChart, Bar, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis }) => (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                // The labelled role="img" wrapper carries the values; Recharts'
+                // accessibility layer would add an unnamed role="application" tab stop.
+                accessibilityLayer={false}
+                layout="vertical"
+                data={data}
+                margin={{
+                  top: 10,
+                  right: 22,
+                  bottom: 0,
+                  left: 0,
+                }}
+              >
+                <CartesianGrid
+                  horizontal={false}
+                  stroke="var(--chart-grid)"
                 />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+
+                <XAxis
+                  type="number"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{
+                    fill: COLORS.muted,
+                    fontSize: 12,
+                  }}
+                  tickFormatter={formatCompact}
+                />
+
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  width={70}
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{
+                    fill: COLORS.muted,
+                    fontSize: 12,
+                  }}
+                />
+
+                <Tooltip
+                  content={<ForecastTooltip />}
+                  cursor={{ fill: COLORS.cream }}
+                />
+
+                <Bar
+                  dataKey="value"
+                  maxBarSize={54}
+                >
+                  {data.map((entry) => (
+                    <Cell
+                      key={entry.name}
+                      fill={entry.color}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </LazyChart>
       </div>
 
       <div className="mt-5">
