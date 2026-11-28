@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowDownRight,
@@ -268,6 +268,39 @@ function useSectionLink() {
 function SiteHeader({ userId }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const scrollToSection = useSectionLink();
+  const toggleRef = useRef(null);
+  const menuRef = useRef(null);
+
+  // Like the app's Menu (Header.jsx): Escape closes the menu and returns
+  // focus to its toggle, and a press outside the menu closes it (#89).
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        toggleRef.current?.focus();
+      }
+    }
+
+    // The toggle is left out: its own click already closes the menu.
+    function handlePointerDown(event) {
+      if (
+        !menuRef.current?.contains(event.target) &&
+        !toggleRef.current?.contains(event.target)
+      ) {
+        setMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [menuOpen]);
 
   const loggedOut = userId === null;
   const startHref = loggedOut ? "/signup" : "/discover";
@@ -323,6 +356,7 @@ function SiteHeader({ userId }) {
         </div>
 
         <button
+          ref={toggleRef}
           type="button"
           aria-label={menuOpen ? "Close menu" : "Open menu"}
           aria-expanded={menuOpen}
@@ -336,6 +370,7 @@ function SiteHeader({ userId }) {
 
       {menuOpen && (
         <nav
+          ref={menuRef}
           id="landing-mobile-menu"
           aria-label="Mobile navigation"
           className="flex flex-col gap-4 border-t border-ink bg-card px-6 py-5 text-sm md:hidden"
