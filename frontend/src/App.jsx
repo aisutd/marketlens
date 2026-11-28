@@ -277,7 +277,64 @@ function RouteEffects() {
     }
   }, [pathname, hash]);
 
+  // After moving to another page, put focus on its heading so screen readers
+  // announce where the user is (#85). Not on the first load, so the skip link
+  // stays the first Tab stop, and not for in-page anchors such as /#try,
+  // which move focus to their own section.
+  const firstPath = useRef(pathname);
+
+  useEffect(() => {
+    if (firstPath.current !== null) {
+      if (firstPath.current === pathname) return;
+      firstPath.current = null;
+    }
+
+    if (hash) return;
+
+    return focusPageHeading();
+  }, [pathname, hash]);
+
   return null;
+}
+
+// The new page's code and the session check may still be loading, so wait
+// (up to a few seconds) for its <h1>. Stops if the user moves focus first.
+function focusPageHeading() {
+  const startFocus = document.activeElement;
+  let timeoutId;
+
+  const tryFocus = () => {
+    const userMoved =
+      document.activeElement !== startFocus &&
+      document.activeElement !== document.body;
+    if (userMoved) return true;
+
+    const heading =
+      document.querySelector("#main-content h1") ||
+      document.querySelector("main h1");
+    if (!heading) return false;
+
+    if (!heading.hasAttribute("tabindex")) {
+      heading.setAttribute("tabindex", "-1");
+    }
+    heading.setAttribute("data-route-target", "");
+    heading.focus({ preventScroll: true });
+    return true;
+  };
+
+  if (tryFocus()) return undefined;
+
+  const observer = new MutationObserver(() => {
+    if (tryFocus()) stop();
+  });
+  const stop = () => {
+    observer.disconnect();
+    clearTimeout(timeoutId);
+  };
+
+  observer.observe(document.body, { childList: true, subtree: true });
+  timeoutId = setTimeout(stop, 5000);
+  return stop;
 }
 
 // ========================================
